@@ -1,103 +1,93 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-const mockTarefas = [
-  {
-    id: 1,
-    titulo: "Follow-up com ABC Importadora",
-    cliente: "ABC Importadora Ltda",
-    prazo: "2025-11-20",
-    prioridade: "Alta",
-    status: "pendente",
-    responsavel: "João Silva",
-  },
-  {
-    id: 2,
-    titulo: "Enviar proposta renovação",
-    cliente: "XYZ Exportadora S/A",
-    prazo: "2025-11-18",
-    prioridade: "Alta",
-    status: "atrasada",
-    responsavel: "Maria Santos",
-  },
-  {
-    id: 3,
-    titulo: "Agendar visita técnica",
-    cliente: "Tech Solutions Brasil",
-    prazo: "2025-11-22",
-    prioridade: "Média",
-    status: "pendente",
-    responsavel: "Pedro Costa",
-  },
-  {
-    id: 4,
-    titulo: "Revisar contrato",
-    cliente: "Logística Moderna",
-    prazo: "2025-11-25",
-    prioridade: "Baixa",
-    status: "pendente",
-    responsavel: "Ana Paula",
-  },
-  {
-    id: 5,
-    titulo: "Preparar apresentação",
-    cliente: "Comercial Sul América",
-    prazo: "2025-11-19",
-    prioridade: "Alta",
-    status: "concluida",
-    responsavel: "Carlos Mendes",
-  },
-];
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useTarefas, useUpdateTarefa } from "@/hooks/useTarefas";
+import { TarefaForm } from "@/components/forms/TarefaForm";
 
 export default function Tarefas() {
-  const tarefasHoje = mockTarefas.filter(
-    (t) => new Date(t.prazo).toDateString() === new Date().toDateString() && t.status === "pendente"
-  );
-  const tarefasAtrasadas = mockTarefas.filter((t) => t.status === "atrasada");
-  const tarefasSemana = mockTarefas.filter((t) => {
-    const prazo = new Date(t.prazo);
-    const hoje = new Date();
-    const umaSemana = new Date();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const { data: tarefas, isLoading } = useTarefas();
+  const updateTarefa = useUpdateTarefa();
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const tarefasHoje = tarefas?.filter((t) => {
+    if (!t.data_vencimento || t.status === "concluida") return false;
+    const vencimento = new Date(t.data_vencimento);
+    vencimento.setHours(0, 0, 0, 0);
+    return vencimento.getTime() === hoje.getTime();
+  }) || [];
+
+  const tarefasAtrasadas = tarefas?.filter((t) => {
+    if (!t.data_vencimento || t.status === "concluida") return false;
+    const vencimento = new Date(t.data_vencimento);
+    vencimento.setHours(0, 0, 0, 0);
+    return vencimento < hoje;
+  }) || [];
+
+  const tarefasSemana = tarefas?.filter((t) => {
+    if (!t.data_vencimento || t.status === "concluida") return false;
+    const vencimento = new Date(t.data_vencimento);
+    vencimento.setHours(0, 0, 0, 0);
+    const umaSemana = new Date(hoje);
     umaSemana.setDate(hoje.getDate() + 7);
-    return prazo >= hoje && prazo <= umaSemana && t.status === "pendente";
-  });
+    return vencimento >= hoje && vencimento <= umaSemana;
+  }) || [];
 
   const getPrioridadeBadge = (prioridade: string) => {
     const config: Record<string, { className: string }> = {
-      Alta: { className: "bg-destructive text-destructive-foreground" },
-      Média: { className: "bg-warning text-warning-foreground" },
-      Baixa: { className: "bg-muted text-muted-foreground" },
+      urgente: { className: "bg-destructive text-destructive-foreground" },
+      alta: { className: "bg-destructive text-destructive-foreground" },
+      media: { className: "bg-warning text-warning-foreground" },
+      baixa: { className: "bg-muted text-muted-foreground" },
     };
-    const style = config[prioridade] || config.Média;
-    return <Badge className={style.className}>{prioridade}</Badge>;
+    const style = config[prioridade] || config.media;
+    const label = prioridade.charAt(0).toUpperCase() + prioridade.slice(1);
+    return <Badge className={style.className}>{label}</Badge>;
   };
 
-  const getTarefasList = (tarefas: typeof mockTarefas) => (
+  const handleToggleTarefa = async (tarefaId: string, currentStatus: string) => {
+    const newStatus = currentStatus === "concluida" ? "pendente" : "concluida";
+    await updateTarefa.mutateAsync({ id: tarefaId, data: { status: newStatus } });
+  };
+
+  const getTarefasList = (tarefasList: typeof tarefas) => (
     <div className="space-y-3">
-      {tarefas.length === 0 ? (
+      {!tarefasList || tarefasList.length === 0 ? (
         <p className="text-center text-muted-foreground py-8">Nenhuma tarefa</p>
       ) : (
-        tarefas.map((tarefa) => (
+        tarefasList.map((tarefa) => (
           <Card key={tarefa.id} className="p-4">
             <div className="flex items-start gap-4">
-              <Checkbox className="mt-1" />
+              <Checkbox 
+                className="mt-1" 
+                checked={tarefa.status === "concluida"}
+                onCheckedChange={() => handleToggleTarefa(tarefa.id, tarefa.status)}
+              />
               <div className="flex-1 space-y-2">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold">{tarefa.titulo}</h3>
                   {getPrioridadeBadge(tarefa.prioridade)}
                 </div>
-                <div className="text-sm text-muted-foreground">{tarefa.cliente}</div>
+                {tarefa.descricao && (
+                  <p className="text-sm text-muted-foreground">{tarefa.descricao}</p>
+                )}
+                {tarefa.clientes && (
+                  <div className="text-sm text-muted-foreground">{tarefa.clientes.empresa}</div>
+                )}
                 <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    {new Date(tarefa.prazo).toLocaleDateString('pt-BR')}
-                  </div>
-                  <span className="text-muted-foreground">•</span>
-                  <span className="text-muted-foreground">{tarefa.responsavel}</span>
+                  {tarefa.data_vencimento && (
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      {new Date(tarefa.data_vencimento).toLocaleDateString('pt-BR')}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -107,17 +97,31 @@ export default function Tarefas() {
     </div>
   );
 
+  if (isLoading) {
+    return <div className="p-8 text-center">Carregando...</div>;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Tarefas Comerciais</h1>
-          <p className="text-muted-foreground">Gestão de tarefas e follow-ups</p>
+          <p className="text-muted-foreground">Gerencie suas atividades diárias</p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nova Tarefa
-        </Button>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Tarefa
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Nova Tarefa</DialogTitle>
+            </DialogHeader>
+            <TarefaForm onSuccess={() => setDialogOpen(false)} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -199,13 +203,8 @@ export default function Tarefas() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="todas" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Todas as Tarefas</CardTitle>
-            </CardHeader>
-            <CardContent>{getTarefasList(mockTarefas.filter(t => t.status !== "concluida"))}</CardContent>
-          </Card>
+        <TabsContent value="todas">
+          {getTarefasList(tarefas?.filter(t => t.status !== "concluida"))}
         </TabsContent>
       </Tabs>
     </div>
