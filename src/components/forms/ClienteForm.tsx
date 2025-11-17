@@ -6,6 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateCliente, type ClienteInsert } from "@/hooks/useClientes";
 import type { Database } from "@/integrations/supabase/types";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Upload } from "lucide-react";
 
 type SegmentoCliente = Database["public"]["Enums"]["segmento_cliente"];
 type StatusCliente = Database["public"]["Enums"]["status_cliente"];
@@ -22,23 +25,65 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
   const [potencial, setPotencial] = useState("");
   const [site, setSite] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [numeroProposta, setNumeroProposta] = useState("");
+  const [dataProposta, setDataProposta] = useState("");
+  const [vencimentoProposta, setVencimentoProposta] = useState("");
+  const [propostaFile, setPropostaFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const createCliente = useCreateCliente();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    await createCliente.mutateAsync({
-      empresa,
-      cnpj,
-      segmento,
-      status,
-      potencial: potencial || undefined,
-      site: site || undefined,
-      observacoes: observacoes || undefined,
-    });
+    setUploading(true);
 
-    onSuccess?.();
+    try {
+      let propostaUrl = undefined;
+
+      // Upload PDF if provided
+      if (propostaFile) {
+        const fileExt = propostaFile.name.split('.').pop();
+        const fileName = `${cnpj}-${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('propostas')
+          .upload(filePath, propostaFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('propostas')
+          .getPublicUrl(filePath);
+
+        propostaUrl = publicUrl;
+      }
+
+      await createCliente.mutateAsync({
+        empresa,
+        cnpj,
+        segmento,
+        status,
+        potencial: potencial || undefined,
+        site: site || undefined,
+        observacoes: observacoes || undefined,
+        numero_proposta: status === "ativo" && numeroProposta ? numeroProposta : undefined,
+        data_proposta: status === "ativo" && dataProposta ? dataProposta : undefined,
+        vencimento_proposta: status === "ativo" && vencimentoProposta ? vencimentoProposta : undefined,
+        proposta_url: status === "ativo" ? propostaUrl : undefined,
+      });
+
+      onSuccess?.();
+    } catch (error) {
+      toast({
+        title: "Erro ao salvar",
+        description: "Ocorreu um erro ao salvar o cliente. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -123,8 +168,68 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
         />
       </div>
 
-      <Button type="submit" className="w-full" disabled={createCliente.isPending}>
-        {createCliente.isPending ? "Criando..." : "Criar Cliente"}
+      {status === "ativo" && (
+        <>
+          <div className="border-t pt-4 mt-4">
+            <h3 className="text-lg font-semibold mb-4">Dados da Proposta</h3>
+          </div>
+
+          <div>
+            <Label htmlFor="numeroProposta">Número da Proposta *</Label>
+            <Input
+              id="numeroProposta"
+              value={numeroProposta}
+              onChange={(e) => setNumeroProposta(e.target.value)}
+              required
+              placeholder="Ex: PROP-2024-001"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="dataProposta">Data da Proposta *</Label>
+            <Input
+              id="dataProposta"
+              type="date"
+              value={dataProposta}
+              onChange={(e) => setDataProposta(e.target.value)}
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="vencimentoProposta">Vencimento da Proposta *</Label>
+            <Input
+              id="vencimentoProposta"
+              type="date"
+              value={vencimentoProposta}
+              onChange={(e) => setVencimentoProposta(e.target.value)}
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="propostaFile">Anexar PDF da Proposta</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="propostaFile"
+                type="file"
+                accept=".pdf"
+                onChange={(e) => setPropostaFile(e.target.files?.[0] || null)}
+                className="flex-1"
+              />
+              {propostaFile && (
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Upload className="h-4 w-4" />
+                  {propostaFile.name}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      <Button type="submit" className="w-full" disabled={createCliente.isPending || uploading}>
+        {uploading ? "Enviando..." : createCliente.isPending ? "Criando..." : "Criar Cliente"}
       </Button>
     </form>
   );
