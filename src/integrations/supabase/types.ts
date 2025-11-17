@@ -206,40 +206,52 @@ export type Database = {
           cnpj: string
           created_at: string
           created_by: string | null
+          data_proposta: string | null
           empresa: string
           id: string
+          numero_proposta: string | null
           observacoes: string | null
           potencial: string | null
+          proposta_url: string | null
           segmento: Database["public"]["Enums"]["segmento_cliente"]
           site: string | null
           status: Database["public"]["Enums"]["status_cliente"]
           updated_at: string
+          vencimento_proposta: string | null
         }
         Insert: {
           cnpj: string
           created_at?: string
           created_by?: string | null
+          data_proposta?: string | null
           empresa: string
           id?: string
+          numero_proposta?: string | null
           observacoes?: string | null
           potencial?: string | null
+          proposta_url?: string | null
           segmento: Database["public"]["Enums"]["segmento_cliente"]
           site?: string | null
           status?: Database["public"]["Enums"]["status_cliente"]
           updated_at?: string
+          vencimento_proposta?: string | null
         }
         Update: {
           cnpj?: string
           created_at?: string
           created_by?: string | null
+          data_proposta?: string | null
           empresa?: string
           id?: string
+          numero_proposta?: string | null
           observacoes?: string | null
           potencial?: string | null
+          proposta_url?: string | null
           segmento?: Database["public"]["Enums"]["segmento_cliente"]
           site?: string | null
           status?: Database["public"]["Enums"]["status_cliente"]
           updated_at?: string
+          vencimento_proposta?: string | null
         }
         Relationships: [
           {
