@@ -1,63 +1,53 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DollarSign, Calendar, TrendingUp, Plus } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useOportunidades } from "@/hooks/useOportunidades";
+import { OportunidadeForm } from "@/components/forms/OportunidadeForm";
 
-const pipelineStages = [
-  {
-    name: "Prospecção",
-    color: "bg-gray-500",
-    deals: [
-      { id: 1, empresa: "Nova Indústria XYZ", valor: 120000, probabilidade: 10, responsavel: "João Silva", previsao: "2025-12-15" },
-      { id: 2, empresa: "Comércio ABC", valor: 85000, probabilidade: 10, responsavel: "Maria Santos", previsao: "2025-12-20" },
-    ]
-  },
-  {
-    name: "Primeiro Contato",
-    color: "bg-blue-500",
-    deals: [
-      { id: 3, empresa: "Tech Solutions", valor: 250000, probabilidade: 20, responsavel: "Pedro Costa", previsao: "2025-12-10" },
-      { id: 4, empresa: "Logística Moderna", valor: 95000, probabilidade: 20, responsavel: "Ana Paula", previsao: "2025-12-18" },
-    ]
-  },
-  {
-    name: "Diagnóstico",
-    color: "bg-purple-500",
-    deals: [
-      { id: 5, empresa: "Exportadora Sul", valor: 180000, probabilidade: 40, responsavel: "Carlos Mendes", previsao: "2025-11-30" },
-    ]
-  },
-  {
-    name: "Proposta Enviada",
-    color: "bg-yellow-500",
-    deals: [
-      { id: 6, empresa: "Import Global", valor: 320000, probabilidade: 60, responsavel: "João Silva", previsao: "2025-11-25" },
-      { id: 7, empresa: "Agro Forte", valor: 210000, probabilidade: 60, responsavel: "Maria Santos", previsao: "2025-11-28" },
-    ]
-  },
-  {
-    name: "Negociação",
-    color: "bg-orange-500",
-    deals: [
-      { id: 8, empresa: "Indústria Pesada SA", valor: 450000, probabilidade: 80, responsavel: "Pedro Costa", previsao: "2025-11-22" },
-    ]
-  },
-  {
-    name: "Fechamento",
-    color: "bg-green-600",
-    deals: [
-      { id: 9, empresa: "Varejo Nacional", valor: 280000, probabilidade: 90, responsavel: "Ana Paula", previsao: "2025-11-20" },
-    ]
-  },
-];
+const statusMap: Record<string, string> = {
+  qualificacao: "Prospecção",
+  proposta: "Proposta Enviada",
+  negociacao: "Negociação",
+  fechamento: "Fechamento",
+  ganho: "Ganho",
+  perdido: "Perdido"
+};
+
+const statusColors: Record<string, string> = {
+  qualificacao: "bg-gray-500",
+  proposta: "bg-yellow-500",
+  negociacao: "bg-orange-500",
+  fechamento: "bg-green-600",
+  ganho: "bg-green-700",
+  perdido: "bg-red-500"
+};
 
 export default function Pipeline() {
-  const totalDeals = pipelineStages.reduce((acc, stage) => acc + stage.deals.length, 0);
-  const totalValue = pipelineStages.reduce(
-    (acc, stage) => acc + stage.deals.reduce((sum, deal) => sum + deal.valor, 0),
-    0
-  );
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const { data: oportunidades, isLoading } = useOportunidades();
+
+  const groupedOportunidades = oportunidades?.reduce((acc, oportunidade) => {
+    const status = oportunidade.status;
+    if (!acc[status]) {
+      acc[status] = [];
+    }
+    acc[status].push(oportunidade);
+    return acc;
+  }, {} as Record<string, typeof oportunidades>);
+
+  const totalDeals = oportunidades?.length || 0;
+  const totalValue = oportunidades?.reduce((sum, op) => sum + (op.valor || 0), 0) || 0;
+  const taxaConversao = totalDeals > 0 
+    ? ((oportunidades?.filter(op => op.status === 'ganho').length || 0) / totalDeals * 100).toFixed(1)
+    : "0.0";
+
+  if (isLoading) {
+    return <div className="p-8 text-center">Carregando...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -66,10 +56,20 @@ export default function Pipeline() {
           <h1 className="text-3xl font-bold">Pipeline de Vendas</h1>
           <p className="text-muted-foreground">Funil comercial completo</p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nova Oportunidade
-        </Button>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Oportunidade
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Nova Oportunidade</DialogTitle>
+            </DialogHeader>
+            <OportunidadeForm onSuccess={() => setDialogOpen(false)} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -100,55 +100,62 @@ export default function Pipeline() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">18.5%</div>
-            <p className="text-xs text-success">+3.2% vs mês anterior</p>
+            <div className="text-2xl font-bold">{taxaConversao}%</div>
+            <p className="text-xs text-muted-foreground">Oportunidades ganhas</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-6 gap-4">
-        {pipelineStages.map((stage) => {
-          const stageTotal = stage.deals.reduce((sum, deal) => sum + deal.valor, 0);
-          
+      <div className="grid grid-cols-6 gap-4 overflow-x-auto pb-4">
+        {Object.entries(statusMap).map(([statusKey, statusName]) => {
+          const deals = groupedOportunidades?.[statusKey as keyof typeof groupedOportunidades] || [];
           return (
-            <Card key={stage.name} className="col-span-6 md:col-span-3 lg:col-span-1">
-              <CardHeader className={`${stage.color} text-white rounded-t-lg`}>
-                <CardTitle className="text-sm font-semibold">{stage.name}</CardTitle>
-                <div className="text-xs">
-                  {stage.deals.length} negócios
-                </div>
-                <div className="text-xs font-semibold">
-                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' }).format(stageTotal)}
-                </div>
+            <Card key={statusKey} className="min-w-[280px]">
+              <CardHeader className={`${statusColors[statusKey]} text-white rounded-t-lg`}>
+                <CardTitle className="text-sm font-medium">
+                  {statusName}
+                  <Badge className="ml-2 bg-white text-gray-900">{deals.length}</Badge>
+                </CardTitle>
               </CardHeader>
-              <ScrollArea className="h-[600px]">
-                <CardContent className="p-2 space-y-2">
-                  {stage.deals.map((deal) => (
-                    <Card key={deal.id} className="p-3 hover:shadow-md transition-shadow cursor-pointer">
-                      <div className="space-y-2">
-                        <div className="font-semibold text-sm">{deal.empresa}</div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <DollarSign className="h-3 w-3" />
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(deal.valor)}
+              <CardContent className="p-4">
+                <ScrollArea className="h-[600px]">
+                  <div className="space-y-3">
+                    {deals.map((deal) => (
+                      <Card key={deal.id} className="p-4 border-2 hover:border-primary cursor-pointer">
+                        <div className="space-y-2">
+                          <h3 className="font-semibold text-sm">
+                            {deal.clientes?.empresa || "Cliente não informado"}
+                          </h3>
+                          <p className="text-xs text-muted-foreground">{deal.titulo}</p>
+                          <div className="space-y-1 text-xs">
+                            {deal.valor && (
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <DollarSign className="h-3 w-3" />
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(deal.valor)}
+                              </div>
+                            )}
+                            {deal.probabilidade && (
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <TrendingUp className="h-3 w-3" />
+                                {deal.probabilidade}% probabilidade
+                              </div>
+                            )}
+                            {deal.previsao_fechamento && (
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Calendar className="h-3 w-3" />
+                                {new Date(deal.previsao_fechamento).toLocaleDateString('pt-BR')}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(deal.previsao).toLocaleDateString('pt-BR')}
-                        </div>
-                        <Badge variant="outline" className="text-xs">
-                          {deal.probabilidade}% chance
-                        </Badge>
-                        <div className="text-xs text-muted-foreground pt-1 border-t">
-                          {deal.responsavel}
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </CardContent>
-              </ScrollArea>
+                      </Card>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CardContent>
             </Card>
           );
         })}

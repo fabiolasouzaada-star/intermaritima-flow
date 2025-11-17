@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
-export type Tarefa = Tables<"tarefas">;
+export type Tarefa = Tables<"tarefas"> & {
+  clientes?: { empresa: string };
+};
 export type TarefaInsert = TablesInsert<"tarefas">;
 export type TarefaUpdate = TablesUpdate<"tarefas">;
 
