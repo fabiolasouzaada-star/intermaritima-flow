@@ -8,9 +8,12 @@ import {
   CheckSquare,
   Grid3x3,
   MessageSquareMore,
-  BarChart3
+  BarChart3,
+  LogOut
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -20,6 +23,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
 
@@ -38,6 +42,7 @@ const menuItems = [
 
 export function CRMSidebar() {
   const { open } = useSidebar();
+  const { signOut } = useAuth();
 
   return (
     <Sidebar collapsible="icon">
@@ -65,6 +70,22 @@ export function CRMSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Button 
+                variant="ghost" 
+                onClick={signOut}
+                className="w-full justify-start hover:bg-sidebar-accent"
+              >
+                <LogOut className="h-4 w-4" />
+                {open && <span>Sair</span>}
+              </Button>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }

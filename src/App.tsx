@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { CRMLayout } from "./components/CRMLayout";
 import Dashboard from "./pages/Dashboard";
 import Clientes from "./pages/Clientes";
@@ -15,6 +17,8 @@ import Tarefas from "./pages/Tarefas";
 import Matriz from "./pages/Matriz";
 import PosVenda from "./pages/PosVenda";
 import Relatorios from "./pages/Relatorios";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,21 +29,25 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<CRMLayout><Dashboard /></CRMLayout>} />
-        <Route path="/clientes" element={<CRMLayout><Clientes /></CRMLayout>} />
-        <Route path="/cliente/:id" element={<CRMLayout><ClienteDetalhes /></CRMLayout>} />
-          <Route path="/pipeline" element={<CRMLayout><Pipeline /></CRMLayout>} />
-          <Route path="/contratos" element={<CRMLayout><Contratos /></CRMLayout>} />
-          <Route path="/calendario" element={<CRMLayout><Calendario /></CRMLayout>} />
-          <Route path="/visitas" element={<CRMLayout><Visitas /></CRMLayout>} />
-          <Route path="/tarefas" element={<CRMLayout><Tarefas /></CRMLayout>} />
-          <Route path="/matriz" element={<CRMLayout><Matriz /></CRMLayout>} />
-          <Route path="/pos-venda" element={<CRMLayout><PosVenda /></CRMLayout>} />
-          <Route path="/relatorios" element={<CRMLayout><Relatorios /></CRMLayout>} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/" element={<ProtectedRoute><CRMLayout><Dashboard /></CRMLayout></ProtectedRoute>} />
+            <Route path="/clientes" element={<ProtectedRoute><CRMLayout><Clientes /></CRMLayout></ProtectedRoute>} />
+            <Route path="/cliente/:id" element={<ProtectedRoute><CRMLayout><ClienteDetalhes /></CRMLayout></ProtectedRoute>} />
+            <Route path="/pipeline" element={<ProtectedRoute><CRMLayout><Pipeline /></CRMLayout></ProtectedRoute>} />
+            <Route path="/contratos" element={<ProtectedRoute><CRMLayout><Contratos /></CRMLayout></ProtectedRoute>} />
+            <Route path="/calendario" element={<ProtectedRoute><CRMLayout><Calendario /></CRMLayout></ProtectedRoute>} />
+            <Route path="/visitas" element={<ProtectedRoute><CRMLayout><Visitas /></CRMLayout></ProtectedRoute>} />
+            <Route path="/tarefas" element={<ProtectedRoute><CRMLayout><Tarefas /></CRMLayout></ProtectedRoute>} />
+            <Route path="/matriz" element={<ProtectedRoute><CRMLayout><Matriz /></CRMLayout></ProtectedRoute>} />
+            <Route path="/pos-venda" element={<ProtectedRoute><CRMLayout><PosVenda /></CRMLayout></ProtectedRoute>} />
+            <Route path="/relatorios" element={<ProtectedRoute><CRMLayout><Relatorios /></CRMLayout></ProtectedRoute>} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
