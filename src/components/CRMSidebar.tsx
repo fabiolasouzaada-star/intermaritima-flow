@@ -12,7 +12,8 @@ import {
   LogOut,
   Target,
   Upload,
-  TrendingUp
+  TrendingUp,
+  TrendingDown
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,6 +49,15 @@ const menuItemsFS = [
   { title: "Carteira FS", url: "/carteira-fs", icon: Users },
   { title: "Pipeline Retomada", url: "/pipeline-retomada", icon: Target },
   { title: "Importar Clientes", url: "/importar-clientes", icon: Upload },
+];
+
+const menuItemsFSViews = [
+  { title: "Concorrentes", url: "/fs-concorrentes", icon: Target },
+  { title: "Multiterminal", url: "/fs-multiterminal", icon: Grid3x3 },
+  { title: "Importadores", url: "/fs-importadores", icon: TrendingUp },
+  { title: "Exportadores", url: "/fs-exportadores", icon: TrendingDown },
+  { title: "Logística", url: "/fs-logistica", icon: Workflow },
+  { title: "Freight Forwarders", url: "/fs-freight-forwarders", icon: ClipboardList },
 ];
 
 export function CRMSidebar() {
@@ -94,6 +104,28 @@ export function CRMSidebar() {
                     >
                       <item.icon className="h-4 w-4" />
                       {open && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Views FS</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {menuItemsFSViews.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink 
+                      to={item.url}
+                      className="hover:bg-sidebar-accent"
+                      activeClassName="bg-sidebar-accent font-semibold"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {open && <span className="text-sm">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

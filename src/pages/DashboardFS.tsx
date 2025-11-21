@@ -72,7 +72,7 @@ export default function DashboardFS() {
       </div>
 
       {/* Métricas principais */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Total Clientes FS"
           value={totalClientesFS}
@@ -103,6 +103,77 @@ export default function DashboardFS() {
           value={visitasFS.length}
           icon={Calendar}
         />
+      </div>
+
+      {/* Novas Métricas */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Clientes por Terminal</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {["EMPÓRIO", "TPC", "INTER", "TECON"].map((terminal) => {
+              const count = clientesFS.filter(
+                (c) => c.terminais_operados?.includes(terminal)
+              ).length;
+              return (
+                <div key={terminal} className="flex justify-between">
+                  <span className="text-sm">{terminal}</span>
+                  <span className="font-semibold">{count}</span>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Clientes por Tipo de Serviço</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {["Importação", "Exportação", "Logística Integrada", "Transporte"].map((servico) => {
+              const count = clientesFS.filter(
+                (c) => c.tipos_servico?.includes(servico)
+              ).length;
+              return (
+                <div key={servico} className="flex justify-between">
+                  <span className="text-sm">{servico}</span>
+                  <span className="font-semibold">{count}</span>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Análise Especial</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-sm">Freight Forwarders</span>
+              <span className="font-semibold">
+                {clientesFS.filter((c) => c.is_freight_forwarder).length}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm">Opera Concorrentes</span>
+              <span className="font-semibold">
+                {clientesFS.filter(
+                  (c) =>
+                    c.terminais_operados?.length > 0 &&
+                    !c.terminais_operados.includes("INTER")
+                ).length}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm">Multisserviço</span>
+              <span className="font-semibold">
+                {clientesFS.filter((c) => (c.tipos_servico?.length || 0) > 2).length}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Oportunidades de Retomada */}

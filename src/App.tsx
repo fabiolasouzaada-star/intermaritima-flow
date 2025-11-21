@@ -21,6 +21,12 @@ import CarteiraFS from "./pages/CarteiraFS";
 import PipelineRetomada from "./pages/PipelineRetomada";
 import DashboardFS from "./pages/DashboardFS";
 import ImportarClientes from "./pages/ImportarClientes";
+import FSConcorrentes from "./pages/FSConcorrentes";
+import FSMultiterminal from "./pages/FSMultiterminal";
+import FSImportadores from "./pages/FSImportadores";
+import FSExportadores from "./pages/FSExportadores";
+import FSLogistica from "./pages/FSLogistica";
+import FSFreightForwarders from "./pages/FSFreightForwarders";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
@@ -52,6 +58,12 @@ const App = () => (
             <Route path="/pipeline-retomada" element={<ProtectedRoute><CRMLayout><PipelineRetomada /></CRMLayout></ProtectedRoute>} />
             <Route path="/dashboard-fs" element={<ProtectedRoute><CRMLayout><DashboardFS /></CRMLayout></ProtectedRoute>} />
             <Route path="/importar-clientes" element={<ProtectedRoute><CRMLayout><ImportarClientes /></CRMLayout></ProtectedRoute>} />
+            <Route path="/fs-concorrentes" element={<ProtectedRoute><CRMLayout><FSConcorrentes /></CRMLayout></ProtectedRoute>} />
+            <Route path="/fs-multiterminal" element={<ProtectedRoute><CRMLayout><FSMultiterminal /></CRMLayout></ProtectedRoute>} />
+            <Route path="/fs-importadores" element={<ProtectedRoute><CRMLayout><FSImportadores /></CRMLayout></ProtectedRoute>} />
+            <Route path="/fs-exportadores" element={<ProtectedRoute><CRMLayout><FSExportadores /></CRMLayout></ProtectedRoute>} />
+            <Route path="/fs-logistica" element={<ProtectedRoute><CRMLayout><FSLogistica /></CRMLayout></ProtectedRoute>} />
+            <Route path="/fs-freight-forwarders" element={<ProtectedRoute><CRMLayout><FSFreightForwarders /></CRMLayout></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

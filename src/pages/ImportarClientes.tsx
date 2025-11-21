@@ -46,7 +46,6 @@ export default function ImportarClientes() {
       for (const row of jsonData as any[]) {
         try {
           // Mapeamento básico - ajuste conforme as colunas do seu Excel
-          // Assuma que as colunas são: Cliente, Responsavel, Segmento, Status, Volume
           const clienteData = {
             empresa: row["Cliente"] || row["CLIENTE"] || row["Nome"] || "",
             cnpj: row["CNPJ"] || "",
@@ -56,6 +55,17 @@ export default function ImportarClientes() {
             volume_12_meses: parseFloat(row["Volume"] || row["VOLUME"] || row["Volume 12M"] || 0),
             is_cliente_fs: (row["Responsavel"] || row["RESPONSAVEL"] || "").toUpperCase() === "FS",
             observacoes: row["Observações"] || row["OBSERVACOES"] || null,
+            terminais_operados: (row["Terminais"] || row["TERMINAIS"] || "")
+              .toString()
+              .split(",")
+              .map((t: string) => t.trim())
+              .filter((t: string) => t.length > 0) || [],
+            is_freight_forwarder: (row["Freight Forwarder"] || row["FF"] || "").toString().toUpperCase() === "SIM",
+            tipos_servico: (row["Tipo de Serviço"] || row["Servicos"] || row["SERVICOS"] || "")
+              .toString()
+              .split(",")
+              .map((s: string) => s.trim())
+              .filter((s: string) => s.length > 0) || [],
           };
 
           // Valida campos obrigatórios
@@ -131,6 +141,9 @@ export default function ImportarClientes() {
               <li>Segmento: industrial, comercial, varejo, tecnologia, outros</li>
               <li>Status: ativo, inativo, prospecto</li>
               <li>Volume ou Volume 12M: Volume em 12 meses (numérico)</li>
+              <li>Terminais: Lista separada por vírgula (ex: INTER,TPC)</li>
+              <li>Freight Forwarder ou FF: SIM ou NÃO</li>
+              <li>Tipo de Serviço ou Servicos: Lista separada por vírgula</li>
               <li>Observações: Campo texto livre (opcional)</li>
             </ul>
           </div>

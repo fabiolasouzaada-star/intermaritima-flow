@@ -78,6 +78,7 @@ export default function ClienteDetalhes() {
               <CardTitle>Dados Gerais</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
+              <div><strong>CNPJ:</strong> {cliente.cnpj || "-"}</div>
               <div><strong>Segmento:</strong> {cliente.segmento}</div>
               <div><strong>Status:</strong> <Badge>{cliente.status}</Badge></div>
               {cliente.responsavel_codigo && (
@@ -93,6 +94,32 @@ export default function ClienteDetalhes() {
               )}
               {cliente.potencial && <div><strong>Potencial:</strong> {cliente.potencial}</div>}
               {cliente.site && <div><strong>Site:</strong> {cliente.site}</div>}
+              <div>
+                <strong>Freight Forwarder:</strong>{" "}
+                <Badge variant={cliente.is_freight_forwarder ? "default" : "secondary"}>
+                  {cliente.is_freight_forwarder ? "Sim" : "Não"}
+                </Badge>
+              </div>
+              {cliente.terminais_operados && cliente.terminais_operados.length > 0 && (
+                <div>
+                  <strong>Terminais:</strong>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {cliente.terminais_operados.map((terminal: string) => (
+                      <Badge key={terminal} variant="outline">{terminal}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {cliente.tipos_servico && cliente.tipos_servico.length > 0 && (
+                <div>
+                  <strong>Tipos de Serviço:</strong>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {cliente.tipos_servico.map((servico: string) => (
+                      <Badge key={servico} variant="outline">{servico}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
               {cliente.observacoes && <div><strong>Observações:</strong> {cliente.observacoes}</div>}
             </CardContent>
           </Card>
