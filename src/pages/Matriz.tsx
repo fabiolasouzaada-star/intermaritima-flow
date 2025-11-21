@@ -1,18 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const mockClientes = [
-  { id: 1, empresa: "ABC Importadora", potencial: 95, facilidade: 85, categoria: "ganho-rapido" },
-  { id: 2, empresa: "XYZ Exportadora", potencial: 90, facilidade: 60, categoria: "medio-prazo" },
-  { id: 3, empresa: "Tech Solutions", potencial: 85, facilidade: 90, categoria: "ganho-rapido" },
-  { id: 4, empresa: "Logística Moderna", potencial: 40, facilidade: 70, categoria: "baixo-impacto" },
-  { id: 5, empresa: "Comercial Sul", potencial: 75, facilidade: 45, categoria: "medio-prazo" },
-  { id: 6, empresa: "Import Global", potencial: 88, facilidade: 40, categoria: "estrategico" },
-  { id: 7, empresa: "Agro Forte", potencial: 70, facilidade: 75, categoria: "medio-prazo" },
-  { id: 8, empresa: "Indústria Pesada", potencial: 92, facilidade: 35, categoria: "estrategico" },
-  { id: 9, empresa: "Varejo Nacional", potencial: 50, facilidade: 80, categoria: "baixo-impacto" },
-  { id: 10, empresa: "Export Brasil", potencial: 78, facilidade: 88, categoria: "ganho-rapido" },
-];
+const mockClientes: Array<{
+  id: number;
+  empresa: string;
+  potencial: number;
+  facilidade: number;
+  categoria: string;
+}> = [];
 
 const categorias = [
   { id: "ganho-rapido", nome: "Ganho Rápido", cor: "bg-success", descricao: "Alto potencial + Alta facilidade" },

@@ -5,58 +5,16 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, FileText, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const mockContratos = [
-  {
-    id: 1,
-    cliente: "ABC Importadora Ltda",
-    inicio: "2024-01-15",
-    termino: "2025-01-14",
-    valor: 45000,
-    servicos: ["Importação", "Armazém"],
-    diasParaVencer: 58,
-    sla: "99.5%",
-  },
-  {
-    id: 2,
-    cliente: "XYZ Exportadora S/A",
-    inicio: "2023-06-01",
-    termino: "2024-12-01",
-    valor: 78000,
-    servicos: ["Exportação", "Logística Integrada"],
-    diasParaVencer: 14,
-    sla: "98.2%",
-  },
-  {
-    id: 3,
-    cliente: "Tech Solutions Brasil",
-    inicio: "2024-03-10",
-    termino: "2025-03-09",
-    valor: 62000,
-    servicos: ["Carga Projeto"],
-    diasParaVencer: 112,
-    sla: "99.8%",
-  },
-  {
-    id: 4,
-    cliente: "Logística Moderna",
-    inicio: "2023-09-20",
-    termino: "2024-11-20",
-    valor: 35000,
-    servicos: ["Armazém", "CNT R"],
-    diasParaVencer: 3,
-    sla: "97.5%",
-  },
-  {
-    id: 5,
-    cliente: "Comercial Sul América",
-    inicio: "2024-05-05",
-    termino: "2025-05-04",
-    valor: 52000,
-    servicos: ["Transporte", "Porto"],
-    diasParaVencer: 168,
-    sla: "99.1%",
-  },
-];
+const mockContratos: Array<{
+  id: number;
+  cliente: string;
+  inicio: string;
+  termino: string;
+  valor: number;
+  servicos: string[];
+  diasParaVencer: number;
+  sla: string;
+}> = [];
 
 export default function Contratos() {
   const contratosCriticos = mockContratos.filter(c => c.diasParaVencer <= 30);
