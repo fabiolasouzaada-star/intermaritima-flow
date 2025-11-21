@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { SEGMENTOS } from "@/constants/segmentos";
 
 export default function CarteiraFS() {
   const navigate = useNavigate();
@@ -37,14 +38,15 @@ export default function CarteiraFS() {
   ) || [];
 
   const segmentosDisponiveis = Array.from(
-    new Set(clientesFS.map(c => c.segmento))
+    new Set(clientesFS.flatMap(c => c.segmentos || []))
   ).sort();
 
   const filteredClientes = clientesFS.filter(cliente => {
     const matchesSearch = cliente.empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cliente.cnpj?.includes(searchTerm);
     
-    const matchesSegmento = filtroSegmento === "todos" || cliente.segmento === filtroSegmento;
+    const matchesSegmento = filtroSegmento === "todos" || 
+      (cliente.segmentos && cliente.segmentos.includes(filtroSegmento));
     
     const volumeMin = filtroVolumeMin ? parseFloat(filtroVolumeMin) : null;
     const volumeMax = filtroVolumeMax ? parseFloat(filtroVolumeMax) : null;
@@ -248,7 +250,17 @@ export default function CarteiraFS() {
                   <TableRow key={cliente.id}>
                     <TableCell className="font-medium">{cliente.empresa}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{cliente.segmento}</Badge>
+                      {cliente.segmentos && cliente.segmentos.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {cliente.segmentos.map((seg) => (
+                            <Badge key={seg} variant="outline" className="text-xs">
+                              {seg}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <Badge variant="outline">-</Badge>
+                      )}
                     </TableCell>
                     <TableCell>{getStatusBadge(cliente.status)}</TableCell>
                     <TableCell>

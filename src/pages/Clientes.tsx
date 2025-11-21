@@ -124,8 +124,25 @@ export default function Clientes() {
                 filteredClientes.map((cliente) => (
                   <TableRow key={cliente.id} className="cursor-pointer hover:bg-muted/50">
                     <TableCell className="font-medium">{cliente.empresa}</TableCell>
-                    <TableCell>{cliente.cnpj}</TableCell>
-                    <TableCell className="capitalize">{cliente.segmento}</TableCell>
+                    <TableCell>{cliente.cnpj || "-"}</TableCell>
+                    <TableCell>
+                      {cliente.segmentos && cliente.segmentos.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {cliente.segmentos.slice(0, 2).map((seg) => (
+                            <Badge key={seg} variant="outline" className="text-xs">
+                              {seg}
+                            </Badge>
+                          ))}
+                          {cliente.segmentos.length > 2 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{cliente.segmentos.length - 2}
+                            </Badge>
+                          )}
+                        </div>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
                     <TableCell>{getStatusBadge(cliente.status)}</TableCell>
                     <TableCell>{cliente.potencial || "-"}</TableCell>
                     <TableCell className="text-right">

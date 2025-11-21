@@ -217,6 +217,7 @@ export type Database = {
           proposta_url: string | null
           responsavel_codigo: string | null
           segmento: Database["public"]["Enums"]["segmento_cliente"]
+          segmentos: string[] | null
           site: string | null
           status: Database["public"]["Enums"]["status_cliente"]
           terminais_operados: string[] | null
@@ -240,6 +241,7 @@ export type Database = {
           proposta_url?: string | null
           responsavel_codigo?: string | null
           segmento: Database["public"]["Enums"]["segmento_cliente"]
+          segmentos?: string[] | null
           site?: string | null
           status?: Database["public"]["Enums"]["status_cliente"]
           terminais_operados?: string[] | null
@@ -263,6 +265,7 @@ export type Database = {
           proposta_url?: string | null
           responsavel_codigo?: string | null
           segmento?: Database["public"]["Enums"]["segmento_cliente"]
+          segmentos?: string[] | null
           site?: string | null
           status?: Database["public"]["Enums"]["status_cliente"]
           terminais_operados?: string[] | null
@@ -290,6 +293,7 @@ export type Database = {
           id: string
           is_principal: boolean | null
           nome: string
+          sede: string | null
           telefone: string | null
           updated_at: string
         }
@@ -301,6 +305,7 @@ export type Database = {
           id?: string
           is_principal?: boolean | null
           nome: string
+          sede?: string | null
           telefone?: string | null
           updated_at?: string
         }
@@ -312,6 +317,7 @@ export type Database = {
           id?: string
           is_principal?: boolean | null
           nome?: string
+          sede?: string | null
           telefone?: string | null
           updated_at?: string
         }

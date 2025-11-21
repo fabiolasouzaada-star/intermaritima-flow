@@ -6,11 +6,18 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Building2, FileText, Calendar, CheckSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ContatoClienteForm } from "@/components/forms/ContatoClienteForm";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function ClienteDetalhes() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: cliente, isLoading } = useCliente(id!);
+
+  const handleContatosChange = () => {
+    queryClient.invalidateQueries({ queryKey: ["cliente", id] });
+  };
 
   if (isLoading) {
     return <div>Carregando...</div>;
@@ -79,7 +86,16 @@ export default function ClienteDetalhes() {
             </CardHeader>
             <CardContent className="space-y-2">
               <div><strong>CNPJ:</strong> {cliente.cnpj || "-"}</div>
-              <div><strong>Segmento:</strong> {cliente.segmento}</div>
+              {cliente.segmentos && cliente.segmentos.length > 0 && (
+                <div>
+                  <strong>Segmentos:</strong>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {cliente.segmentos.map((seg: string) => (
+                      <Badge key={seg} variant="outline">{seg}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div><strong>Status:</strong> <Badge>{cliente.status}</Badge></div>
               {cliente.responsavel_codigo && (
                 <div>
@@ -121,6 +137,19 @@ export default function ClienteDetalhes() {
                 </div>
               )}
               {cliente.observacoes && <div><strong>Observações:</strong> {cliente.observacoes}</div>}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Contatos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ContatoClienteForm
+                clienteId={cliente.id}
+                contatos={cliente.contatos || []}
+                onContatosChange={handleContatosChange}
+              />
             </CardContent>
           </Card>
 
