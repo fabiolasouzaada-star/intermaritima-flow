@@ -4,14 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Users, FileText, Clock } from "lucide-react";
 import { useState } from "react";
 
-const mockEventos = [
-  { id: 1, tipo: "visita", cliente: "ABC Importadora", data: "2025-11-20", hora: "14:00", responsavel: "João Silva" },
-  { id: 2, tipo: "reuniao", cliente: "XYZ Exportadora", data: "2025-11-22", hora: "10:00", responsavel: "Maria Santos" },
-  { id: 3, tipo: "followup", cliente: "Tech Solutions", data: "2025-11-20", hora: "16:00", responsavel: "Pedro Costa" },
-  { id: 4, tipo: "renovacao", cliente: "Logística Moderna", data: "2025-11-20", hora: "09:00", responsavel: "Ana Paula" },
-  { id: 5, tipo: "visita", cliente: "Comercial Sul América", data: "2025-11-25", hora: "15:00", responsavel: "Carlos Mendes" },
-  { id: 6, tipo: "entrega", cliente: "Import Global", data: "2025-11-22", hora: "11:30", responsavel: "João Silva" },
-];
+const mockEventos: Array<{
+  id: number;
+  tipo: string;
+  cliente: string;
+  data: string;
+  hora: string;
+  responsavel: string;
+}> = [];
 
 export default function Calendario() {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -111,28 +111,8 @@ export default function Calendario() {
           <CardTitle>Próximos Eventos (7 dias)</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {mockEventos
-              .slice(0, 6)
-              .map((evento) => (
-                <div key={evento.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      {getTipoIcon(evento.tipo)}
-                    </div>
-                    <div>
-                      <div className="font-medium">{evento.cliente}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {new Date(evento.data).toLocaleDateString('pt-BR')} às {evento.hora}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {getTipoBadge(evento.tipo)}
-                    <span className="text-sm text-muted-foreground">{evento.responsavel}</span>
-                  </div>
-                </div>
-              ))}
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
+            Nenhum evento agendado
           </div>
         </CardContent>
       </Card>
