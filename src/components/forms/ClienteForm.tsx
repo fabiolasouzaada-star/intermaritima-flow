@@ -30,6 +30,9 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
   const [vencimentoProposta, setVencimentoProposta] = useState("");
   const [propostaFile, setPropostaFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [responsavelCodigo, setResponsavelCodigo] = useState("");
+  const [volume12Meses, setVolume12Meses] = useState("");
+  const [isClienteFs, setIsClienteFs] = useState(false);
 
   const createCliente = useCreateCliente();
   const { toast } = useToast();
@@ -72,7 +75,26 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
         data_proposta: status === "ativo" && dataProposta ? dataProposta : undefined,
         vencimento_proposta: status === "ativo" && vencimentoProposta ? vencimentoProposta : undefined,
         proposta_url: status === "ativo" ? propostaUrl : undefined,
+        responsavel_codigo: responsavelCodigo || undefined,
+        volume_12_meses: volume12Meses ? parseFloat(volume12Meses) : 0,
+        is_cliente_fs: isClienteFs,
       });
+
+      // Reset form
+      setEmpresa("");
+      setCnpj("");
+      setSegmento("industrial");
+      setStatus("prospecto");
+      setPotencial("");
+      setSite("");
+      setObservacoes("");
+      setNumeroProposta("");
+      setDataProposta("");
+      setVencimentoProposta("");
+      setPropostaFile(null);
+      setResponsavelCodigo("");
+      setVolume12Meses("");
+      setIsClienteFs(false);
 
       onSuccess?.();
     } catch (error) {
@@ -166,6 +188,47 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
           onChange={(e) => setObservacoes(e.target.value)}
           rows={4}
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="responsavel">Código do Responsável</Label>
+          <Input
+            id="responsavel"
+            value={responsavelCodigo}
+            onChange={(e) => {
+              const valor = e.target.value.toUpperCase();
+              setResponsavelCodigo(valor);
+              setIsClienteFs(valor === "FS");
+            }}
+            placeholder="Ex: FS, JN, etc"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="volume">Volume 12 Meses</Label>
+          <Input
+            id="volume"
+            type="number"
+            step="0.01"
+            value={volume12Meses}
+            onChange={(e) => setVolume12Meses(e.target.value)}
+            placeholder="Volume total em 12 meses"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="clienteFs"
+          checked={isClienteFs}
+          onChange={(e) => setIsClienteFs(e.target.checked)}
+          className="rounded border-input"
+        />
+        <Label htmlFor="clienteFs" className="cursor-pointer">
+          Cliente FS (automaticamente marcado se responsável = FS)
+        </Label>
       </div>
 
       {status === "ativo" && (

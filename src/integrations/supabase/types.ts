@@ -209,15 +209,18 @@ export type Database = {
           data_proposta: string | null
           empresa: string
           id: string
+          is_cliente_fs: boolean | null
           numero_proposta: string | null
           observacoes: string | null
           potencial: string | null
           proposta_url: string | null
+          responsavel_codigo: string | null
           segmento: Database["public"]["Enums"]["segmento_cliente"]
           site: string | null
           status: Database["public"]["Enums"]["status_cliente"]
           updated_at: string
           vencimento_proposta: string | null
+          volume_12_meses: number | null
         }
         Insert: {
           cnpj: string
@@ -226,15 +229,18 @@ export type Database = {
           data_proposta?: string | null
           empresa: string
           id?: string
+          is_cliente_fs?: boolean | null
           numero_proposta?: string | null
           observacoes?: string | null
           potencial?: string | null
           proposta_url?: string | null
+          responsavel_codigo?: string | null
           segmento: Database["public"]["Enums"]["segmento_cliente"]
           site?: string | null
           status?: Database["public"]["Enums"]["status_cliente"]
           updated_at?: string
           vencimento_proposta?: string | null
+          volume_12_meses?: number | null
         }
         Update: {
           cnpj?: string
@@ -243,15 +249,18 @@ export type Database = {
           data_proposta?: string | null
           empresa?: string
           id?: string
+          is_cliente_fs?: boolean | null
           numero_proposta?: string | null
           observacoes?: string | null
           potencial?: string | null
           proposta_url?: string | null
+          responsavel_codigo?: string | null
           segmento?: Database["public"]["Enums"]["segmento_cliente"]
           site?: string | null
           status?: Database["public"]["Enums"]["status_cliente"]
           updated_at?: string
           vencimento_proposta?: string | null
+          volume_12_meses?: number | null
         }
         Relationships: [
           {
@@ -557,6 +566,44 @@ export type Database = {
             columns: ["responsavel_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_retomada: {
+        Row: {
+          cliente_id: string
+          created_at: string | null
+          data_movimentacao: string | null
+          estagio: string
+          id: string
+          observacoes: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string | null
+          data_movimentacao?: string | null
+          estagio: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string | null
+          data_movimentacao?: string | null
+          estagio?: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_retomada_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
             referencedColumns: ["id"]
           },
         ]
