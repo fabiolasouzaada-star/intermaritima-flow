@@ -8,9 +8,12 @@ import { useCreateCliente, type ClienteInsert } from "@/hooks/useClientes";
 import type { Database } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Upload } from "lucide-react";
+import { Upload, X } from "lucide-react";
+import { SEGMENTOS } from "@/constants/segmentos";
+import { Badge } from "@/components/ui/badge";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-type SegmentoCliente = Database["public"]["Enums"]["segmento_cliente"];
 type StatusCliente = Database["public"]["Enums"]["status_cliente"];
 
 interface ClienteFormProps {
@@ -20,7 +23,9 @@ interface ClienteFormProps {
 export function ClienteForm({ onSuccess }: ClienteFormProps) {
   const [empresa, setEmpresa] = useState("");
   const [cnpj, setCnpj] = useState("");
-  const [segmento, setSegmento] = useState<SegmentoCliente>("industrial");
+  const [segmentos, setSegmentos] = useState<string[]>([]);
+  const [segmentoSearch, setSegmentoSearch] = useState("");
+  const [openSegmentos, setOpenSegmentos] = useState(false);
   const [status, setStatus] = useState<StatusCliente>("prospecto");
   const [potencial, setPotencial] = useState("");
   const [site, setSite] = useState("");
@@ -69,7 +74,8 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
       await createCliente.mutateAsync({
         empresa,
         cnpj: cnpj || "",
-        segmento,
+        segmento: "outros",
+        segmentos,
         status,
         potencial: potencial || undefined,
         site: site || undefined,
@@ -89,7 +95,7 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
       // Reset form
       setEmpresa("");
       setCnpj("");
-      setSegmento("industrial");
+      setSegmentos([]);
       setStatus("prospecto");
       setPotencial("");
       setSite("");
@@ -139,20 +145,73 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
           />
         </div>
 
-      <div>
-        <Label htmlFor="segmento">Segmento *</Label>
-        <Select value={segmento} onValueChange={(value) => setSegmento(value as SegmentoCliente)} required>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione o segmento" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="industrial">Industrial</SelectItem>
-            <SelectItem value="comercial">Comercial</SelectItem>
-            <SelectItem value="varejo">Varejo</SelectItem>
-            <SelectItem value="tecnologia">Tecnologia</SelectItem>
-            <SelectItem value="outros">Outros</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="space-y-2">
+        <Label>Segmentos (multi-seleção)</Label>
+        <Popover open={openSegmentos} onOpenChange={setOpenSegmentos}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-start text-left font-normal"
+            >
+              {segmentos.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {segmentos.map((seg) => (
+                    <Badge key={seg} variant="secondary" className="mr-1">
+                      {seg}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSegmentos(segmentos.filter((s) => s !== seg));
+                        }}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-muted-foreground">Selecione os segmentos</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-full p-0" align="start">
+            <Command>
+              <CommandInput
+                placeholder="Buscar segmento..."
+                value={segmentoSearch}
+                onValueChange={setSegmentoSearch}
+              />
+              <CommandEmpty>Nenhum segmento encontrado.</CommandEmpty>
+              <CommandGroup className="max-h-64 overflow-auto">
+                {SEGMENTOS.filter((seg) =>
+                  seg.toLowerCase().includes(segmentoSearch.toLowerCase())
+                ).map((seg) => (
+                  <CommandItem
+                    key={seg}
+                    onSelect={() => {
+                      if (segmentos.includes(seg)) {
+                        setSegmentos(segmentos.filter((s) => s !== seg));
+                      } else {
+                        setSegmentos([...segmentos, seg]);
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={segmentos.includes(seg)}
+                        onChange={() => {}}
+                        className="rounded border-gray-300"
+                      />
+                      <span>{seg}</span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div>

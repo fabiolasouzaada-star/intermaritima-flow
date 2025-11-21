@@ -13,6 +13,7 @@ export interface Contato {
   email: string | null;
   telefone: string | null;
   cargo: string | null;
+  sede: string | null;
   is_principal: boolean | null;
 }
 
