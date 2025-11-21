@@ -73,7 +73,7 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
 
       await createCliente.mutateAsync({
         empresa,
-        cnpj: cnpj || "",
+        cnpj: cnpj || null,
         segmento: "outros",
         segmentos,
         status,

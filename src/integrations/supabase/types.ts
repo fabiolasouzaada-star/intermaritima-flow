@@ -203,7 +203,7 @@ export type Database = {
       }
       clientes: {
         Row: {
-          cnpj: string
+          cnpj: string | null
           created_at: string
           created_by: string | null
           data_proposta: string | null
@@ -227,7 +227,7 @@ export type Database = {
           volume_12_meses: number | null
         }
         Insert: {
-          cnpj: string
+          cnpj?: string | null
           created_at?: string
           created_by?: string | null
           data_proposta?: string | null
@@ -251,7 +251,7 @@ export type Database = {
           volume_12_meses?: number | null
         }
         Update: {
-          cnpj?: string
+          cnpj?: string | null
           created_at?: string
           created_by?: string | null
           data_proposta?: string | null
