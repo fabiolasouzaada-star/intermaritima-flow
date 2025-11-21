@@ -80,10 +80,46 @@ export default function ClienteDetalhes() {
             <CardContent className="space-y-2">
               <div><strong>Segmento:</strong> {cliente.segmento}</div>
               <div><strong>Status:</strong> <Badge>{cliente.status}</Badge></div>
+              {cliente.responsavel_codigo && (
+                <div>
+                  <strong>Responsável:</strong> {cliente.responsavel_codigo}
+                  {cliente.is_cliente_fs && <Badge variant="secondary" className="ml-2">Cliente FS</Badge>}
+                </div>
+              )}
+              {cliente.volume_12_meses !== null && cliente.volume_12_meses !== undefined && (
+                <div>
+                  <strong>Volume 12 Meses:</strong> {new Intl.NumberFormat('pt-BR').format(cliente.volume_12_meses)}
+                </div>
+              )}
+              {cliente.potencial && <div><strong>Potencial:</strong> {cliente.potencial}</div>}
               {cliente.site && <div><strong>Site:</strong> {cliente.site}</div>}
               {cliente.observacoes && <div><strong>Observações:</strong> {cliente.observacoes}</div>}
             </CardContent>
           </Card>
+
+          {cliente.numero_proposta && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Dados da Proposta</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div><strong>Número:</strong> {cliente.numero_proposta}</div>
+                {cliente.data_proposta && (
+                  <div><strong>Data:</strong> {new Date(cliente.data_proposta).toLocaleDateString()}</div>
+                )}
+                {cliente.vencimento_proposta && (
+                  <div><strong>Vencimento:</strong> {new Date(cliente.vencimento_proposta).toLocaleDateString()}</div>
+                )}
+                {cliente.proposta_url && (
+                  <Button asChild>
+                    <a href={cliente.proposta_url} target="_blank" rel="noopener noreferrer">
+                      Ver Proposta
+                    </a>
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="contratos">
