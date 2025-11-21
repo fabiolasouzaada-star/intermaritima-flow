@@ -33,6 +33,9 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
   const [responsavelCodigo, setResponsavelCodigo] = useState("");
   const [volume12Meses, setVolume12Meses] = useState("");
   const [isClienteFs, setIsClienteFs] = useState(false);
+  const [terminaisOperados, setTerminaisOperados] = useState<string[]>([]);
+  const [isFreightForwarder, setIsFreightForwarder] = useState(false);
+  const [tiposServico, setTiposServico] = useState<string[]>([]);
 
   const createCliente = useCreateCliente();
   const { toast } = useToast();
@@ -65,7 +68,7 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
 
       await createCliente.mutateAsync({
         empresa,
-        cnpj,
+        cnpj: cnpj || "",
         segmento,
         status,
         potencial: potencial || undefined,
@@ -78,6 +81,9 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
         responsavel_codigo: responsavelCodigo || undefined,
         volume_12_meses: volume12Meses ? parseFloat(volume12Meses) : 0,
         is_cliente_fs: isClienteFs,
+        terminais_operados: terminaisOperados,
+        is_freight_forwarder: isFreightForwarder,
+        tipos_servico: tiposServico,
       });
 
       // Reset form
@@ -95,6 +101,9 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
       setResponsavelCodigo("");
       setVolume12Meses("");
       setIsClienteFs(false);
+      setTerminaisOperados([]);
+      setIsFreightForwarder(false);
+      setTiposServico([]);
 
       onSuccess?.();
     } catch (error) {
@@ -120,15 +129,15 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
         />
       </div>
 
-      <div>
-        <Label htmlFor="cnpj">CNPJ *</Label>
-        <Input
-          id="cnpj"
-          value={cnpj}
-          onChange={(e) => setCnpj(e.target.value)}
-          required
-        />
-      </div>
+        <div>
+          <Label htmlFor="cnpj">CNPJ</Label>
+          <Input
+            id="cnpj"
+            value={cnpj}
+            onChange={(e) => setCnpj(e.target.value)}
+            placeholder="Opcional"
+          />
+        </div>
 
       <div>
         <Label htmlFor="segmento">Segmento *</Label>
@@ -177,18 +186,75 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
           type="url"
           value={site}
           onChange={(e) => setSite(e.target.value)}
-        />
-      </div>
+          />
+        </div>
 
-      <div>
-        <Label htmlFor="observacoes">Observações</Label>
-        <Textarea
-          id="observacoes"
-          value={observacoes}
-          onChange={(e) => setObservacoes(e.target.value)}
-          rows={4}
-        />
-      </div>
+        <div className="space-y-2">
+          <Label>Terminais onde opera</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {["EMPÓRIO", "TPC", "INTER", "TECON"].map((terminal) => (
+              <label key={terminal} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={terminaisOperados.includes(terminal)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setTerminaisOperados([...terminaisOperados, terminal]);
+                    } else {
+                      setTerminaisOperados(terminaisOperados.filter(t => t !== terminal));
+                    }
+                  }}
+                  className="rounded border-gray-300"
+                />
+                <span>{terminal}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="isFreightForwarder"
+            checked={isFreightForwarder}
+            onChange={(e) => setIsFreightForwarder(e.target.checked)}
+            className="rounded border-gray-300"
+          />
+          <Label htmlFor="isFreightForwarder">É Freight Forwarder?</Label>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Tipo de Serviço</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {["Importação", "Exportação", "Logística Integrada", "Transporte", "Armazém / AG", "Carga Projeto", "Carga Solta", "CNTR"].map((servico) => (
+              <label key={servico} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={tiposServico.includes(servico)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setTiposServico([...tiposServico, servico]);
+                    } else {
+                      setTiposServico(tiposServico.filter(s => s !== servico));
+                    }
+                  }}
+                  className="rounded border-gray-300"
+                />
+                <span className="text-sm">{servico}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="observacoes">Observações</Label>
+          <Textarea
+            id="observacoes"
+            value={observacoes}
+            onChange={(e) => setObservacoes(e.target.value)}
+            rows={4}
+          />
+        </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>

@@ -210,6 +210,7 @@ export type Database = {
           empresa: string
           id: string
           is_cliente_fs: boolean | null
+          is_freight_forwarder: boolean | null
           numero_proposta: string | null
           observacoes: string | null
           potencial: string | null
@@ -218,6 +219,8 @@ export type Database = {
           segmento: Database["public"]["Enums"]["segmento_cliente"]
           site: string | null
           status: Database["public"]["Enums"]["status_cliente"]
+          terminais_operados: string[] | null
+          tipos_servico: string[] | null
           updated_at: string
           vencimento_proposta: string | null
           volume_12_meses: number | null
@@ -230,6 +233,7 @@ export type Database = {
           empresa: string
           id?: string
           is_cliente_fs?: boolean | null
+          is_freight_forwarder?: boolean | null
           numero_proposta?: string | null
           observacoes?: string | null
           potencial?: string | null
@@ -238,6 +242,8 @@ export type Database = {
           segmento: Database["public"]["Enums"]["segmento_cliente"]
           site?: string | null
           status?: Database["public"]["Enums"]["status_cliente"]
+          terminais_operados?: string[] | null
+          tipos_servico?: string[] | null
           updated_at?: string
           vencimento_proposta?: string | null
           volume_12_meses?: number | null
@@ -250,6 +256,7 @@ export type Database = {
           empresa?: string
           id?: string
           is_cliente_fs?: boolean | null
+          is_freight_forwarder?: boolean | null
           numero_proposta?: string | null
           observacoes?: string | null
           potencial?: string | null
@@ -258,6 +265,8 @@ export type Database = {
           segmento?: Database["public"]["Enums"]["segmento_cliente"]
           site?: string | null
           status?: Database["public"]["Enums"]["status_cliente"]
+          terminais_operados?: string[] | null
+          tipos_servico?: string[] | null
           updated_at?: string
           vencimento_proposta?: string | null
           volume_12_meses?: number | null
