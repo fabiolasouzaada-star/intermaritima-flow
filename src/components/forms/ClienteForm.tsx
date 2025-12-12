@@ -56,6 +56,11 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
   const [isFreightForwarder, setIsFreightForwarder] = useState(false);
   const [tiposServico, setTiposServico] = useState<string[]>([]);
   const [propostas, setPropostas] = useState<Proposta[]>([]);
+  
+  // Contato principal
+  const [contatoNome, setContatoNome] = useState("");
+  const [contatoEmail, setContatoEmail] = useState("");
+  const [contatoTelefone, setContatoTelefone] = useState("");
   const [uploading, setUploading] = useState(false);
 
   const createCliente = useCreateCliente();
@@ -108,6 +113,21 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
         is_freight_forwarder: isFreightForwarder,
         tipos_servico: tiposServico,
       });
+
+      // Create contato if provided
+      if (contatoNome && clienteData?.id) {
+        const { error: contatoError } = await supabase
+          .from('contatos_cliente')
+          .insert({
+            cliente_id: clienteData.id,
+            nome: contatoNome,
+            email: contatoEmail || null,
+            telefone: contatoTelefone || null,
+            is_principal: true,
+          });
+
+        if (contatoError) throw contatoError;
+      }
 
       // Now create propostas if any
       if (propostas.length > 0 && clienteData?.id) {
@@ -166,6 +186,9 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
       setIsFreightForwarder(false);
       setTiposServico([]);
       setPropostas([]);
+      setContatoNome("");
+      setContatoEmail("");
+      setContatoTelefone("");
 
       onSuccess?.();
     } catch (error) {
@@ -199,6 +222,41 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
           onChange={(e) => setCnpj(e.target.value)}
           placeholder="Opcional"
         />
+      </div>
+
+      {/* Contato Principal */}
+      <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
+        <h4 className="font-medium text-sm">Contato Principal</h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <Label htmlFor="contatoNome">Nome</Label>
+            <Input
+              id="contatoNome"
+              value={contatoNome}
+              onChange={(e) => setContatoNome(e.target.value)}
+              placeholder="Nome do contato"
+            />
+          </div>
+          <div>
+            <Label htmlFor="contatoEmail">Email</Label>
+            <Input
+              id="contatoEmail"
+              type="email"
+              value={contatoEmail}
+              onChange={(e) => setContatoEmail(e.target.value)}
+              placeholder="email@empresa.com"
+            />
+          </div>
+          <div>
+            <Label htmlFor="contatoTelefone">Telefone</Label>
+            <Input
+              id="contatoTelefone"
+              value={contatoTelefone}
+              onChange={(e) => setContatoTelefone(e.target.value)}
+              placeholder="(00) 00000-0000"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="space-y-2">
