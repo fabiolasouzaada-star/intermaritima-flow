@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCreateVisita, type VisitaInsert } from "@/hooks/useVisitas";
 import { useClientes } from "@/hooks/useClientes";
 import type { Database } from "@/integrations/supabase/types";
+import { Loader2, Search } from "lucide-react";
 
 type StatusVisita = Database["public"]["Enums"]["status_visita"];
 
@@ -24,8 +25,9 @@ export function VisitaForm({ clienteId, onSuccess }: VisitaFormProps) {
   const [dores, setDores] = useState("");
   const [proximosPassos, setProximosPassos] = useState("");
   const [status, setStatus] = useState<StatusVisita>("agendada");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: clientes } = useClientes();
+  const { data: clientes, isLoading: isLoadingClientes } = useClientes();
   const createVisita = useCreateVisita();
 
   useEffect(() => {
@@ -33,6 +35,15 @@ export function VisitaForm({ clienteId, onSuccess }: VisitaFormProps) {
       setSelectedClienteId(clienteId);
     }
   }, [clienteId]);
+
+  // Filtrar clientes para melhor performance
+  const filteredClientes = useMemo(() => {
+    if (!clientes) return [];
+    if (!searchTerm) return clientes.slice(0, 50); // Limita a 50 inicialmente
+    return clientes.filter(c => 
+      c.empresa.toLowerCase().includes(searchTerm.toLowerCase())
+    ).slice(0, 50);
+  }, [clientes, searchTerm]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,18 +65,37 @@ export function VisitaForm({ clienteId, onSuccess }: VisitaFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {!clienteId && (
-        <div>
+        <div className="space-y-2">
           <Label htmlFor="cliente">Cliente *</Label>
+          <div className="relative mb-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar cliente..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
           <Select value={selectedClienteId} onValueChange={setSelectedClienteId} required>
             <SelectTrigger>
-              <SelectValue placeholder="Selecione o cliente" />
+              <SelectValue placeholder={isLoadingClientes ? "Carregando..." : "Selecione o cliente"} />
             </SelectTrigger>
-            <SelectContent>
-              {clientes?.map((cliente) => (
-                <SelectItem key={cliente.id} value={cliente.id}>
-                  {cliente.empresa}
-                </SelectItem>
-              ))}
+            <SelectContent className="max-h-60">
+              {isLoadingClientes ? (
+                <div className="flex items-center justify-center p-4">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              ) : filteredClientes.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  Nenhum cliente encontrado
+                </div>
+              ) : (
+                filteredClientes.map((cliente) => (
+                  <SelectItem key={cliente.id} value={cliente.id}>
+                    {cliente.empresa}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
         </div>

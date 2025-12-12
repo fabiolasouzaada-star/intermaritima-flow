@@ -32,9 +32,18 @@ export function useCreateVisita() {
 
   return useMutation({
     mutationFn: async (data: VisitaInsert) => {
+      // Garante que o usuário está autenticado para RLS
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Usuário não autenticado");
+      }
+
       const { data: visita, error } = await supabase
         .from("visitas")
-        .insert(data)
+        .insert({
+          ...data,
+          created_by: user.id,
+        })
         .select()
         .single();
 
