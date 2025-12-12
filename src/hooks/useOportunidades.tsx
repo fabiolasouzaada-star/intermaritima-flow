@@ -32,9 +32,12 @@ export function useCreateOportunidade() {
 
   return useMutation({
     mutationFn: async (data: OportunidadeInsert) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
       const { data: oportunidade, error } = await supabase
         .from("oportunidades")
-        .insert(data)
+        .insert({ ...data, created_by: user.id })
         .select()
         .single();
 
