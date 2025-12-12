@@ -8,6 +8,7 @@ import { useCreateCliente, type ClienteInsert } from "@/hooks/useClientes";
 import type { Database } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { Upload, X, Plus, Trash2 } from "lucide-react";
 import { SEGMENTOS } from "@/constants/segmentos";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +60,7 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
 
   const createCliente = useCreateCliente();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const addProposta = () => {
     setPropostas([
@@ -142,6 +144,7 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
               data_proposta: proposta.data_proposta || null,
               vencimento_proposta: proposta.vencimento_proposta || null,
               proposta_url: propostaUrl,
+              created_by: user?.id,
             });
 
           if (propostaError) throw propostaError;
