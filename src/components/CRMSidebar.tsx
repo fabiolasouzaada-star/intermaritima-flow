@@ -11,7 +11,6 @@ import {
   BarChart3,
   LogOut,
   Target,
-  Upload,
   TrendingUp,
   TrendingDown
 } from "lucide-react";
@@ -48,7 +47,6 @@ const menuItemsFS = [
   { title: "Dashboard FS", url: "/dashboard-fs", icon: TrendingUp },
   { title: "Carteira FS", url: "/carteira-fs", icon: Users },
   { title: "Pipeline Retomada", url: "/pipeline-retomada", icon: Target },
-  { title: "Importar Clientes", url: "/importar-clientes", icon: Upload },
 ];
 
 const menuItemsFSViews = [
