@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           cliente_id: string
           created_at: string
+          created_by: string | null
           data_acao: string
           descricao: string
           id: string
@@ -27,6 +28,7 @@ export type Database = {
         Insert: {
           cliente_id: string
           created_at?: string
+          created_by?: string | null
           data_acao: string
           descricao: string
           id?: string
@@ -36,6 +38,7 @@ export type Database = {
         Update: {
           cliente_id?: string
           created_at?: string
+          created_by?: string | null
           data_acao?: string
           descricao?: string
           id?: string
@@ -96,6 +99,7 @@ export type Database = {
           cliente_id: string | null
           contrato_id: string | null
           created_at: string
+          created_by: string | null
           id: string
           nome: string
           oportunidade_id: string | null
@@ -109,6 +113,7 @@ export type Database = {
           cliente_id?: string | null
           contrato_id?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           nome: string
           oportunidade_id?: string | null
@@ -122,6 +127,7 @@ export type Database = {
           cliente_id?: string | null
           contrato_id?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           nome?: string
           oportunidade_id?: string | null
@@ -370,6 +376,7 @@ export type Database = {
         Row: {
           cliente_id: string
           created_at: string
+          created_by: string | null
           data_fim: string | null
           data_inicio: string
           id: string
@@ -383,6 +390,7 @@ export type Database = {
         Insert: {
           cliente_id: string
           created_at?: string
+          created_by?: string | null
           data_fim?: string | null
           data_inicio: string
           id?: string
@@ -396,6 +404,7 @@ export type Database = {
         Update: {
           cliente_id?: string
           created_at?: string
+          created_by?: string | null
           data_fim?: string | null
           data_inicio?: string
           id?: string
@@ -427,6 +436,7 @@ export type Database = {
         Row: {
           cliente_id: string | null
           created_at: string
+          created_by: string | null
           data_fim: string | null
           data_inicio: string
           descricao: string | null
@@ -439,6 +449,7 @@ export type Database = {
         Insert: {
           cliente_id?: string | null
           created_at?: string
+          created_by?: string | null
           data_fim?: string | null
           data_inicio: string
           descricao?: string | null
@@ -451,6 +462,7 @@ export type Database = {
         Update: {
           cliente_id?: string | null
           created_at?: string
+          created_by?: string | null
           data_fim?: string | null
           data_inicio?: string
           descricao?: string | null
@@ -481,6 +493,7 @@ export type Database = {
         Row: {
           contrato_id: string
           created_at: string
+          created_by: string | null
           data_resolucao: string | null
           descricao: string
           id: string
@@ -492,6 +505,7 @@ export type Database = {
         Insert: {
           contrato_id: string
           created_at?: string
+          created_by?: string | null
           data_resolucao?: string | null
           descricao: string
           id?: string
@@ -503,6 +517,7 @@ export type Database = {
         Update: {
           contrato_id?: string
           created_at?: string
+          created_by?: string | null
           data_resolucao?: string | null
           descricao?: string
           id?: string
@@ -532,6 +547,7 @@ export type Database = {
         Row: {
           cliente_id: string
           created_at: string
+          created_by: string | null
           descricao: string | null
           id: string
           previsao_fechamento: string | null
@@ -545,6 +561,7 @@ export type Database = {
         Insert: {
           cliente_id: string
           created_at?: string
+          created_by?: string | null
           descricao?: string | null
           id?: string
           previsao_fechamento?: string | null
@@ -558,6 +575,7 @@ export type Database = {
         Update: {
           cliente_id?: string
           created_at?: string
+          created_by?: string | null
           descricao?: string | null
           id?: string
           previsao_fechamento?: string | null
@@ -589,6 +607,7 @@ export type Database = {
         Row: {
           cliente_id: string
           created_at: string | null
+          created_by: string | null
           data_movimentacao: string | null
           estagio: string
           id: string
@@ -598,6 +617,7 @@ export type Database = {
         Insert: {
           cliente_id: string
           created_at?: string | null
+          created_by?: string | null
           data_movimentacao?: string | null
           estagio: string
           id?: string
@@ -607,6 +627,7 @@ export type Database = {
         Update: {
           cliente_id?: string
           created_at?: string | null
+          created_by?: string | null
           data_movimentacao?: string | null
           estagio?: string
           id?: string
@@ -627,6 +648,7 @@ export type Database = {
         Row: {
           contrato_id: string
           created_at: string
+          created_by: string | null
           data_contato: string
           id: string
           observacoes: string | null
@@ -637,6 +659,7 @@ export type Database = {
         Insert: {
           contrato_id: string
           created_at?: string
+          created_by?: string | null
           data_contato: string
           id?: string
           observacoes?: string | null
@@ -647,6 +670,7 @@ export type Database = {
         Update: {
           contrato_id?: string
           created_at?: string
+          created_by?: string | null
           data_contato?: string
           id?: string
           observacoes?: string | null
@@ -708,6 +732,7 @@ export type Database = {
         Row: {
           cliente_id: string
           created_at: string
+          created_by: string | null
           data_proposta: string | null
           id: string
           numero_proposta: string
@@ -720,6 +745,7 @@ export type Database = {
         Insert: {
           cliente_id: string
           created_at?: string
+          created_by?: string | null
           data_proposta?: string | null
           id?: string
           numero_proposta: string
@@ -732,6 +758,7 @@ export type Database = {
         Update: {
           cliente_id?: string
           created_at?: string
+          created_by?: string | null
           data_proposta?: string | null
           id?: string
           numero_proposta?: string
@@ -755,6 +782,7 @@ export type Database = {
         Row: {
           cliente_id: string | null
           created_at: string
+          created_by: string | null
           data_vencimento: string | null
           descricao: string | null
           id: string
@@ -768,6 +796,7 @@ export type Database = {
         Insert: {
           cliente_id?: string | null
           created_at?: string
+          created_by?: string | null
           data_vencimento?: string | null
           descricao?: string | null
           id?: string
@@ -781,6 +810,7 @@ export type Database = {
         Update: {
           cliente_id?: string | null
           created_at?: string
+          created_by?: string | null
           data_vencimento?: string | null
           descricao?: string | null
           id?: string
@@ -808,10 +838,32 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       visitas: {
         Row: {
           cliente_id: string
           created_at: string
+          created_by: string | null
           data_visita: string
           dores_percebidas: string | null
           id: string
@@ -826,6 +878,7 @@ export type Database = {
         Insert: {
           cliente_id: string
           created_at?: string
+          created_by?: string | null
           data_visita: string
           dores_percebidas?: string | null
           id?: string
@@ -840,6 +893,7 @@ export type Database = {
         Update: {
           cliente_id?: string
           created_at?: string
+          created_by?: string | null
           data_visita?: string
           dores_percebidas?: string | null
           id?: string
@@ -873,9 +927,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin_or_manager: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
+      app_role: "admin" | "manager" | "user"
       prioridade_tarefa: "baixa" | "media" | "alta" | "urgente"
       segmento_cliente:
         | "industrial"
@@ -1036,6 +1098,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "manager", "user"],
       prioridade_tarefa: ["baixa", "media", "alta", "urgente"],
       segmento_cliente: [
         "industrial",
