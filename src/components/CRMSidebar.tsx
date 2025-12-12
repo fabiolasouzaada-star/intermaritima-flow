@@ -59,11 +59,11 @@ const menuItemsFSViews = [
 ];
 
 export function CRMSidebar() {
-  const { open } = useSidebar();
+  const { open, isMobile } = useSidebar();
   const { signOut } = useAuth();
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible={isMobile ? "offcanvas" : "icon"}>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>CRM Intermarítima</SidebarGroupLabel>
