@@ -96,6 +96,12 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
     setUploading(true);
 
     try {
+      // Garante que o usuário está autenticado para passar nas políticas de segurança (RLS)
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        throw new Error("Usuário não autenticado");
+      }
+
       // Create the client first
       const clienteData = await createCliente.mutateAsync({
         empresa,
@@ -164,7 +170,7 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
               data_proposta: proposta.data_proposta || null,
               vencimento_proposta: proposta.vencimento_proposta || null,
               proposta_url: propostaUrl,
-              created_by: user?.id,
+              created_by: currentUser.id,
             });
 
           if (propostaError) throw propostaError;
