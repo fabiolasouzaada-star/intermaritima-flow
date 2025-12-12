@@ -704,6 +704,53 @@ export type Database = {
         }
         Relationships: []
       }
+      propostas_cliente: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          data_proposta: string | null
+          id: string
+          numero_proposta: string
+          observacoes: string | null
+          proposta_url: string | null
+          servico: string
+          updated_at: string
+          vencimento_proposta: string | null
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          data_proposta?: string | null
+          id?: string
+          numero_proposta: string
+          observacoes?: string | null
+          proposta_url?: string | null
+          servico: string
+          updated_at?: string
+          vencimento_proposta?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          data_proposta?: string | null
+          id?: string
+          numero_proposta?: string
+          observacoes?: string | null
+          proposta_url?: string | null
+          servico?: string
+          updated_at?: string
+          vencimento_proposta?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "propostas_cliente_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tarefas: {
         Row: {
           cliente_id: string | null
@@ -713,6 +760,7 @@ export type Database = {
           id: string
           prioridade: Database["public"]["Enums"]["prioridade_tarefa"]
           responsavel_id: string | null
+          responsavel_nome: string | null
           status: Database["public"]["Enums"]["status_tarefa"]
           titulo: string
           updated_at: string
@@ -725,6 +773,7 @@ export type Database = {
           id?: string
           prioridade?: Database["public"]["Enums"]["prioridade_tarefa"]
           responsavel_id?: string | null
+          responsavel_nome?: string | null
           status?: Database["public"]["Enums"]["status_tarefa"]
           titulo: string
           updated_at?: string
@@ -737,6 +786,7 @@ export type Database = {
           id?: string
           prioridade?: Database["public"]["Enums"]["prioridade_tarefa"]
           responsavel_id?: string | null
+          responsavel_nome?: string | null
           status?: Database["public"]["Enums"]["status_tarefa"]
           titulo?: string
           updated_at?: string

@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Clock, User, GripVertical } from "lucide-react";
 import { useUpdateTarefa, type Tarefa } from "@/hooks/useTarefas";
-import { useProfiles } from "@/hooks/useProfiles";
 import type { Database } from "@/integrations/supabase/types";
 
 type StatusTarefa = Database["public"]["Enums"]["status_tarefa"];
@@ -22,12 +21,15 @@ const STATUS_COLUMNS: { key: StatusTarefa; label: string; color: string }[] = [
 
 export function KanbanBoard({ tarefas }: KanbanBoardProps) {
   const updateTarefa = useUpdateTarefa();
-  const { data: profiles } = useProfiles();
   const [draggedTask, setDraggedTask] = useState<string | null>(null);
 
-  const getResponsavel = (responsavelId: string | null) => {
-    if (!responsavelId || !profiles) return null;
-    return profiles.find((p) => p.id === responsavelId);
+  const getInitials = (nome: string) => {
+    return nome
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
   };
 
   const getPrioridadeBadge = (prioridade: string) => {
@@ -63,15 +65,6 @@ export function KanbanBoard({ tarefas }: KanbanBoardProps) {
     }
   };
 
-  const getInitials = (nome: string) => {
-    return nome
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-  };
-
   const isOverdue = (dataVencimento: string | null) => {
     if (!dataVencimento) return false;
     const hoje = new Date();
@@ -101,7 +94,7 @@ export function KanbanBoard({ tarefas }: KanbanBoardProps) {
 
             <div className="space-y-3">
               {columnTarefas.map((tarefa) => {
-                const responsavel = getResponsavel(tarefa.responsavel_id);
+                const responsavelNome = tarefa.responsavel_nome;
                 const overdue =
                   tarefa.status !== "concluida" &&
                   tarefa.status !== "cancelada" &&
@@ -156,15 +149,15 @@ export function KanbanBoard({ tarefas }: KanbanBoardProps) {
                             <span />
                           )}
 
-                          {responsavel ? (
+                          {responsavelNome ? (
                             <div className="flex items-center gap-1">
                               <Avatar className="h-5 w-5">
                                 <AvatarFallback className="text-[10px] bg-primary/10">
-                                  {getInitials(responsavel.nome)}
+                                  {getInitials(responsavelNome)}
                                 </AvatarFallback>
                               </Avatar>
                               <span className="text-xs text-muted-foreground truncate max-w-[80px]">
-                                {responsavel.nome.split(" ")[0]}
+                                {responsavelNome.split(" ")[0]}
                               </span>
                             </div>
                           ) : (

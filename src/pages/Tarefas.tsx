@@ -7,7 +7,6 @@ import { Plus, AlertCircle, Clock, CheckCircle2, LayoutGrid, List, User } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useTarefas, useUpdateTarefa } from "@/hooks/useTarefas";
-import { useProfiles } from "@/hooks/useProfiles";
 import { TarefaForm } from "@/components/forms/TarefaForm";
 import { KanbanBoard } from "@/components/tarefas/KanbanBoard";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -16,7 +15,6 @@ export default function Tarefas() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
   const { data: tarefas, isLoading } = useTarefas();
-  const { data: profiles } = useProfiles();
   const updateTarefa = useUpdateTarefa();
 
   const hoje = new Date();
@@ -44,11 +42,6 @@ export default function Tarefas() {
     umaSemana.setDate(hoje.getDate() + 7);
     return vencimento >= hoje && vencimento <= umaSemana;
   }) || [];
-
-  const getResponsavel = (responsavelId: string | null) => {
-    if (!responsavelId || !profiles) return null;
-    return profiles.find((p) => p.id === responsavelId);
-  };
 
   const getInitials = (nome: string) => {
     return nome
@@ -82,7 +75,7 @@ export default function Tarefas() {
         <p className="text-center text-muted-foreground py-8">Nenhuma tarefa</p>
       ) : (
         tarefasList.map((tarefa) => {
-          const responsavel = getResponsavel(tarefa.responsavel_id);
+          const responsavelNome = tarefa.responsavel_nome;
           return (
             <Card key={tarefa.id} className="p-4">
               <div className="flex items-start gap-4">
@@ -113,15 +106,15 @@ export default function Tarefas() {
                         {new Date(tarefa.data_vencimento).toLocaleDateString('pt-BR')}
                       </div>
                     )}
-                    {responsavel ? (
+                    {responsavelNome ? (
                       <div className="flex items-center gap-1">
                         <Avatar className="h-5 w-5">
                           <AvatarFallback className="text-[10px] bg-primary/10">
-                            {getInitials(responsavel.nome)}
+                            {getInitials(responsavelNome)}
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-xs text-muted-foreground">
-                          {responsavel.nome}
+                          {responsavelNome}
                         </span>
                       </div>
                     ) : (

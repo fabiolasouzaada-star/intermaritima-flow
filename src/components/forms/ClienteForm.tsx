@@ -8,13 +8,31 @@ import { useCreateCliente, type ClienteInsert } from "@/hooks/useClientes";
 import type { Database } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Plus, Trash2 } from "lucide-react";
 import { SEGMENTOS } from "@/constants/segmentos";
 import { Badge } from "@/components/ui/badge";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Card, CardContent } from "@/components/ui/card";
 
 type StatusCliente = Database["public"]["Enums"]["status_cliente"];
+
+interface Proposta {
+  id: string;
+  numero_proposta: string;
+  servico: string;
+  data_proposta: string;
+  vencimento_proposta: string;
+  file: File | null;
+}
+
+const SERVICOS_PROPOSTA = [
+  "AG (Armazém Geral)",
+  "Transporte",
+  "Alfandegado",
+  "Operação Portuária",
+  "Exportação",
+];
 
 interface ClienteFormProps {
   onSuccess?: () => void;
@@ -30,48 +48,49 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
   const [potencial, setPotencial] = useState("");
   const [site, setSite] = useState("");
   const [observacoes, setObservacoes] = useState("");
-  const [numeroProposta, setNumeroProposta] = useState("");
-  const [dataProposta, setDataProposta] = useState("");
-  const [vencimentoProposta, setVencimentoProposta] = useState("");
-  const [propostaFile, setPropostaFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
   const [responsavelCodigo, setResponsavelCodigo] = useState("");
   const [volume12Meses, setVolume12Meses] = useState("");
   const [isClienteFs, setIsClienteFs] = useState(false);
   const [terminaisOperados, setTerminaisOperados] = useState<string[]>([]);
   const [isFreightForwarder, setIsFreightForwarder] = useState(false);
   const [tiposServico, setTiposServico] = useState<string[]>([]);
+  const [propostas, setPropostas] = useState<Proposta[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const createCliente = useCreateCliente();
   const { toast } = useToast();
+
+  const addProposta = () => {
+    setPropostas([
+      ...propostas,
+      {
+        id: crypto.randomUUID(),
+        numero_proposta: "",
+        servico: "",
+        data_proposta: "",
+        vencimento_proposta: "",
+        file: null,
+      },
+    ]);
+  };
+
+  const removeProposta = (id: string) => {
+    setPropostas(propostas.filter((p) => p.id !== id));
+  };
+
+  const updateProposta = (id: string, field: keyof Proposta, value: string | File | null) => {
+    setPropostas(
+      propostas.map((p) => (p.id === id ? { ...p, [field]: value } : p))
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setUploading(true);
 
     try {
-      let propostaUrl = undefined;
-
-      // Upload PDF if provided
-      if (propostaFile) {
-        const fileExt = propostaFile.name.split('.').pop();
-        const fileName = `${cnpj}-${Date.now()}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('propostas')
-          .upload(filePath, propostaFile);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('propostas')
-          .getPublicUrl(filePath);
-
-        propostaUrl = publicUrl;
-      }
-
-      await createCliente.mutateAsync({
+      // Create the client first
+      const clienteData = await createCliente.mutateAsync({
         empresa,
         cnpj: cnpj || null,
         segmento: "outros",
@@ -80,10 +99,6 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
         potencial: potencial || undefined,
         site: site || undefined,
         observacoes: observacoes || undefined,
-        numero_proposta: status === "ativo" && numeroProposta ? numeroProposta : undefined,
-        data_proposta: status === "ativo" && dataProposta ? dataProposta : undefined,
-        vencimento_proposta: status === "ativo" && vencimentoProposta ? vencimentoProposta : undefined,
-        proposta_url: status === "ativo" ? propostaUrl : undefined,
         responsavel_codigo: responsavelCodigo || undefined,
         volume_12_meses: volume12Meses ? parseFloat(volume12Meses) : 0,
         is_cliente_fs: isClienteFs,
@@ -91,6 +106,47 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
         is_freight_forwarder: isFreightForwarder,
         tipos_servico: tiposServico,
       });
+
+      // Now create propostas if any
+      if (propostas.length > 0 && clienteData?.id) {
+        for (const proposta of propostas) {
+          if (!proposta.numero_proposta || !proposta.servico) continue;
+
+          let propostaUrl = undefined;
+
+          // Upload PDF if provided
+          if (proposta.file) {
+            const fileExt = proposta.file.name.split('.').pop();
+            const fileName = `${clienteData.id}-${proposta.servico}-${Date.now()}.${fileExt}`;
+
+            const { error: uploadError } = await supabase.storage
+              .from('propostas')
+              .upload(fileName, proposta.file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+              .from('propostas')
+              .getPublicUrl(fileName);
+
+            propostaUrl = publicUrl;
+          }
+
+          // Insert proposta
+          const { error: propostaError } = await supabase
+            .from('propostas_cliente')
+            .insert({
+              cliente_id: clienteData.id,
+              numero_proposta: proposta.numero_proposta,
+              servico: proposta.servico,
+              data_proposta: proposta.data_proposta || null,
+              vencimento_proposta: proposta.vencimento_proposta || null,
+              proposta_url: propostaUrl,
+            });
+
+          if (propostaError) throw propostaError;
+        }
+      }
 
       // Reset form
       setEmpresa("");
@@ -100,16 +156,13 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
       setPotencial("");
       setSite("");
       setObservacoes("");
-      setNumeroProposta("");
-      setDataProposta("");
-      setVencimentoProposta("");
-      setPropostaFile(null);
       setResponsavelCodigo("");
       setVolume12Meses("");
       setIsClienteFs(false);
       setTerminaisOperados([]);
       setIsFreightForwarder(false);
       setTiposServico([]);
+      setPropostas([]);
 
       onSuccess?.();
     } catch (error) {
@@ -135,15 +188,15 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
         />
       </div>
 
-        <div>
-          <Label htmlFor="cnpj">CNPJ</Label>
-          <Input
-            id="cnpj"
-            value={cnpj}
-            onChange={(e) => setCnpj(e.target.value)}
-            placeholder="Opcional"
-          />
-        </div>
+      <div>
+        <Label htmlFor="cnpj">CNPJ</Label>
+        <Input
+          id="cnpj"
+          value={cnpj}
+          onChange={(e) => setCnpj(e.target.value)}
+          placeholder="Opcional"
+        />
+      </div>
 
       <div className="space-y-2">
         <Label>Segmentos (multi-seleção)</Label>
@@ -245,75 +298,75 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
           type="url"
           value={site}
           onChange={(e) => setSite(e.target.value)}
-          />
-        </div>
+        />
+      </div>
 
-        <div className="space-y-2">
-          <Label>Terminais onde opera</Label>
-          <div className="grid grid-cols-2 gap-2">
-            {["EMPÓRIO", "TPC", "INTER", "TECON"].map((terminal) => (
-              <label key={terminal} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={terminaisOperados.includes(terminal)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setTerminaisOperados([...terminaisOperados, terminal]);
-                    } else {
-                      setTerminaisOperados(terminaisOperados.filter(t => t !== terminal));
-                    }
-                  }}
-                  className="rounded border-gray-300"
-                />
-                <span>{terminal}</span>
-              </label>
-            ))}
-          </div>
+      <div className="space-y-2">
+        <Label>Terminais onde opera</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {["EMPÓRIO", "TPC", "INTER", "TECON"].map((terminal) => (
+            <label key={terminal} className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={terminaisOperados.includes(terminal)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setTerminaisOperados([...terminaisOperados, terminal]);
+                  } else {
+                    setTerminaisOperados(terminaisOperados.filter(t => t !== terminal));
+                  }
+                }}
+                className="rounded border-gray-300"
+              />
+              <span>{terminal}</span>
+            </label>
+          ))}
         </div>
+      </div>
 
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="isFreightForwarder"
-            checked={isFreightForwarder}
-            onChange={(e) => setIsFreightForwarder(e.target.checked)}
-            className="rounded border-gray-300"
-          />
-          <Label htmlFor="isFreightForwarder">É Freight Forwarder?</Label>
-        </div>
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="isFreightForwarder"
+          checked={isFreightForwarder}
+          onChange={(e) => setIsFreightForwarder(e.target.checked)}
+          className="rounded border-gray-300"
+        />
+        <Label htmlFor="isFreightForwarder">É Freight Forwarder?</Label>
+      </div>
 
-        <div className="space-y-2">
-          <Label>Tipo de Serviço</Label>
-          <div className="grid grid-cols-2 gap-2">
-            {["Importação", "Exportação", "Logística Integrada", "Transporte", "Armazém / AG", "Carga Projeto", "Carga Solta", "CNTR"].map((servico) => (
-              <label key={servico} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={tiposServico.includes(servico)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setTiposServico([...tiposServico, servico]);
-                    } else {
-                      setTiposServico(tiposServico.filter(s => s !== servico));
-                    }
-                  }}
-                  className="rounded border-gray-300"
-                />
-                <span className="text-sm">{servico}</span>
-              </label>
-            ))}
-          </div>
+      <div className="space-y-2">
+        <Label>Tipo de Serviço</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {["Importação", "Exportação", "Logística Integrada", "Transporte", "Armazém / AG", "Carga Projeto", "Carga Solta", "CNTR"].map((servico) => (
+            <label key={servico} className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={tiposServico.includes(servico)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setTiposServico([...tiposServico, servico]);
+                  } else {
+                    setTiposServico(tiposServico.filter(s => s !== servico));
+                  }
+                }}
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm">{servico}</span>
+            </label>
+          ))}
         </div>
+      </div>
 
-        <div>
-          <Label htmlFor="observacoes">Observações</Label>
-          <Textarea
-            id="observacoes"
-            value={observacoes}
-            onChange={(e) => setObservacoes(e.target.value)}
-            rows={4}
-          />
-        </div>
+      <div>
+        <Label htmlFor="observacoes">Observações</Label>
+        <Textarea
+          id="observacoes"
+          value={observacoes}
+          onChange={(e) => setObservacoes(e.target.value)}
+          rows={4}
+        />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -356,65 +409,109 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
         </Label>
       </div>
 
-      {status === "ativo" && (
-        <>
-          <div className="border-t pt-4 mt-4">
-            <h3 className="text-lg font-semibold mb-4">Dados da Proposta</h3>
-          </div>
+      {/* Propostas Section */}
+      <div className="border-t pt-4 mt-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Propostas</h3>
+          <Button type="button" variant="outline" size="sm" onClick={addProposta} className="gap-1">
+            <Plus className="h-4 w-4" />
+            Adicionar Proposta
+          </Button>
+        </div>
 
-          <div>
-            <Label htmlFor="numeroProposta">Número da Proposta *</Label>
-            <Input
-              id="numeroProposta"
-              value={numeroProposta}
-              onChange={(e) => setNumeroProposta(e.target.value)}
-              required
-              placeholder="Ex: PROP-2024-001"
-            />
-          </div>
+        {propostas.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            Nenhuma proposta adicionada. Clique no botão acima para adicionar.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {propostas.map((proposta, index) => (
+              <Card key={proposta.id}>
+                <CardContent className="pt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">Proposta {index + 1}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeProposta(proposta.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
 
-          <div>
-            <Label htmlFor="dataProposta">Data da Proposta *</Label>
-            <Input
-              id="dataProposta"
-              type="date"
-              value={dataProposta}
-              onChange={(e) => setDataProposta(e.target.value)}
-              required
-            />
-          </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <Label>Serviço *</Label>
+                      <Select
+                        value={proposta.servico}
+                        onValueChange={(value) => updateProposta(proposta.id, "servico", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o serviço" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SERVICOS_PROPOSTA.map((servico) => (
+                            <SelectItem key={servico} value={servico}>
+                              {servico}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-          <div>
-            <Label htmlFor="vencimentoProposta">Vencimento da Proposta *</Label>
-            <Input
-              id="vencimentoProposta"
-              type="date"
-              value={vencimentoProposta}
-              onChange={(e) => setVencimentoProposta(e.target.value)}
-              required
-            />
-          </div>
+                    <div>
+                      <Label>Número da Proposta *</Label>
+                      <Input
+                        value={proposta.numero_proposta}
+                        onChange={(e) => updateProposta(proposta.id, "numero_proposta", e.target.value)}
+                        placeholder="Ex: PROP-2024-001"
+                      />
+                    </div>
 
-          <div>
-            <Label htmlFor="propostaFile">Anexar PDF da Proposta</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="propostaFile"
-                type="file"
-                accept=".pdf"
-                onChange={(e) => setPropostaFile(e.target.files?.[0] || null)}
-                className="flex-1"
-              />
-              {propostaFile && (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Upload className="h-4 w-4" />
-                  {propostaFile.name}
-                </div>
-              )}
-            </div>
+                    <div>
+                      <Label>Data da Proposta</Label>
+                      <Input
+                        type="date"
+                        value={proposta.data_proposta}
+                        onChange={(e) => updateProposta(proposta.id, "data_proposta", e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Vencimento</Label>
+                      <Input
+                        type="date"
+                        value={proposta.vencimento_proposta}
+                        onChange={(e) => updateProposta(proposta.id, "vencimento_proposta", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Anexar PDF</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="file"
+                        accept=".pdf"
+                        onChange={(e) => updateProposta(proposta.id, "file", e.target.files?.[0] || null)}
+                        className="flex-1"
+                      />
+                      {proposta.file && (
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Upload className="h-4 w-4" />
+                          <span className="truncate max-w-[150px]">{proposta.file.name}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </>
-      )}
+        )}
+      </div>
 
       <Button type="submit" className="w-full" disabled={createCliente.isPending || uploading}>
         {uploading ? "Enviando..." : createCliente.isPending ? "Criando..." : "Criar Cliente"}
