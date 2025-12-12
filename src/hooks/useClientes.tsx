@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
-
+import { useAuth } from "@/contexts/AuthContext";
 export type Cliente = Tables<"clientes">;
 export type ClienteInsert = TablesInsert<"clientes">;
 export type ClienteUpdate = TablesUpdate<"clientes">;
@@ -69,12 +69,20 @@ export function useCliente(id: string) {
 
 export function useCreateCliente() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (data: ClienteInsert) => {
+      if (!user?.id) {
+        throw new Error("Usuário não autenticado");
+      }
+      
       const { data: cliente, error } = await supabase
         .from("clientes")
-        .insert(data)
+        .insert({
+          ...data,
+          created_by: user.id,
+        })
         .select()
         .single();
 
