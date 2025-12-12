@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateTarefa, type TarefaInsert } from "@/hooks/useTarefas";
 import { useClientes } from "@/hooks/useClientes";
+import { useProfiles } from "@/hooks/useProfiles";
 import type { Database } from "@/integrations/supabase/types";
 
 type PrioridadeTarefa = Database["public"]["Enums"]["prioridade_tarefa"];
@@ -23,8 +24,10 @@ export function TarefaForm({ clienteId, onSuccess }: TarefaFormProps) {
   const [dataVencimento, setDataVencimento] = useState("");
   const [prioridade, setPrioridade] = useState<PrioridadeTarefa>("media");
   const [status, setStatus] = useState<StatusTarefa>("pendente");
+  const [responsavelId, setResponsavelId] = useState("");
 
   const { data: clientes } = useClientes();
+  const { data: profiles } = useProfiles();
   const createTarefa = useCreateTarefa();
 
   useEffect(() => {
@@ -43,6 +46,7 @@ export function TarefaForm({ clienteId, onSuccess }: TarefaFormProps) {
       data_vencimento: dataVencimento || undefined,
       prioridade,
       status,
+      responsavel_id: responsavelId || undefined,
     });
 
     onSuccess?.();
@@ -124,6 +128,22 @@ export function TarefaForm({ clienteId, onSuccess }: TarefaFormProps) {
             <SelectItem value="em_andamento">Em Andamento</SelectItem>
             <SelectItem value="concluida">Concluída</SelectItem>
             <SelectItem value="cancelada">Cancelada</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="responsavel">Responsável</Label>
+        <Select value={responsavelId} onValueChange={setResponsavelId}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione o responsável (opcional)" />
+          </SelectTrigger>
+          <SelectContent>
+            {profiles?.map((profile) => (
+              <SelectItem key={profile.id} value={profile.id}>
+                {profile.nome}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

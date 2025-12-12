@@ -5,6 +5,7 @@ import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase
 
 export type Tarefa = Tables<"tarefas"> & {
   clientes?: { empresa: string };
+  profiles?: { nome: string };
 };
 export type TarefaInsert = TablesInsert<"tarefas">;
 export type TarefaUpdate = TablesUpdate<"tarefas">;
@@ -17,7 +18,8 @@ export function useTarefas() {
         .from("tarefas")
         .select(`
           *,
-          clientes(empresa)
+          clientes(empresa),
+          profiles:responsavel_id(nome)
         `)
         .order("data_vencimento", { ascending: true });
 
