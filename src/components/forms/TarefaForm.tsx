@@ -6,7 +6,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateTarefa, type TarefaInsert } from "@/hooks/useTarefas";
 import { useClientes } from "@/hooks/useClientes";
-import { useProfiles } from "@/hooks/useProfiles";
 import type { Database } from "@/integrations/supabase/types";
 
 type PrioridadeTarefa = Database["public"]["Enums"]["prioridade_tarefa"];
@@ -24,10 +23,9 @@ export function TarefaForm({ clienteId, onSuccess }: TarefaFormProps) {
   const [dataVencimento, setDataVencimento] = useState("");
   const [prioridade, setPrioridade] = useState<PrioridadeTarefa>("media");
   const [status, setStatus] = useState<StatusTarefa>("pendente");
-  const [responsavelId, setResponsavelId] = useState("");
+  const [responsavelNome, setResponsavelNome] = useState("");
 
   const { data: clientes } = useClientes();
-  const { data: profiles } = useProfiles();
   const createTarefa = useCreateTarefa();
 
   useEffect(() => {
@@ -46,7 +44,7 @@ export function TarefaForm({ clienteId, onSuccess }: TarefaFormProps) {
       data_vencimento: dataVencimento || undefined,
       prioridade,
       status,
-      responsavel_id: responsavelId || undefined,
+      responsavel_nome: responsavelNome || undefined,
     });
 
     onSuccess?.();
@@ -134,18 +132,12 @@ export function TarefaForm({ clienteId, onSuccess }: TarefaFormProps) {
 
       <div>
         <Label htmlFor="responsavel">Responsável</Label>
-        <Select value={responsavelId} onValueChange={setResponsavelId}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione o responsável (opcional)" />
-          </SelectTrigger>
-          <SelectContent>
-            {profiles?.map((profile) => (
-              <SelectItem key={profile.id} value={profile.id}>
-                {profile.nome}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Input
+          id="responsavel"
+          value={responsavelNome}
+          onChange={(e) => setResponsavelNome(e.target.value)}
+          placeholder="Digite o nome do responsável"
+        />
       </div>
 
       <Button type="submit" className="w-full" disabled={createTarefa.isPending}>
