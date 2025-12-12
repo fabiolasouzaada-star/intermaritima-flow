@@ -150,7 +150,7 @@ export default function Clientes() {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          onClick={() => navigate(`/clientes/${cliente.id}`)}
+                          onClick={() => navigate(`/cliente/${cliente.id}`)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
