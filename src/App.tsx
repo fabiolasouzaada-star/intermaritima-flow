@@ -20,7 +20,7 @@ import Relatorios from "./pages/Relatorios";
 import CarteiraFS from "./pages/CarteiraFS";
 import PipelineRetomada from "./pages/PipelineRetomada";
 import DashboardFS from "./pages/DashboardFS";
-import ImportarClientes from "./pages/ImportarClientes";
+
 import FSConcorrentes from "./pages/FSConcorrentes";
 import FSMultiterminal from "./pages/FSMultiterminal";
 import FSImportadores from "./pages/FSImportadores";
@@ -57,7 +57,7 @@ const App = () => (
             <Route path="/carteira-fs" element={<ProtectedRoute><CRMLayout><CarteiraFS /></CRMLayout></ProtectedRoute>} />
             <Route path="/pipeline-retomada" element={<ProtectedRoute><CRMLayout><PipelineRetomada /></CRMLayout></ProtectedRoute>} />
             <Route path="/dashboard-fs" element={<ProtectedRoute><CRMLayout><DashboardFS /></CRMLayout></ProtectedRoute>} />
-            <Route path="/importar-clientes" element={<ProtectedRoute><CRMLayout><ImportarClientes /></CRMLayout></ProtectedRoute>} />
+            
             <Route path="/fs-concorrentes" element={<ProtectedRoute><CRMLayout><FSConcorrentes /></CRMLayout></ProtectedRoute>} />
             <Route path="/fs-multiterminal" element={<ProtectedRoute><CRMLayout><FSMultiterminal /></CRMLayout></ProtectedRoute>} />
             <Route path="/fs-importadores" element={<ProtectedRoute><CRMLayout><FSImportadores /></CRMLayout></ProtectedRoute>} />
