@@ -1,21 +1,35 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useCliente } from "@/hooks/useClientes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Building2, FileText, Calendar, CheckSquare } from "lucide-react";
+import { ArrowLeft, FileText, Calendar, CheckSquare, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ContatoClienteForm } from "@/components/forms/ContatoClienteForm";
+import { ClienteEditForm } from "@/components/forms/ClienteEditForm";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function ClienteDetalhes() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: cliente, isLoading } = useCliente(id!);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const handleContatosChange = () => {
+    queryClient.invalidateQueries({ queryKey: ["cliente", id] });
+  };
+
+  const handleEditSuccess = () => {
+    setIsEditOpen(false);
     queryClient.invalidateQueries({ queryKey: ["cliente", id] });
   };
 
@@ -29,15 +43,34 @@ export default function ClienteDetalhes() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/clientes")}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">{cliente.empresa}</h1>
-          <p className="text-muted-foreground">{cliente.cnpj}</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/clientes")}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">{cliente.empresa}</h1>
+            <p className="text-muted-foreground">{cliente.cnpj}</p>
+          </div>
         </div>
+        <Button onClick={() => setIsEditOpen(true)} className="gap-2">
+          <Pencil className="h-4 w-4" />
+          Editar
+        </Button>
       </div>
+
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Cliente</DialogTitle>
+          </DialogHeader>
+          <ClienteEditForm
+            cliente={cliente}
+            onSuccess={handleEditSuccess}
+            onCancel={() => setIsEditOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
