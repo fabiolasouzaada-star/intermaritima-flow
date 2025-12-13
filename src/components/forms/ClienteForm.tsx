@@ -271,7 +271,8 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              className="w-full justify-start text-left font-normal"
+              className="w-full justify-start text-left font-normal min-h-[40px] h-auto"
+              type="button"
             >
               {segmentos.length > 0 ? (
                 <div className="flex flex-wrap gap-1">
@@ -279,7 +280,9 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
                     <Badge key={seg} variant="secondary" className="mr-1">
                       {seg}
                       <button
+                        type="button"
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           setSegmentos(segmentos.filter((s) => s !== seg));
                         }}
@@ -295,21 +298,26 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-full p-0" align="start">
-            <Command>
-              <CommandInput
+          <PopoverContent className="w-[300px] p-0 z-50 bg-popover" align="start">
+            <div className="p-2 border-b">
+              <Input
                 placeholder="Buscar segmento..."
                 value={segmentoSearch}
-                onValueChange={setSegmentoSearch}
+                onChange={(e) => setSegmentoSearch(e.target.value)}
+                className="h-8"
               />
-              <CommandEmpty>Nenhum segmento encontrado.</CommandEmpty>
-              <CommandGroup className="max-h-64 overflow-auto">
-                {SEGMENTOS.filter((seg) =>
+            </div>
+            <div className="max-h-64 overflow-y-auto p-1">
+              {SEGMENTOS
+                .filter((seg) =>
                   seg.toLowerCase().includes(segmentoSearch.toLowerCase())
-                ).map((seg) => (
-                  <CommandItem
+                )
+                .slice(0, 50) // Limita para melhorar performance
+                .map((seg) => (
+                  <div
                     key={seg}
-                    onSelect={() => {
+                    className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-accent rounded-sm"
+                    onClick={() => {
                       if (segmentos.includes(seg)) {
                         setSegmentos(segmentos.filter((s) => s !== seg));
                       } else {
@@ -317,19 +325,23 @@ export function ClienteForm({ onSuccess }: ClienteFormProps) {
                       }
                     }}
                   >
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={segmentos.includes(seg)}
-                        onChange={() => {}}
-                        className="rounded border-gray-300"
-                      />
-                      <span>{seg}</span>
-                    </div>
-                  </CommandItem>
+                    <input
+                      type="checkbox"
+                      checked={segmentos.includes(seg)}
+                      onChange={() => {}}
+                      className="rounded border-input pointer-events-none"
+                    />
+                    <span className="text-sm">{seg}</span>
+                  </div>
                 ))}
-              </CommandGroup>
-            </Command>
+              {SEGMENTOS.filter((seg) =>
+                seg.toLowerCase().includes(segmentoSearch.toLowerCase())
+              ).length > 50 && (
+                <p className="text-xs text-muted-foreground text-center py-2">
+                  Digite para filtrar mais resultados...
+                </p>
+              )}
+            </div>
           </PopoverContent>
         </Popover>
       </div>
