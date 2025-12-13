@@ -38,8 +38,6 @@ const menuItems = [
   { title: "Calendário", url: "/calendario", icon: Calendar },
   { title: "Visitas", url: "/visitas", icon: ClipboardList },
   { title: "Tarefas", url: "/tarefas", icon: CheckSquare },
-  { title: "Matriz Potencial", url: "/matriz", icon: Grid3x3 },
-  { title: "Pós-Venda", url: "/pos-venda", icon: MessageSquareMore },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
 ];
 
