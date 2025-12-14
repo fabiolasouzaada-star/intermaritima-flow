@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,12 @@ export function ClienteEditForm({ cliente, onSuccess, onCancel }: ClienteEditFor
   const [terminaisOperados, setTerminaisOperados] = useState<string[]>(cliente.terminais_operados || []);
   const [isFreightForwarder, setIsFreightForwarder] = useState(cliente.is_freight_forwarder || false);
   const [tiposServico, setTiposServico] = useState<string[]>(cliente.tipos_servico || []);
+  
+  // Campos de Proposta
+  const [numeroProposta, setNumeroProposta] = useState(cliente.numero_proposta || "");
+  const [dataProposta, setDataProposta] = useState(cliente.data_proposta || "");
+  const [vencimentoProposta, setVencimentoProposta] = useState(cliente.vencimento_proposta || "");
+  const [propostaUrl, setPropostaUrl] = useState(cliente.proposta_url || "");
 
   const updateCliente = useUpdateCliente();
 
@@ -57,6 +63,10 @@ export function ClienteEditForm({ cliente, onSuccess, onCancel }: ClienteEditFor
         terminais_operados: terminaisOperados,
         is_freight_forwarder: isFreightForwarder,
         tipos_servico: tiposServico,
+        numero_proposta: numeroProposta || null,
+        data_proposta: dataProposta || null,
+        vencimento_proposta: vencimentoProposta || null,
+        proposta_url: propostaUrl || null,
       },
     });
 
@@ -254,6 +264,54 @@ export function ClienteEditForm({ cliente, onSuccess, onCancel }: ClienteEditFor
               <span className="text-sm">{servico}</span>
             </label>
           ))}
+        </div>
+      </div>
+
+      {/* Seção de Proposta */}
+      <div className="border-t pt-4 mt-4">
+        <h3 className="font-semibold mb-3">Dados da Proposta</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="numeroProposta">Número da Proposta</Label>
+            <Input
+              id="numeroProposta"
+              value={numeroProposta}
+              onChange={(e) => setNumeroProposta(e.target.value)}
+              placeholder="Ex: PROP-2024-001"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="propostaUrl">URL da Proposta (PDF)</Label>
+            <Input
+              id="propostaUrl"
+              type="url"
+              value={propostaUrl}
+              onChange={(e) => setPropostaUrl(e.target.value)}
+              placeholder="https://..."
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="dataProposta">Data da Proposta</Label>
+            <Input
+              id="dataProposta"
+              type="date"
+              value={dataProposta}
+              onChange={(e) => setDataProposta(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="vencimentoProposta">Vencimento da Proposta</Label>
+            <Input
+              id="vencimentoProposta"
+              type="date"
+              value={vencimentoProposta}
+              onChange={(e) => setVencimentoProposta(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 

@@ -13,9 +13,10 @@ interface KanbanBoardProps {
 }
 
 const STATUS_COLUMNS: { key: StatusTarefa; label: string; color: string }[] = [
-  { key: "pendente", label: "A Agendar", color: "bg-muted" },
-  { key: "em_andamento", label: "Agendadas", color: "bg-primary/10" },
-  { key: "concluida", label: "Realizadas", color: "bg-success/10" },
+  { key: "pendente", label: "Pendente", color: "bg-muted" },
+  { key: "em_andamento", label: "Em Andamento", color: "bg-primary/10" },
+  { key: "concluida", label: "Concluída", color: "bg-success/10" },
+  { key: "cancelada", label: "Cancelada", color: "bg-destructive/10" },
 ];
 
 export function KanbanBoard({ tarefas }: KanbanBoardProps) {
