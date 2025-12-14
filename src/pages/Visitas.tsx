@@ -2,14 +2,16 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, User } from "lucide-react";
+import { Plus, Calendar, User, LayoutGrid, List } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useVisitas } from "@/hooks/useVisitas";
 import { VisitaForm } from "@/components/forms/VisitaForm";
+import { VisitasKanban } from "@/components/visitas/VisitasKanban";
 
 export default function Visitas() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
   const { data: visitas, isLoading } = useVisitas();
 
   const visitasAgendadas = visitas?.filter(v => v.status === "agendada") || [];
@@ -90,20 +92,40 @@ export default function Visitas() {
           <h1 className="text-3xl font-bold">Visitas e Pautas</h1>
           <p className="text-muted-foreground">Gestão completa de visitas comerciais</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nova Visita
+        <div className="flex items-center gap-2">
+          <div className="flex border rounded-lg">
+            <Button
+              variant={viewMode === "kanban" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("kanban")}
+              className="rounded-r-none"
+            >
+              <LayoutGrid className="h-4 w-4" />
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Nova Visita</DialogTitle>
-            </DialogHeader>
-            <VisitaForm onSuccess={() => setDialogOpen(false)} />
-          </DialogContent>
-        </Dialog>
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+              className="rounded-l-none"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Nova Visita
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Nova Visita</DialogTitle>
+              </DialogHeader>
+              <VisitaForm onSuccess={() => setDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -141,49 +163,53 @@ export default function Visitas() {
         </Card>
       </div>
 
-      <Tabs defaultValue="agendadas" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="agendadas">Agendadas</TabsTrigger>
-          <TabsTrigger value="realizadas">Realizadas</TabsTrigger>
-          <TabsTrigger value="todas">Todas</TabsTrigger>
-        </TabsList>
+      {viewMode === "kanban" ? (
+        <VisitasKanban visitas={visitas || []} />
+      ) : (
+        <Tabs defaultValue="agendadas" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="agendadas">Agendadas</TabsTrigger>
+            <TabsTrigger value="realizadas">Realizadas</TabsTrigger>
+            <TabsTrigger value="todas">Todas</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="agendadas">
-          <div className="space-y-4">
-            {visitasAgendadas.length === 0 ? (
-              <Card className="p-8">
-                <p className="text-center text-muted-foreground">Nenhuma visita agendada</p>
-              </Card>
-            ) : (
-              visitasAgendadas.map((visita) => (
+          <TabsContent value="agendadas">
+            <div className="space-y-4">
+              {visitasAgendadas.length === 0 ? (
+                <Card className="p-8">
+                  <p className="text-center text-muted-foreground">Nenhuma visita agendada</p>
+                </Card>
+              ) : (
+                visitasAgendadas.map((visita) => (
+                  <VisitaCard key={visita.id} visita={visita} />
+                ))
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="realizadas">
+            <div className="space-y-4">
+              {visitasRealizadas.length === 0 ? (
+                <Card className="p-8">
+                  <p className="text-center text-muted-foreground">Nenhuma visita realizada</p>
+                </Card>
+              ) : (
+                visitasRealizadas.map((visita) => (
+                  <VisitaCard key={visita.id} visita={visita} />
+                ))
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="todas">
+            <div className="space-y-4">
+              {visitas?.map((visita) => (
                 <VisitaCard key={visita.id} visita={visita} />
-              ))
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="realizadas">
-          <div className="space-y-4">
-            {visitasRealizadas.length === 0 ? (
-              <Card className="p-8">
-                <p className="text-center text-muted-foreground">Nenhuma visita realizada</p>
-              </Card>
-            ) : (
-              visitasRealizadas.map((visita) => (
-                <VisitaCard key={visita.id} visita={visita} />
-              ))
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="todas">
-          <div className="space-y-4">
-            {visitas?.map((visita) => (
-              <VisitaCard key={visita.id} visita={visita} />
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 }
