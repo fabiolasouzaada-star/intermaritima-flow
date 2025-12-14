@@ -23,7 +23,7 @@ export default function Clientes() {
   const filteredClientes = clientes?.filter(cliente => {
     const matchesSearch = 
       cliente.empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.cnpj.includes(searchTerm);
+      (cliente.cnpj && cliente.cnpj.includes(searchTerm));
     
     const matchesStatus = statusFilter === "todos" || cliente.status === statusFilter;
 
