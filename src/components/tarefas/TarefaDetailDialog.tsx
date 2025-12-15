@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Clock, User, Building2, FileText, AlertCircle } from "lucide-react";
+import { Clock, User, Building2, FileText, AlertCircle, Pencil } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useUpdateTarefa, type Tarefa } from "@/hooks/useTarefas";
+import { TarefaEditForm } from "@/components/forms/TarefaEditForm";
 
 interface TarefaDetailDialogProps {
   tarefa: Tarefa | null;
@@ -13,6 +15,7 @@ interface TarefaDetailDialogProps {
 }
 
 export function TarefaDetailDialog({ tarefa, open, onOpenChange }: TarefaDetailDialogProps) {
+  const [isEditing, setIsEditing] = useState(false);
   const updateTarefa = useUpdateTarefa();
 
   if (!tarefa) return null;
@@ -62,120 +65,141 @@ export function TarefaDetailDialog({ tarefa, open, onOpenChange }: TarefaDetailD
     await updateTarefa.mutateAsync({ id: tarefa.id, data: { status: newStatus } });
   };
 
+  const handleClose = () => {
+    setIsEditing(false);
+    onOpenChange(false);
+  };
+
+  const handleEditSuccess = () => {
+    setIsEditing(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Detalhes da Tarefa
+          <DialogTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              {isEditing ? "Editar Tarefa" : "Detalhes da Tarefa"}
+            </div>
+            {!isEditing && (
+              <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
+                <Pencil className="h-4 w-4 mr-1" />
+                Editar
+              </Button>
+            )}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Header com título e badges */}
-          <div className="space-y-3">
-            <div className="flex items-start justify-between gap-4">
-              <h2 className="text-lg font-semibold leading-tight">{tarefa.titulo}</h2>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {getPrioridadeBadge(tarefa.prioridade)}
-                {getStatusBadge(tarefa.status)}
+        {isEditing ? (
+          <TarefaEditForm tarefa={tarefa} onSuccess={handleEditSuccess} />
+        ) : (
+          <div className="space-y-6">
+            {/* Header com título e badges */}
+            <div className="space-y-3">
+              <div className="flex items-start justify-between gap-4">
+                <h2 className="text-lg font-semibold leading-tight">{tarefa.titulo}</h2>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {getPrioridadeBadge(tarefa.prioridade)}
+                  {getStatusBadge(tarefa.status)}
+                </div>
               </div>
+              
+              {isOverdue() && (
+                <div className="flex items-center gap-2 text-destructive text-sm">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="font-medium">Tarefa atrasada!</span>
+                </div>
+              )}
             </div>
-            
-            {isOverdue() && (
-              <div className="flex items-center gap-2 text-destructive text-sm">
-                <AlertCircle className="h-4 w-4" />
-                <span className="font-medium">Tarefa atrasada!</span>
+
+            {/* Descrição */}
+            {tarefa.descricao && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Descrição</h3>
+                <p className="text-sm bg-muted/50 p-3 rounded-lg">{tarefa.descricao}</p>
               </div>
             )}
+
+            {/* Informações */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Cliente */}
+              <div className="space-y-1">
+                <div className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  <Building2 className="h-3 w-3" />
+                  Cliente
+                </div>
+                <div className="text-sm">
+                  {tarefa.clientes?.empresa || (
+                    <span className="text-muted-foreground italic">Nenhum cliente</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Responsável */}
+              <div className="space-y-1">
+                <div className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  Responsável
+                </div>
+                <div className="text-sm">
+                  {tarefa.responsavel_nome ? (
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-5 w-5">
+                        <AvatarFallback className="text-[10px] bg-primary/10">
+                          {getInitials(tarefa.responsavel_nome)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{tarefa.responsavel_nome}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground italic">Sem responsável</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Data de Vencimento */}
+              <div className="space-y-1">
+                <div className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Prazo
+                </div>
+                <div className={`text-sm ${isOverdue() ? "text-destructive font-medium" : ""}`}>
+                  {tarefa.data_vencimento
+                    ? new Date(tarefa.data_vencimento).toLocaleDateString("pt-BR")
+                    : <span className="text-muted-foreground italic">Sem prazo</span>
+                  }
+                </div>
+              </div>
+
+              {/* Data de Criação */}
+              <div className="space-y-1">
+                <div className="text-sm font-medium text-muted-foreground">Criada em</div>
+                <div className="text-sm">
+                  {new Date(tarefa.created_at).toLocaleDateString("pt-BR")}
+                </div>
+              </div>
+            </div>
+
+            {/* Ação de conclusão */}
+            <div className="flex items-center justify-between border-t pt-4">
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  id="concluida"
+                  checked={tarefa.status === "concluida"}
+                  onCheckedChange={handleToggleStatus}
+                />
+                <label htmlFor="concluida" className="text-sm font-medium cursor-pointer">
+                  Marcar como {tarefa.status === "concluida" ? "pendente" : "concluída"}
+                </label>
+              </div>
+              <Button variant="outline" onClick={handleClose}>
+                Fechar
+              </Button>
+            </div>
           </div>
-
-          {/* Descrição */}
-          {tarefa.descricao && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium text-muted-foreground">Descrição</h3>
-              <p className="text-sm bg-muted/50 p-3 rounded-lg">{tarefa.descricao}</p>
-            </div>
-          )}
-
-          {/* Informações */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Cliente */}
-            <div className="space-y-1">
-              <div className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-                <Building2 className="h-3 w-3" />
-                Cliente
-              </div>
-              <div className="text-sm">
-                {tarefa.clientes?.empresa || (
-                  <span className="text-muted-foreground italic">Nenhum cliente</span>
-                )}
-              </div>
-            </div>
-
-            {/* Responsável */}
-            <div className="space-y-1">
-              <div className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-                <User className="h-3 w-3" />
-                Responsável
-              </div>
-              <div className="text-sm">
-                {tarefa.responsavel_nome ? (
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-5 w-5">
-                      <AvatarFallback className="text-[10px] bg-primary/10">
-                        {getInitials(tarefa.responsavel_nome)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{tarefa.responsavel_nome}</span>
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground italic">Sem responsável</span>
-                )}
-              </div>
-            </div>
-
-            {/* Data de Vencimento */}
-            <div className="space-y-1">
-              <div className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Prazo
-              </div>
-              <div className={`text-sm ${isOverdue() ? "text-destructive font-medium" : ""}`}>
-                {tarefa.data_vencimento
-                  ? new Date(tarefa.data_vencimento).toLocaleDateString("pt-BR")
-                  : <span className="text-muted-foreground italic">Sem prazo</span>
-                }
-              </div>
-            </div>
-
-            {/* Data de Criação */}
-            <div className="space-y-1">
-              <div className="text-sm font-medium text-muted-foreground">Criada em</div>
-              <div className="text-sm">
-                {new Date(tarefa.created_at).toLocaleDateString("pt-BR")}
-              </div>
-            </div>
-          </div>
-
-          {/* Ação de conclusão */}
-          <div className="flex items-center justify-between border-t pt-4">
-            <div className="flex items-center gap-3">
-              <Checkbox
-                id="concluida"
-                checked={tarefa.status === "concluida"}
-                onCheckedChange={handleToggleStatus}
-              />
-              <label htmlFor="concluida" className="text-sm font-medium cursor-pointer">
-                Marcar como {tarefa.status === "concluida" ? "pendente" : "concluída"}
-              </label>
-            </div>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Fechar
-            </Button>
-          </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );
