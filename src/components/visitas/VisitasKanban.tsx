@@ -9,6 +9,7 @@ type StatusVisita = Database["public"]["Enums"]["status_visita"];
 
 interface VisitasKanbanProps {
   visitas: Visita[];
+  onVisitaClick?: (visita: Visita) => void;
 }
 
 const STATUS_COLUMNS: { key: StatusVisita; label: string; color: string }[] = [
@@ -24,9 +25,15 @@ const KANBAN_COLUMNS = [
   { key: "done", label: "Realizadas", color: "bg-success/10", filter: (v: Visita) => v.status === "realizada" },
 ];
 
-export function VisitasKanban({ visitas }: VisitasKanbanProps) {
+export function VisitasKanban({ visitas, onVisitaClick }: VisitasKanbanProps) {
   const updateVisita = useUpdateVisita();
   const [draggedVisita, setDraggedVisita] = useState<string | null>(null);
+
+  const handleCardClick = (visita: Visita) => {
+    if (onVisitaClick) {
+      onVisitaClick(visita);
+    }
+  };
 
   const handleDragStart = (e: React.DragEvent, visitaId: string) => {
     setDraggedVisita(visitaId);
@@ -77,7 +84,8 @@ export function VisitasKanban({ visitas }: VisitasKanbanProps) {
                   key={visita.id}
                   draggable
                   onDragStart={(e) => handleDragStart(e, visita.id)}
-                  className={`p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow ${
+                  onClick={() => handleCardClick(visita)}
+                  className={`p-3 cursor-pointer hover:shadow-md transition-shadow ${
                     draggedVisita === visita.id ? "opacity-50" : ""
                   }`}
                 >

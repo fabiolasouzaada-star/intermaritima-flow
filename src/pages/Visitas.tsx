@@ -5,14 +5,22 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Calendar, User, LayoutGrid, List } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useVisitas } from "@/hooks/useVisitas";
+import { useVisitas, type Visita } from "@/hooks/useVisitas";
 import { VisitaForm } from "@/components/forms/VisitaForm";
 import { VisitasKanban } from "@/components/visitas/VisitasKanban";
+import { VisitaDetailDialog } from "@/components/visitas/VisitaDetailDialog";
 
 export default function Visitas() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
+  const [selectedVisita, setSelectedVisita] = useState<Visita | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   const { data: visitas, isLoading } = useVisitas();
+
+  const handleVisitaClick = (visita: Visita) => {
+    setSelectedVisita(visita);
+    setDetailOpen(true);
+  };
 
   const visitasAgendadas = visitas?.filter(v => v.status === "agendada") || [];
   const visitasRealizadas = visitas?.filter(v => v.status === "realizada") || [];
@@ -163,8 +171,14 @@ export default function Visitas() {
         </Card>
       </div>
 
+      <VisitaDetailDialog 
+        visita={selectedVisita} 
+        open={detailOpen} 
+        onOpenChange={setDetailOpen} 
+      />
+
       {viewMode === "kanban" ? (
-        <VisitasKanban visitas={visitas || []} />
+        <VisitasKanban visitas={visitas || []} onVisitaClick={handleVisitaClick} />
       ) : (
         <Tabs defaultValue="agendadas" className="space-y-4">
           <TabsList>
