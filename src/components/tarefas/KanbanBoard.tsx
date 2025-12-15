@@ -10,6 +10,7 @@ type StatusTarefa = Database["public"]["Enums"]["status_tarefa"];
 
 interface KanbanBoardProps {
   tarefas: Tarefa[];
+  onTaskClick?: (tarefa: Tarefa) => void;
 }
 
 const STATUS_COLUMNS: { key: StatusTarefa; label: string; color: string }[] = [
@@ -19,7 +20,7 @@ const STATUS_COLUMNS: { key: StatusTarefa; label: string; color: string }[] = [
   { key: "cancelada", label: "Cancelada", color: "bg-destructive/10" },
 ];
 
-export function KanbanBoard({ tarefas }: KanbanBoardProps) {
+export function KanbanBoard({ tarefas, onTaskClick }: KanbanBoardProps) {
   const updateTarefa = useUpdateTarefa();
   const [draggedTask, setDraggedTask] = useState<string | null>(null);
 
@@ -74,6 +75,12 @@ export function KanbanBoard({ tarefas }: KanbanBoardProps) {
     return vencimento < hoje;
   };
 
+  const handleCardClick = (tarefa: Tarefa) => {
+    if (onTaskClick) {
+      onTaskClick(tarefa);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {STATUS_COLUMNS.map((column) => {
@@ -105,12 +112,13 @@ export function KanbanBoard({ tarefas }: KanbanBoardProps) {
                     key={tarefa.id}
                     draggable
                     onDragStart={(e) => handleDragStart(e, tarefa.id)}
-                    className={`p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow ${
+                    onClick={() => handleCardClick(tarefa)}
+                    className={`p-3 cursor-pointer hover:shadow-md transition-shadow ${
                       draggedTask === tarefa.id ? "opacity-50" : ""
                     } ${overdue ? "border-destructive" : ""}`}
                   >
                     <div className="flex items-start gap-2">
-                      <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0 cursor-grab" />
                       <div className="flex-1 space-y-2 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <h4 className="font-medium text-sm leading-tight break-words">
