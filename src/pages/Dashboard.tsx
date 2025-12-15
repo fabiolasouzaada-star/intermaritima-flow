@@ -55,15 +55,8 @@ export default function Dashboard() {
     return dataFim >= hoje && dataFim <= em30dias && c.status === "ativo";
   }).length || 0;
 
-  // Visitas realizadas (este mês)
-  const mesAtual = hoje.getMonth();
-  const anoAtual = hoje.getFullYear();
-  const visitasRealizadas = visitas?.filter(v => {
-    const dataVisita = new Date(v.data_visita);
-    return dataVisita.getMonth() === mesAtual && 
-           dataVisita.getFullYear() === anoAtual && 
-           v.status === "realizada";
-  }).length || 0;
+  // Visitas realizadas (total)
+  const visitasRealizadas = visitas?.filter(v => v.status === "realizada").length || 0;
 
   // Follow-ups pendentes (tarefas pendentes)
   const followUpsPendentes = tarefas?.filter(t => 
