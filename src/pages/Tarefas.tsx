@@ -1,47 +1,114 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, AlertCircle, Clock, CheckCircle2, LayoutGrid, List, User } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, AlertCircle, Clock, CheckCircle2, LayoutGrid, List, User, Search, Filter } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useTarefas, useUpdateTarefa } from "@/hooks/useTarefas";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTarefas, useUpdateTarefa, type Tarefa } from "@/hooks/useTarefas";
 import { TarefaForm } from "@/components/forms/TarefaForm";
 import { KanbanBoard } from "@/components/tarefas/KanbanBoard";
+import { TarefaDetailDialog } from "@/components/tarefas/TarefaDetailDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default function Tarefas() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
+  const [selectedTarefa, setSelectedTarefa] = useState<Tarefa | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  
+  // Filtros
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filtroPrazo, setFiltroPrazo] = useState<string>("todos");
+  const [filtroPrioridade, setFiltroPrioridade] = useState<string>("todos");
+  const [filtroCliente, setFiltroCliente] = useState<string>("todos");
+  
   const { data: tarefas, isLoading } = useTarefas();
   const updateTarefa = useUpdateTarefa();
 
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
-  const tarefasHoje = tarefas?.filter((t) => {
+  // Lista de clientes únicos para o filtro
+  const clientesUnicos = useMemo(() => {
+    const clientes = tarefas
+      ?.filter(t => t.clientes?.empresa)
+      .map(t => t.clientes!.empresa)
+      .filter((value, index, self) => self.indexOf(value) === index)
+      .sort() || [];
+    return clientes;
+  }, [tarefas]);
+
+  // Aplicar filtros
+  const tarefasFiltradas = useMemo(() => {
+    if (!tarefas) return [];
+    
+    return tarefas.filter(tarefa => {
+      // Busca por texto
+      if (searchTerm) {
+        const termo = searchTerm.toLowerCase();
+        const matchTitulo = tarefa.titulo.toLowerCase().includes(termo);
+        const matchDescricao = tarefa.descricao?.toLowerCase().includes(termo) || false;
+        const matchCliente = tarefa.clientes?.empresa.toLowerCase().includes(termo) || false;
+        const matchResponsavel = tarefa.responsavel_nome?.toLowerCase().includes(termo) || false;
+        if (!matchTitulo && !matchDescricao && !matchCliente && !matchResponsavel) return false;
+      }
+
+      // Filtro por prioridade
+      if (filtroPrioridade !== "todos" && tarefa.prioridade !== filtroPrioridade) return false;
+
+      // Filtro por cliente
+      if (filtroCliente !== "todos" && tarefa.clientes?.empresa !== filtroCliente) return false;
+
+      // Filtro por prazo
+      if (filtroPrazo !== "todos") {
+        if (!tarefa.data_vencimento) return filtroPrazo === "sem_prazo";
+        
+        const vencimento = new Date(tarefa.data_vencimento);
+        vencimento.setHours(0, 0, 0, 0);
+        
+        if (filtroPrazo === "atrasadas") {
+          return vencimento < hoje && tarefa.status !== "concluida";
+        } else if (filtroPrazo === "hoje") {
+          return vencimento.getTime() === hoje.getTime();
+        } else if (filtroPrazo === "semana") {
+          const umaSemana = new Date(hoje);
+          umaSemana.setDate(hoje.getDate() + 7);
+          return vencimento >= hoje && vencimento <= umaSemana;
+        } else if (filtroPrazo === "sem_prazo") {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [tarefas, searchTerm, filtroPrazo, filtroPrioridade, filtroCliente, hoje]);
+
+  const tarefasHoje = tarefasFiltradas.filter((t) => {
     if (!t.data_vencimento || t.status === "concluida") return false;
     const vencimento = new Date(t.data_vencimento);
     vencimento.setHours(0, 0, 0, 0);
     return vencimento.getTime() === hoje.getTime();
-  }) || [];
+  });
 
-  const tarefasAtrasadas = tarefas?.filter((t) => {
+  const tarefasAtrasadas = tarefasFiltradas.filter((t) => {
     if (!t.data_vencimento || t.status === "concluida") return false;
     const vencimento = new Date(t.data_vencimento);
     vencimento.setHours(0, 0, 0, 0);
     return vencimento < hoje;
-  }) || [];
+  });
 
-  const tarefasSemana = tarefas?.filter((t) => {
+  const tarefasSemana = tarefasFiltradas.filter((t) => {
     if (!t.data_vencimento || t.status === "concluida") return false;
     const vencimento = new Date(t.data_vencimento);
     vencimento.setHours(0, 0, 0, 0);
     const umaSemana = new Date(hoje);
     umaSemana.setDate(hoje.getDate() + 7);
     return vencimento >= hoje && vencimento <= umaSemana;
-  }) || [];
+  });
 
   const getInitials = (nome: string) => {
     return nome
@@ -69,7 +136,21 @@ export default function Tarefas() {
     await updateTarefa.mutateAsync({ id: tarefaId, data: { status: newStatus } });
   };
 
-  const getTarefasList = (tarefasList: typeof tarefas) => (
+  const handleOpenDetail = (tarefa: Tarefa) => {
+    setSelectedTarefa(tarefa);
+    setDetailOpen(true);
+  };
+
+  const limparFiltros = () => {
+    setSearchTerm("");
+    setFiltroPrazo("todos");
+    setFiltroPrioridade("todos");
+    setFiltroCliente("todos");
+  };
+
+  const temFiltrosAtivos = searchTerm || filtroPrazo !== "todos" || filtroPrioridade !== "todos" || filtroCliente !== "todos";
+
+  const getTarefasList = (tarefasList: Tarefa[]) => (
     <div className="space-y-3">
       {!tarefasList || tarefasList.length === 0 ? (
         <p className="text-center text-muted-foreground py-8">Nenhuma tarefa</p>
@@ -77,12 +158,17 @@ export default function Tarefas() {
         tarefasList.map((tarefa) => {
           const responsavelNome = tarefa.responsavel_nome;
           return (
-            <Card key={tarefa.id} className="p-4">
+            <Card 
+              key={tarefa.id} 
+              className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => handleOpenDetail(tarefa)}
+            >
               <div className="flex items-start gap-4">
                 <Checkbox 
                   className="mt-1" 
                   checked={tarefa.status === "concluida"}
                   onCheckedChange={() => handleToggleTarefa(tarefa.id, tarefa.status)}
+                  onClick={(e) => e.stopPropagation()}
                 />
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center justify-between">
@@ -180,6 +266,73 @@ export default function Tarefas() {
         </div>
       </div>
 
+      {/* Filtros */}
+      <Card className="p-4">
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por título, descrição, cliente ou responsável..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Select value={filtroPrazo} onValueChange={setFiltroPrazo}>
+              <SelectTrigger className="w-[150px]">
+                <Clock className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Prazo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os prazos</SelectItem>
+                <SelectItem value="atrasadas">Atrasadas</SelectItem>
+                <SelectItem value="hoje">Hoje</SelectItem>
+                <SelectItem value="semana">Esta semana</SelectItem>
+                <SelectItem value="sem_prazo">Sem prazo</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filtroPrioridade} onValueChange={setFiltroPrioridade}>
+              <SelectTrigger className="w-[150px]">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Prioridade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todas prioridades</SelectItem>
+                <SelectItem value="urgente">Urgente</SelectItem>
+                <SelectItem value="alta">Alta</SelectItem>
+                <SelectItem value="media">Média</SelectItem>
+                <SelectItem value="baixa">Baixa</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filtroCliente} onValueChange={setFiltroCliente}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Cliente" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos clientes</SelectItem>
+                {clientesUnicos.map(cliente => (
+                  <SelectItem key={cliente} value={cliente}>{cliente}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {temFiltrosAtivos && (
+              <Button variant="ghost" size="sm" onClick={limparFiltros}>
+                Limpar filtros
+              </Button>
+            )}
+          </div>
+        </div>
+        {temFiltrosAtivos && (
+          <p className="text-sm text-muted-foreground mt-2">
+            {tarefasFiltradas.length} tarefa(s) encontrada(s)
+          </p>
+        )}
+      </Card>
+
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardContent className="p-6">
@@ -225,7 +378,7 @@ export default function Tarefas() {
       </div>
 
       {viewMode === "kanban" ? (
-        <KanbanBoard tarefas={tarefas || []} />
+        <KanbanBoard tarefas={tarefasFiltradas} onTaskClick={handleOpenDetail} />
       ) : (
         <Tabs defaultValue="hoje" className="space-y-4">
           <TabsList>
@@ -263,10 +416,16 @@ export default function Tarefas() {
           </TabsContent>
 
           <TabsContent value="todas">
-            {getTarefasList(tarefas?.filter(t => t.status !== "concluida"))}
+            {getTarefasList(tarefasFiltradas.filter(t => t.status !== "concluida"))}
           </TabsContent>
         </Tabs>
       )}
+
+      <TarefaDetailDialog 
+        tarefa={selectedTarefa} 
+        open={detailOpen} 
+        onOpenChange={setDetailOpen} 
+      />
     </div>
   );
 }
