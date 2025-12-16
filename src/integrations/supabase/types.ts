@@ -956,7 +956,7 @@ export type Database = {
         | "ganho"
         | "perdido"
       status_tarefa: "pendente" | "em_andamento" | "concluida" | "cancelada"
-      status_visita: "agendada" | "realizada" | "cancelada"
+      status_visita: "a_agendar" | "agendada" | "realizada" | "cancelada"
       tipo_evento: "reuniao" | "follow_up" | "apresentacao" | "visita" | "outro"
       tipo_ocorrencia:
         | "reclamacao"
@@ -1119,7 +1119,7 @@ export const Constants = {
         "perdido",
       ],
       status_tarefa: ["pendente", "em_andamento", "concluida", "cancelada"],
-      status_visita: ["agendada", "realizada", "cancelada"],
+      status_visita: ["a_agendar", "agendada", "realizada", "cancelada"],
       tipo_evento: ["reuniao", "follow_up", "apresentacao", "visita", "outro"],
       tipo_ocorrencia: [
         "reclamacao",
