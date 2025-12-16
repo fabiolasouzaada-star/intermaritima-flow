@@ -549,7 +549,9 @@ export type Database = {
           created_at: string
           created_by: string | null
           descricao: string | null
+          descricao_perda: string | null
           id: string
+          motivo_perda: string | null
           previsao_fechamento: string | null
           probabilidade: number | null
           responsavel_id: string | null
@@ -563,7 +565,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           descricao?: string | null
+          descricao_perda?: string | null
           id?: string
+          motivo_perda?: string | null
           previsao_fechamento?: string | null
           probabilidade?: number | null
           responsavel_id?: string | null
@@ -577,7 +581,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           descricao?: string | null
+          descricao_perda?: string | null
           id?: string
+          motivo_perda?: string | null
           previsao_fechamento?: string | null
           probabilidade?: number | null
           responsavel_id?: string | null
