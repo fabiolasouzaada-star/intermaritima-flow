@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DollarSign, Calendar, TrendingUp, GripVertical } from "lucide-react";
 import { useUpdateOportunidade, type Oportunidade } from "@/hooks/useOportunidades";
 import { OportunidadeEditForm } from "@/components/forms/OportunidadeEditForm";
@@ -41,9 +45,26 @@ const STATUS_COLUMNS: StatusOportunidade[] = [
   "perdido"
 ];
 
+const MOTIVOS_PERDA = [
+  "Preço",
+  "Concorrência",
+  "Prazo de entrega",
+  "Falta de orçamento do cliente",
+  "Mudança de prioridades do cliente",
+  "Serviço não atende necessidades",
+  "Relacionamento com outro fornecedor",
+  "Projeto cancelado",
+  "Decisão adiada",
+  "Outro"
+];
+
 export function PipelineKanban({ oportunidades }: PipelineKanbanProps) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [editingOportunidade, setEditingOportunidade] = useState<Oportunidade | null>(null);
+  const [perdaDialogOpen, setPerdaDialogOpen] = useState(false);
+  const [pendingPerdaId, setPendingPerdaId] = useState<string | null>(null);
+  const [motivoPerda, setMotivoPerda] = useState("");
+  const [descricaoPerda, setDescricaoPerda] = useState("");
   const updateOportunidade = useUpdateOportunidade();
 
   const groupedOportunidades = oportunidades.reduce((acc, oportunidade) => {
@@ -76,6 +97,16 @@ export function PipelineKanban({ oportunidades }: PipelineKanbanProps) {
       return;
     }
 
+    // Se está movendo para "perdido", abre o dialog
+    if (newStatus === "perdido") {
+      setPendingPerdaId(draggedId);
+      setMotivoPerda("");
+      setDescricaoPerda("");
+      setPerdaDialogOpen(true);
+      setDraggedId(null);
+      return;
+    }
+
     await updateOportunidade.mutateAsync({
       id: draggedId,
       data: { status: newStatus }
@@ -86,6 +117,31 @@ export function PipelineKanban({ oportunidades }: PipelineKanbanProps) {
 
   const handleDragEnd = () => {
     setDraggedId(null);
+  };
+
+  const handleConfirmPerda = async () => {
+    if (!pendingPerdaId || !motivoPerda) return;
+
+    await updateOportunidade.mutateAsync({
+      id: pendingPerdaId,
+      data: { 
+        status: "perdido",
+        motivo_perda: motivoPerda,
+        descricao_perda: descricaoPerda || null
+      }
+    });
+
+    setPerdaDialogOpen(false);
+    setPendingPerdaId(null);
+    setMotivoPerda("");
+    setDescricaoPerda("");
+  };
+
+  const handleCancelPerda = () => {
+    setPerdaDialogOpen(false);
+    setPendingPerdaId(null);
+    setMotivoPerda("");
+    setDescricaoPerda("");
   };
 
   return (
@@ -166,6 +222,7 @@ export function PipelineKanban({ oportunidades }: PipelineKanbanProps) {
         })}
       </div>
 
+      {/* Dialog de edição */}
       <Dialog open={!!editingOportunidade} onOpenChange={(open) => !open && setEditingOportunidade(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -177,6 +234,53 @@ export function PipelineKanban({ oportunidades }: PipelineKanbanProps) {
               onSuccess={() => setEditingOportunidade(null)} 
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de motivo de perda */}
+      <Dialog open={perdaDialogOpen} onOpenChange={(open) => !open && handleCancelPerda()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Registrar Perda</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="motivo">Motivo da Objeção *</Label>
+              <Select value={motivoPerda} onValueChange={setMotivoPerda}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o motivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MOTIVOS_PERDA.map((motivo) => (
+                    <SelectItem key={motivo} value={motivo}>
+                      {motivo}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="descricao">Detalhes</Label>
+              <Textarea
+                id="descricao"
+                placeholder="Descreva os detalhes da perda..."
+                value={descricaoPerda}
+                onChange={(e) => setDescricaoPerda(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelPerda}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleConfirmPerda} 
+              disabled={!motivoPerda || updateOportunidade.isPending}
+            >
+              {updateOportunidade.isPending ? "Salvando..." : "Confirmar"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
