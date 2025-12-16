@@ -70,8 +70,9 @@ export function KanbanBoard({ tarefas, onTaskClick }: KanbanBoardProps) {
     if (!dataVencimento) return false;
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    const vencimento = new Date(dataVencimento);
-    vencimento.setHours(0, 0, 0, 0);
+    // Parsear data como local (YYYY-MM-DD)
+    const [year, month, day] = dataVencimento.split('-').map(Number);
+    const vencimento = new Date(year, month - 1, day);
     return vencimento < hoje;
   };
 

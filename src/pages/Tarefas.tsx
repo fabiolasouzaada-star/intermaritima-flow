@@ -32,6 +32,12 @@ export default function Tarefas() {
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
+  // Função para parsear data do banco (YYYY-MM-DD) como data local
+  const parseLocalDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   // Lista de clientes únicos para o filtro
   const clientesUnicos = useMemo(() => {
     const clientes = tarefas
@@ -67,8 +73,7 @@ export default function Tarefas() {
       if (filtroPrazo !== "todos") {
         if (!tarefa.data_vencimento) return filtroPrazo === "sem_prazo";
         
-        const vencimento = new Date(tarefa.data_vencimento);
-        vencimento.setHours(0, 0, 0, 0);
+        const vencimento = parseLocalDate(tarefa.data_vencimento);
         
         if (filtroPrazo === "atrasadas") {
           return vencimento < hoje && tarefa.status !== "concluida";
@@ -89,22 +94,19 @@ export default function Tarefas() {
 
   const tarefasHoje = tarefasFiltradas.filter((t) => {
     if (!t.data_vencimento || t.status === "concluida") return false;
-    const vencimento = new Date(t.data_vencimento);
-    vencimento.setHours(0, 0, 0, 0);
+    const vencimento = parseLocalDate(t.data_vencimento);
     return vencimento.getTime() === hoje.getTime();
   });
 
   const tarefasAtrasadas = tarefasFiltradas.filter((t) => {
     if (!t.data_vencimento || t.status === "concluida") return false;
-    const vencimento = new Date(t.data_vencimento);
-    vencimento.setHours(0, 0, 0, 0);
+    const vencimento = parseLocalDate(t.data_vencimento);
     return vencimento < hoje;
   });
 
   const tarefasSemana = tarefasFiltradas.filter((t) => {
     if (!t.data_vencimento || t.status === "concluida") return false;
-    const vencimento = new Date(t.data_vencimento);
-    vencimento.setHours(0, 0, 0, 0);
+    const vencimento = parseLocalDate(t.data_vencimento);
     const umaSemana = new Date(hoje);
     umaSemana.setDate(hoje.getDate() + 7);
     return vencimento >= hoje && vencimento <= umaSemana;
