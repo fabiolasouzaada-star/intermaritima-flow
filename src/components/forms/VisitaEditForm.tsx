@@ -71,6 +71,7 @@ export function VisitaEditForm({ visita, onSuccess }: VisitaEditFormProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="a_agendar">A Agendar</SelectItem>
             <SelectItem value="agendada">Agendada</SelectItem>
             <SelectItem value="realizada">Realizada</SelectItem>
             <SelectItem value="cancelada">Cancelada</SelectItem>

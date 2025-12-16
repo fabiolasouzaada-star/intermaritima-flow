@@ -24,7 +24,7 @@ export function VisitaForm({ clienteId, onSuccess }: VisitaFormProps) {
   const [oportunidades, setOportunidades] = useState("");
   const [dores, setDores] = useState("");
   const [proximosPassos, setProximosPassos] = useState("");
-  const [status, setStatus] = useState<StatusVisita>("agendada");
+  const [status, setStatus] = useState<StatusVisita>("a_agendar");
   const [searchTerm, setSearchTerm] = useState("");
 
   const { data: clientes, isLoading: isLoadingClientes } = useClientes();
@@ -119,6 +119,7 @@ export function VisitaForm({ clienteId, onSuccess }: VisitaFormProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="a_agendar">A Agendar</SelectItem>
             <SelectItem value="agendada">Agendada</SelectItem>
             <SelectItem value="realizada">Realizada</SelectItem>
             <SelectItem value="cancelada">Cancelada</SelectItem>

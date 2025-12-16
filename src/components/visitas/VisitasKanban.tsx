@@ -13,16 +13,10 @@ interface VisitasKanbanProps {
 }
 
 const STATUS_COLUMNS: { key: StatusVisita; label: string; color: string }[] = [
-  { key: "agendada", label: "A Agendar", color: "bg-muted" },
-  { key: "realizada", label: "Agendadas", color: "bg-primary/10" },
-  { key: "cancelada", label: "Realizadas", color: "bg-success/10" },
-];
-
-// Mapeamento customizado para a lógica do Kanban
-const KANBAN_COLUMNS = [
-  { key: "pending", label: "A Agendar", color: "bg-muted", filter: (v: Visita) => v.status === "agendada" && new Date(v.data_visita) > new Date() },
-  { key: "scheduled", label: "Agendadas", color: "bg-primary/10", filter: (v: Visita) => v.status === "agendada" },
-  { key: "done", label: "Realizadas", color: "bg-success/10", filter: (v: Visita) => v.status === "realizada" },
+  { key: "a_agendar", label: "A Agendar", color: "bg-muted" },
+  { key: "agendada", label: "Agendada", color: "bg-primary/10" },
+  { key: "realizada", label: "Realizada", color: "bg-green-500/10" },
+  { key: "cancelada", label: "Cancelada", color: "bg-destructive/10" },
 ];
 
 export function VisitasKanban({ visitas, onVisitaClick }: VisitasKanbanProps) {
@@ -61,7 +55,7 @@ export function VisitasKanban({ visitas, onVisitaClick }: VisitasKanbanProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {STATUS_COLUMNS.map((column) => {
         const columnVisitas = getVisitasByStatus(column.key);
         return (
