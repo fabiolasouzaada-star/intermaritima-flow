@@ -8,9 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useClientes } from "@/hooks/useClientes";
 import { useOportunidades } from "@/hooks/useOportunidades";
-import { useModelosPropostas, useModeloProposta, useCreateProposta, ServicoItem } from "@/hooks/usePropostas";
+import { useModelosPropostas, useModeloProposta, useCreateProposta, CategoriaServico, ServicoItem } from "@/hooks/usePropostas";
 import { Loader2 } from "lucide-react";
 import { Json } from "@/integrations/supabase/types";
 
@@ -36,7 +39,7 @@ interface PropostaFormProps {
 
 export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaFormProps) {
   const [selectedModeloId, setSelectedModeloId] = useState<string>("");
-  const [servicos, setServicos] = useState<ServicoItem[]>([]);
+  const [categorias, setCategorias] = useState<CategoriaServico[]>([]);
 
   const { data: clientes } = useClientes();
   const { data: oportunidades } = useOportunidades();
@@ -59,27 +62,69 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
     },
   });
 
-  // Load modelo structure when selected - now handles flat array structure
+  // Load modelo structure when selected
   useEffect(() => {
     if (modeloSelecionado?.estrutura_servicos) {
-      const estrutura = modeloSelecionado.estrutura_servicos as unknown as ServicoItem[];
-      // Initialize with empty values for editing
-      const servicosComValor = estrutura.map(item => ({
-        ...item,
-        valor: item.valor || "",
-        valorEditado: "",
-      }));
-      setServicos(servicosComValor);
+      const estrutura = modeloSelecionado.estrutura_servicos as unknown;
+      
+      // Check if it's the new category-based structure
+      if (Array.isArray(estrutura) && estrutura.length > 0 && 'categoria' in estrutura[0]) {
+        const cats = (estrutura as CategoriaServico[]).map(cat => ({
+          ...cat,
+          itens: cat.itens.map(item => ({
+            ...item,
+            selecionado: false,
+            valorEditado: item.valor,
+          }))
+        }));
+        setCategorias(cats);
+      } else if (Array.isArray(estrutura)) {
+        // Old flat structure - convert to single category
+        const items = (estrutura as ServicoItem[]).map(item => ({
+          ...item,
+          selecionado: false,
+          valorEditado: item.valor || "",
+        }));
+        setCategorias([{ categoria: "Serviços", itens: items }]);
+      }
     }
   }, [modeloSelecionado]);
 
-  // Watch selected client
   const selectedClienteId = form.watch("cliente_id");
 
-  const handleServicoValueChange = (index: number, newValue: string) => {
-    setServicos(prev => {
+  const handleServicoToggle = (catIndex: number, itemIndex: number) => {
+    setCategorias(prev => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], valorEditado: newValue };
+      updated[catIndex] = {
+        ...updated[catIndex],
+        itens: updated[catIndex].itens.map((item, idx) => 
+          idx === itemIndex ? { ...item, selecionado: !item.selecionado } : item
+        )
+      };
+      return updated;
+    });
+  };
+
+  const handleServicoValueChange = (catIndex: number, itemIndex: number, newValue: string) => {
+    setCategorias(prev => {
+      const updated = [...prev];
+      updated[catIndex] = {
+        ...updated[catIndex],
+        itens: updated[catIndex].itens.map((item, idx) => 
+          idx === itemIndex ? { ...item, valorEditado: newValue } : item
+        )
+      };
+      return updated;
+    });
+  };
+
+  const handleSelectAllCategory = (catIndex: number, select: boolean) => {
+    setCategorias(prev => {
+      const updated = [...prev];
+      updated[catIndex] = {
+        ...updated[catIndex],
+        itens: updated[catIndex].itens.map(item => ({ ...item, selecionado: select }))
+      };
       return updated;
     });
   };
@@ -87,10 +132,27 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
   const onSubmit = async (data: FormData) => {
     if (!modeloSelecionado) return;
 
-    const valorTotal = servicos.reduce((total, item) => {
-      const valorStr = item.valorEditado || item.valor || "0";
-      const valor = parseFloat(valorStr.replace(/[^0-9.,]/g, "").replace(",", "."));
-      return total + (isNaN(valor) ? 0 : valor);
+    // Filter only selected services
+    const servicosSelecionados = categorias.map(cat => ({
+      ...cat,
+      itens: cat.itens.filter(item => item.selecionado)
+    })).filter(cat => cat.itens.length > 0);
+
+    if (servicosSelecionados.length === 0) {
+      toast.error("Selecione pelo menos um serviço");
+      return;
+    }
+
+    const valorTotal = servicosSelecionados.reduce((total, cat) => {
+      return total + cat.itens.reduce((catTotal, item) => {
+        const valorStr = item.valorEditado || item.valor || "0";
+        const match = valorStr.match(/[\d.,]+/);
+        if (match) {
+          const valor = parseFloat(match[0].replace(".", "").replace(",", "."));
+          return catTotal + (isNaN(valor) ? 0 : valor);
+        }
+        return catTotal;
+      }, 0);
     }, 0);
 
     await createProposta.mutateAsync({
@@ -101,7 +163,7 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
       texto_introdutorio: modeloSelecionado.texto_introdutorio,
       notas_condicoes: modeloSelecionado.notas_condicoes,
       assinatura_padrao: modeloSelecionado.assinatura_padrao,
-      servicos: servicos as unknown as Json,
+      servicos: servicosSelecionados as unknown as Json,
       contato_nome: data.contato_nome || null,
       contato_email: data.contato_email || null,
       contato_telefone: data.contato_telefone || null,
@@ -122,6 +184,10 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
       </div>
     );
   }
+
+  const totalSelecionados = categorias.reduce((acc, cat) => 
+    acc + cat.itens.filter(i => i.selecionado).length, 0
+  );
 
   return (
     <Form {...form}>
@@ -211,33 +277,6 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
           />
         </div>
 
-        {/* Preview do modelo selecionado */}
-        {modeloSelecionado && (
-          <Card className="border-primary/20 bg-muted/30">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Prévia do Modelo</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-              <div>
-                <p className="font-medium text-xs uppercase text-muted-foreground mb-1">Cabeçalho Institucional</p>
-                <p className="whitespace-pre-wrap bg-background p-2 rounded border">{modeloSelecionado.cabecalho_institucional}</p>
-              </div>
-              <div>
-                <p className="font-medium text-xs uppercase text-muted-foreground mb-1">Texto Introdutório</p>
-                <p className="whitespace-pre-wrap bg-background p-2 rounded border">{modeloSelecionado.texto_introdutorio}</p>
-              </div>
-              <div>
-                <p className="font-medium text-xs uppercase text-muted-foreground mb-1">Notas e Condições</p>
-                <p className="whitespace-pre-wrap bg-background p-2 rounded border text-xs">{modeloSelecionado.notas_condicoes}</p>
-              </div>
-              <div>
-                <p className="font-medium text-xs uppercase text-muted-foreground mb-1">Assinatura</p>
-                <p className="whitespace-pre-wrap bg-background p-2 rounded border">{modeloSelecionado.assinatura_padrao}</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Dados do Contato</CardTitle>
@@ -298,29 +337,69 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
           </CardContent>
         </Card>
 
-        {servicos.length > 0 && (
+        {categorias.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Serviços e Valores</CardTitle>
+              <CardTitle className="text-lg flex items-center justify-between">
+                <span>Serviços e Valores</span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  {totalSelecionados} serviço(s) selecionado(s)
+                </span>
+              </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Preencha os valores para cada serviço. Deixe em branco para usar "A combinar".
+                Selecione os serviços que serão incluídos nesta proposta. Você pode editar os valores individualmente.
               </p>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {servicos.map((item, index) => (
-                <div key={index} className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium">{item.nome}</p>
-                    <p className="text-sm text-muted-foreground">Unidade: {item.unidade}</p>
-                  </div>
-                  <Input
-                    className="w-40"
-                    placeholder="R$ 0,00"
-                    value={item.valorEditado || ""}
-                    onChange={(e) => handleServicoValueChange(index, e.target.value)}
-                  />
+            <CardContent>
+              <ScrollArea className="h-[400px] pr-4">
+                <div className="space-y-6">
+                  {categorias.map((categoria, catIndex) => {
+                    const selectedCount = categoria.itens.filter(i => i.selecionado).length;
+                    const allSelected = selectedCount === categoria.itens.length;
+                    
+                    return (
+                      <div key={catIndex} className="space-y-3">
+                        <div className="flex items-center justify-between sticky top-0 bg-background py-2 border-b">
+                          <h4 className="font-semibold text-primary">{categoria.categoria}</h4>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSelectAllCategory(catIndex, !allSelected)}
+                          >
+                            {allSelected ? "Desmarcar todos" : "Selecionar todos"}
+                          </Button>
+                        </div>
+                        <div className="space-y-2">
+                          {categoria.itens.map((item, itemIndex) => (
+                            <div 
+                              key={itemIndex} 
+                              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                                item.selecionado ? "bg-primary/5 border-primary/30" : "bg-muted/30"
+                              }`}
+                            >
+                              <Checkbox
+                                checked={item.selecionado}
+                                onCheckedChange={() => handleServicoToggle(catIndex, itemIndex)}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{item.nome}</p>
+                                <p className="text-xs text-muted-foreground">{item.unidade}</p>
+                              </div>
+                              <Input
+                                className="w-32 text-right text-sm"
+                                value={item.valorEditado || item.valor}
+                                onChange={(e) => handleServicoValueChange(catIndex, itemIndex, e.target.value)}
+                                disabled={!item.selecionado}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
+              </ScrollArea>
             </CardContent>
           </Card>
         )}
@@ -350,7 +429,7 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
               <FormControl>
                 <Textarea 
                   rows={4} 
-                  placeholder="Observações específicas para esta proposta (serão adicionadas ao documento)"
+                  placeholder="Observações específicas para esta proposta"
                   {...field} 
                 />
               </FormControl>
@@ -360,12 +439,14 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
         />
 
         <div className="flex justify-end gap-2">
-          <Button type="submit" disabled={createProposta.isPending}>
+          <Button type="submit" disabled={createProposta.isPending || totalSelecionados === 0}>
             {createProposta.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Criar Proposta
+            Criar Proposta ({totalSelecionados} serviços)
           </Button>
         </div>
       </form>
     </Form>
   );
 }
+
+import { toast } from "sonner";
