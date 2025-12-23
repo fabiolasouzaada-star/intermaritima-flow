@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Proposta, ServicoItem, useUpdateProposta, usePropostaHistorico } from "@/hooks/usePropostas";
+import { Proposta, CategoriaServico, useUpdateProposta, usePropostaHistorico } from "@/hooks/usePropostas";
 import { Download, Send, CheckCircle, XCircle, FileText, History, Edit } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
@@ -26,7 +26,7 @@ export function PropostaViewer({ proposta, onClose }: PropostaViewerProps) {
   const updateProposta = useUpdateProposta();
   const { data: historico } = usePropostaHistorico(proposta.id);
 
-  const servicos = (proposta.servicos || []) as unknown as ServicoItem[];
+  const categorias = (proposta.servicos || []) as unknown as CategoriaServico[];
   const status = statusConfig[proposta.status];
 
   const handleStatusChange = async (newStatus: "enviada" | "aprovada" | "rejeitada") => {
@@ -49,77 +49,64 @@ export function PropostaViewer({ proposta, onClose }: PropostaViewerProps) {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       const margin = 20;
-      let y = 20;
+      let y = 25;
 
       // === CABEÇALHO INSTITUCIONAL ===
-      doc.setFontSize(11);
+      doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
-      const headerLines = doc.splitTextToSize(proposta.cabecalho_institucional, pageWidth - margin * 2);
-      headerLines.forEach((line: string) => {
-        doc.text(line, pageWidth / 2, y, { align: "center" });
-        y += 5;
-      });
-      y += 10;
-
-      // Linha separadora
-      doc.setLineWidth(0.5);
-      doc.line(margin, y, pageWidth - margin, y);
-      y += 10;
-
-      // === NÚMERO DA PROPOSTA E DATA ===
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text(`PROPOSTA COMERCIAL`, pageWidth / 2, y, { align: "center" });
+      doc.text("INTERMARÍTIMA", pageWidth / 2, y, { align: "center" });
       y += 7;
-      doc.setFontSize(12);
-      doc.text(`Nº ${proposta.numero_proposta}`, pageWidth / 2, y, { align: "center" });
-      y += 10;
-
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      doc.text(`Data: ${new Date(proposta.created_at).toLocaleDateString("pt-BR", { 
+      doc.text("Portos e Logística S.A.", pageWidth / 2, y, { align: "center" });
+      y += 15;
+
+      // Linha decorativa
+      doc.setDrawColor(0, 100, 180);
+      doc.setLineWidth(1);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 15;
+
+      // === TÍTULO DA PROPOSTA ===
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Proposta Comercial Número ${proposta.numero_proposta}`, pageWidth / 2, y, { align: "center" });
+      y += 10;
+
+      // Data
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Salvador, ${new Date(proposta.created_at).toLocaleDateString("pt-BR", { 
         day: "numeric", 
         month: "long", 
         year: "numeric" 
       })}`, pageWidth / 2, y, { align: "center" });
-      
-      if (proposta.prazo_validade) {
-        y += 5;
-        doc.text(`Válida até: ${new Date(proposta.prazo_validade).toLocaleDateString("pt-BR")}`, pageWidth / 2, y, { align: "center" });
-      }
       y += 15;
 
       // === DADOS DO CLIENTE ===
       doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
       doc.text("À", margin, y);
       y += 6;
-      doc.setFontSize(11);
-      doc.text(proposta.clientes?.empresa || "Cliente não especificado", margin, y);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text(proposta.clientes?.empresa || "Cliente", margin, y);
       y += 6;
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      if (proposta.clientes?.cnpj) {
-        doc.text(`CNPJ: ${proposta.clientes.cnpj}`, margin, y);
-        y += 5;
-      }
+      
       if (proposta.contato_nome) {
-        doc.text(`Att.: Sr(a). ${proposta.contato_nome}${proposta.contato_cargo ? ` - ${proposta.contato_cargo}` : ""}`, margin, y);
+        doc.text(`ATT.: ${proposta.contato_nome}`, margin, y);
         y += 5;
       }
       if (proposta.contato_email) {
-        doc.text(`E-mail: ${proposta.contato_email}`, margin, y);
-        y += 5;
-      }
-      if (proposta.contato_telefone) {
-        doc.text(`Tel.: ${proposta.contato_telefone}`, margin, y);
+        doc.text(`Email: ${proposta.contato_email}`, margin, y);
         y += 5;
       }
       y += 10;
 
       // === REFERÊNCIA ===
       doc.setFont("helvetica", "bold");
-      doc.text(`Ref.: ${proposta.modelos_proposta?.nome || "Proposta Comercial"}`, margin, y);
+      doc.text(`Ref. - ${proposta.modelos_proposta?.nome || "Proposta Comercial"}`, margin, y);
       y += 12;
 
       // === TEXTO INTRODUTÓRIO ===
@@ -129,93 +116,110 @@ export function PropostaViewer({ proposta, onClose }: PropostaViewerProps) {
       introLines.forEach((line: string) => {
         if (y > 270) {
           doc.addPage();
-          y = 20;
+          y = 25;
         }
         doc.text(line, margin, y);
         y += 5;
       });
+      
+      // Assinatura da primeira página
       y += 10;
+      doc.setFont("helvetica", "normal");
+      doc.text("Fabíola Souza", margin, y);
+      y += 5;
+      doc.text("Intermarítima Portos e Logística S.A.", margin, y);
 
-      // === SERVIÇOS ===
-      if (servicos && servicos.length > 0) {
-        if (y > 200) {
+      // === PÁGINAS DE SERVIÇOS ===
+      if (categorias && categorias.length > 0) {
+        categorias.forEach((categoria) => {
           doc.addPage();
-          y = 20;
-        }
+          y = 25;
 
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.text("TABELA DE SERVIÇOS E VALORES", margin, y);
-        y += 10;
+          // Header da página
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "normal");
+          doc.text("INTERMARÍTIMA", margin, 15);
+          doc.text("CERTIFIED OEA", pageWidth - margin - 30, 15);
 
-        // Cabeçalho da tabela
-        doc.setFontSize(9);
-        doc.setFillColor(240, 240, 240);
-        doc.rect(margin, y - 4, pageWidth - margin * 2, 7, "F");
-        doc.text("Serviço", margin + 2, y);
-        doc.text("Unidade", pageWidth / 2, y);
-        doc.text("Valor", pageWidth - margin - 25, y);
-        y += 8;
-
-        doc.setFont("helvetica", "normal");
-        servicos.forEach((item) => {
-          if (y > 270) {
-            doc.addPage();
-            y = 20;
-          }
-          
-          const nomeLines = doc.splitTextToSize(item.nome, pageWidth / 2 - margin - 10);
-          doc.text(nomeLines, margin + 2, y);
-          doc.text(item.unidade, pageWidth / 2, y);
-          doc.text(item.valorEditado || item.valor || "A combinar", pageWidth - margin - 25, y);
-          y += Math.max(nomeLines.length * 4, 6);
-        });
-        y += 10;
-
-        // Valor total se houver
-        if (proposta.valor_total && proposta.valor_total > 0) {
+          // Título da categoria
+          doc.setFontSize(12);
           doc.setFont("helvetica", "bold");
-          doc.text(`Valor Total Estimado: ${new Intl.NumberFormat("pt-BR", { 
-            style: "currency", 
-            currency: "BRL" 
-          }).format(proposta.valor_total)}`, margin, y);
+          doc.text(categoria.categoria, margin, y);
           y += 10;
-        }
+
+          // Tabela de serviços
+          doc.setFontSize(9);
+          
+          // Cabeçalho da tabela
+          doc.setFillColor(240, 240, 240);
+          doc.rect(margin, y - 4, pageWidth - margin * 2, 8, "F");
+          doc.setFont("helvetica", "bold");
+          doc.text("Serviço", margin + 2, y);
+          doc.text("Unidade", pageWidth - 70, y);
+          doc.text("Valor", pageWidth - margin - 20, y, { align: "right" });
+          y += 10;
+
+          doc.setFont("helvetica", "normal");
+          categoria.itens.forEach((item) => {
+            if (y > 265) {
+              doc.addPage();
+              y = 25;
+              // Header da nova página
+              doc.setFontSize(10);
+              doc.text("INTERMARÍTIMA", margin, 15);
+              doc.setFontSize(9);
+            }
+            
+            // Nome do serviço (pode quebrar linha)
+            const nomeLines = doc.splitTextToSize(item.nome, 90);
+            doc.text(nomeLines, margin + 2, y);
+            
+            // Unidade e valor
+            doc.text(item.unidade, pageWidth - 70, y);
+            doc.text(item.valorEditado || item.valor, pageWidth - margin - 2, y, { align: "right" });
+            
+            y += Math.max(nomeLines.length * 4, 6) + 2;
+            
+            // Linha separadora
+            doc.setDrawColor(220, 220, 220);
+            doc.setLineWidth(0.1);
+            doc.line(margin, y - 1, pageWidth - margin, y - 1);
+          });
+        });
       }
 
       // === NOTAS E CONDIÇÕES ===
-      if (y > 180) {
-        doc.addPage();
-        y = 20;
-      }
+      doc.addPage();
+      y = 25;
+      
+      // Header
+      doc.setFontSize(10);
+      doc.text("INTERMARÍTIMA", margin, 15);
+      doc.text("CERTIFIED OEA", pageWidth - margin - 30, 15);
 
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "bold");
-      doc.text("NOTAS E CONDIÇÕES GERAIS", margin, y);
-      y += 8;
-
+      doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
       const notesLines = doc.splitTextToSize(proposta.notas_condicoes, pageWidth - margin * 2);
       notesLines.forEach((line: string) => {
         if (y > 270) {
           doc.addPage();
-          y = 20;
+          y = 25;
+          doc.text("INTERMARÍTIMA", margin, 15);
         }
         doc.text(line, margin, y);
-        y += 4;
+        y += 4.5;
       });
-      y += 10;
 
       // === OBSERVAÇÕES ADICIONAIS ===
       if (proposta.observacoes) {
+        y += 10;
         if (y > 240) {
           doc.addPage();
-          y = 20;
+          y = 25;
         }
         doc.setFontSize(11);
         doc.setFont("helvetica", "bold");
-        doc.text("OBSERVAÇÕES", margin, y);
+        doc.text("Observações Adicionais:", margin, y);
         y += 7;
         
         doc.setFont("helvetica", "normal");
@@ -224,30 +228,45 @@ export function PropostaViewer({ proposta, onClose }: PropostaViewerProps) {
         obsLines.forEach((line: string) => {
           if (y > 270) {
             doc.addPage();
-            y = 20;
+            y = 25;
           }
           doc.text(line, margin, y);
           y += 5;
         });
-        y += 10;
       }
 
-      // === ASSINATURA ===
+      // === ASSINATURAS ===
+      y += 20;
       if (y > 220) {
         doc.addPage();
-        y = 20;
+        y = 100;
       }
 
-      y += 10;
-      doc.setFontSize(10);
+      // Assinatura Intermarítima
       doc.setFont("helvetica", "normal");
-      const signLines = doc.splitTextToSize(proposta.assinatura_padrao, pageWidth - margin * 2);
-      signLines.forEach((line: string) => {
-        doc.text(line, margin, y);
-        y += 5;
-      });
+      doc.setFontSize(10);
+      doc.text("Intermarítima Portos e Logística S.A.", margin, y);
+      y += 20;
+      doc.line(margin, y, margin + 70, y);
+      y += 5;
+      doc.text("Nome: Fabíola Souza", margin, y);
+      y += 5;
+      doc.text("Cargo: Gerente Comercial", margin, y);
+      y += 5;
+      doc.text("E-mail: fabiola.souza@intermaritima.com.br", margin, y);
 
-      // Save
+      // Assinatura Cliente
+      const clienteX = pageWidth / 2 + 10;
+      y -= 35;
+      doc.text("Cliente:", clienteX, y);
+      y += 20;
+      doc.line(clienteX, y, clienteX + 70, y);
+      y += 5;
+      doc.text("Nome:", clienteX, y);
+      y += 5;
+      doc.text("Tel:", clienteX, y);
+
+      // Salvar
       doc.save(`Proposta_${proposta.numero_proposta}.pdf`);
       toast.success("PDF gerado com sucesso!");
     } catch (error) {
@@ -304,111 +323,124 @@ export function PropostaViewer({ proposta, onClose }: PropostaViewerProps) {
         </TabsList>
 
         <TabsContent value="proposta" className="space-y-4 mt-4">
+          {/* Página 1 - Capa */}
           <Card>
-            <CardHeader className="text-center border-b">
-              <div className="whitespace-pre-wrap text-sm font-medium">{proposta.cabecalho_institucional}</div>
+            <CardHeader className="text-center border-b bg-gradient-to-r from-primary/5 to-primary/10">
+              <CardTitle className="text-2xl text-primary">INTERMARÍTIMA</CardTitle>
+              <p className="text-muted-foreground">Portos e Logística S.A.</p>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
-              <div className="text-center">
-                <h2 className="text-xl font-bold">PROPOSTA COMERCIAL</h2>
-                <p className="text-lg font-semibold">Nº {proposta.numero_proposta}</p>
+              <div className="text-center border-b pb-6">
+                <h2 className="text-xl font-bold">Proposta Comercial Número {proposta.numero_proposta}</h2>
                 <p className="text-muted-foreground">
-                  Data: {new Date(proposta.created_at).toLocaleDateString("pt-BR", {
+                  Salvador, {new Date(proposta.created_at).toLocaleDateString("pt-BR", {
                     day: "numeric",
                     month: "long",
                     year: "numeric",
                   })}
                 </p>
-                {proposta.prazo_validade && (
-                  <p className="text-sm text-muted-foreground">
-                    Válida até: {new Date(proposta.prazo_validade).toLocaleDateString("pt-BR")}
-                  </p>
-                )}
               </div>
 
-              <Separator />
-
-              <div>
+              <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">À</p>
-                <p className="font-bold text-lg">{proposta.clientes?.empresa}</p>
-                {proposta.clientes?.cnpj && <p>CNPJ: {proposta.clientes.cnpj}</p>}
-                {proposta.contato_nome && (
-                  <p>Att.: Sr(a). {proposta.contato_nome}{proposta.contato_cargo ? ` - ${proposta.contato_cargo}` : ""}</p>
-                )}
-                {proposta.contato_email && <p>E-mail: {proposta.contato_email}</p>}
-                {proposta.contato_telefone && <p>Tel.: {proposta.contato_telefone}</p>}
+                <p className="font-bold text-xl">{proposta.clientes?.empresa}</p>
+                {proposta.contato_nome && <p>ATT.: {proposta.contato_nome}</p>}
+                {proposta.contato_email && <p>Email: {proposta.contato_email}</p>}
               </div>
 
-              <div>
-                <p className="font-bold">Ref.: {proposta.modelos_proposta?.nome}</p>
+              <div className="pt-4">
+                <p className="font-bold text-primary">Ref. - {proposta.modelos_proposta?.nome}</p>
               </div>
 
               <Separator />
 
               <div className="whitespace-pre-wrap text-sm leading-relaxed">{proposta.texto_introdutorio}</div>
 
-              {servicos && servicos.length > 0 && (
-                <>
-                  <Separator />
-                  <div className="space-y-4">
-                    <h3 className="font-bold text-lg">TABELA DE SERVIÇOS E VALORES</h3>
-                    <div className="border rounded-lg overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead className="bg-muted">
-                          <tr>
-                            <th className="text-left p-3 font-medium">Serviço</th>
-                            <th className="text-left p-3 font-medium">Unidade</th>
-                            <th className="text-right p-3 font-medium">Valor</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {servicos.map((item, idx) => (
-                            <tr key={idx} className="border-t">
-                              <td className="p-3">{item.nome}</td>
-                              <td className="p-3">{item.unidade}</td>
-                              <td className="p-3 text-right font-medium">
-                                {item.valorEditado || item.valor || "A combinar"}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </>
-              )}
+              <div className="pt-6">
+                <p className="font-medium">Fabíola Souza</p>
+                <p className="text-muted-foreground">Intermarítima Portos e Logística S.A.</p>
+              </div>
+            </CardContent>
+          </Card>
 
-              {proposta.valor_total && proposta.valor_total > 0 && (
-                <div className="flex justify-between text-lg font-bold p-4 bg-muted rounded-lg">
-                  <span>Valor Total Estimado</span>
-                  <span>
-                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(proposta.valor_total)}
-                  </span>
+          {/* Páginas de Serviços */}
+          {categorias && categorias.length > 0 && categorias.map((categoria, catIdx) => (
+            <Card key={catIdx}>
+              <CardHeader className="bg-muted/50">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">{categoria.categoria}</CardTitle>
+                  <Badge variant="outline">CERTIFIED OEA</Badge>
                 </div>
-              )}
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted">
+                      <tr>
+                        <th className="text-left p-3 font-medium">Serviço</th>
+                        <th className="text-left p-3 font-medium w-32">Unidade</th>
+                        <th className="text-right p-3 font-medium w-32">Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {categoria.itens.map((item, idx) => (
+                        <tr key={idx} className="border-t hover:bg-muted/30">
+                          <td className="p-3">{item.nome}</td>
+                          <td className="p-3 text-muted-foreground">{item.unidade}</td>
+                          <td className="p-3 text-right font-medium">{item.valorEditado || item.valor}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
 
-              <Separator />
+          {/* Notas e Condições */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Notas e Condições</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm whitespace-pre-wrap text-muted-foreground leading-relaxed">
+                {proposta.notas_condicoes}
+              </div>
+            </CardContent>
+          </Card>
 
-              <div className="space-y-2">
-                <h3 className="font-bold">NOTAS E CONDIÇÕES GERAIS</h3>
-                <div className="text-sm whitespace-pre-wrap text-muted-foreground leading-relaxed">
-                  {proposta.notas_condicoes}
+          {/* Observações */}
+          {proposta.observacoes && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Observações Adicionais</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm whitespace-pre-wrap">{proposta.observacoes}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Assinaturas */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <p className="font-medium">Intermarítima Portos e Logística S.A.</p>
+                  <div className="border-t border-foreground w-48 pt-2">
+                    <p className="text-sm">Nome: Fabíola Souza</p>
+                    <p className="text-sm">Cargo: Gerente Comercial</p>
+                    <p className="text-sm">E-mail: fabiola.souza@intermaritima.com.br</p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <p className="font-medium">Cliente</p>
+                  <div className="border-t border-foreground w-48 pt-2">
+                    <p className="text-sm">Nome:</p>
+                    <p className="text-sm">Tel:</p>
+                  </div>
                 </div>
               </div>
-
-              {proposta.observacoes && (
-                <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <h3 className="font-bold">OBSERVAÇÕES</h3>
-                    <p className="text-sm whitespace-pre-wrap">{proposta.observacoes}</p>
-                  </div>
-                </>
-              )}
-
-              <Separator />
-
-              <div className="whitespace-pre-wrap text-sm pt-4">{proposta.assinatura_padrao}</div>
             </CardContent>
           </Card>
         </TabsContent>
