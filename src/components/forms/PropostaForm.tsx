@@ -109,6 +109,15 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
     onSuccess?.();
   };
 
+  // Guard against undefined data
+  if (!clientes || !oportunidades || !modelos) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -126,7 +135,7 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {clientes?.map((cliente) => (
+                    {clientes.map((cliente) => (
                       <SelectItem key={cliente.id} value={cliente.id}>
                         {cliente.empresa}
                       </SelectItem>
@@ -152,7 +161,7 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
                   </FormControl>
                   <SelectContent>
                     {oportunidades
-                      ?.filter(o => !selectedClienteId || o.cliente_id === selectedClienteId)
+                      .filter(o => !selectedClienteId || o.cliente_id === selectedClienteId)
                       .map((op) => (
                         <SelectItem key={op.id} value={op.id}>
                           {op.titulo}
@@ -184,7 +193,7 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {modelos?.map((modelo) => (
+                    {modelos.map((modelo) => (
                       <SelectItem key={modelo.id} value={modelo.id}>
                         {modelo.nome}
                       </SelectItem>
