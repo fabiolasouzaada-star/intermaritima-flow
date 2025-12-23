@@ -13,17 +13,12 @@ export type PropostaInsert = TablesInsert<"propostas">;
 export type PropostaUpdate = TablesUpdate<"propostas">;
 export type PropostaHistorico = Tables<"proposta_historico">;
 
+// Estrutura simples de serviço conforme armazenado no banco
 export interface ServicoItem {
   nome: string;
-  valor: string;
   unidade: string;
+  valor?: string;
   valorEditado?: string;
-}
-
-export interface ServicoCategoria {
-  categoria: string;
-  subcategoria: string;
-  itens: ServicoItem[];
 }
 
 export function useModelosPropostas() {

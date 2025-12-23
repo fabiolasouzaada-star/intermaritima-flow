@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useClientes } from "@/hooks/useClientes";
 import { useOportunidades } from "@/hooks/useOportunidades";
-import { useModelosPropostas, useModeloProposta, useCreateProposta, ServicoCategoria } from "@/hooks/usePropostas";
+import { useModelosPropostas, useModeloProposta, useCreateProposta, ServicoItem } from "@/hooks/usePropostas";
 import { Loader2 } from "lucide-react";
 import { Json } from "@/integrations/supabase/types";
 
@@ -36,7 +36,7 @@ interface PropostaFormProps {
 
 export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaFormProps) {
   const [selectedModeloId, setSelectedModeloId] = useState<string>("");
-  const [servicos, setServicos] = useState<ServicoCategoria[]>([]);
+  const [servicos, setServicos] = useState<ServicoItem[]>([]);
 
   const { data: clientes } = useClientes();
   const { data: oportunidades } = useOportunidades();
@@ -59,21 +59,27 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
     },
   });
 
-  // Load modelo structure when selected
+  // Load modelo structure when selected - now handles flat array structure
   useEffect(() => {
     if (modeloSelecionado?.estrutura_servicos) {
-      const estrutura = modeloSelecionado.estrutura_servicos as unknown as ServicoCategoria[];
-      setServicos(estrutura);
+      const estrutura = modeloSelecionado.estrutura_servicos as unknown as ServicoItem[];
+      // Initialize with empty values for editing
+      const servicosComValor = estrutura.map(item => ({
+        ...item,
+        valor: item.valor || "",
+        valorEditado: "",
+      }));
+      setServicos(servicosComValor);
     }
   }, [modeloSelecionado]);
 
   // Watch selected client
   const selectedClienteId = form.watch("cliente_id");
 
-  const handleServicoValueChange = (catIndex: number, itemIndex: number, newValue: string) => {
+  const handleServicoValueChange = (index: number, newValue: string) => {
     setServicos(prev => {
       const updated = [...prev];
-      updated[catIndex].itens[itemIndex].valorEditado = newValue;
+      updated[index] = { ...updated[index], valorEditado: newValue };
       return updated;
     });
   };
@@ -81,11 +87,10 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
   const onSubmit = async (data: FormData) => {
     if (!modeloSelecionado) return;
 
-    const valorTotal = servicos.reduce((total, cat) => {
-      return total + cat.itens.reduce((catTotal, item) => {
-        const valor = parseFloat(item.valorEditado || item.valor.replace(/[^0-9.,]/g, "").replace(",", "."));
-        return catTotal + (isNaN(valor) ? 0 : valor);
-      }, 0);
+    const valorTotal = servicos.reduce((total, item) => {
+      const valorStr = item.valorEditado || item.valor || "0";
+      const valor = parseFloat(valorStr.replace(/[^0-9.,]/g, "").replace(",", "."));
+      return total + (isNaN(valor) ? 0 : valor);
     }, 0);
 
     await createProposta.mutateAsync({
@@ -206,6 +211,33 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
           />
         </div>
 
+        {/* Preview do modelo selecionado */}
+        {modeloSelecionado && (
+          <Card className="border-primary/20 bg-muted/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">Prévia do Modelo</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm">
+              <div>
+                <p className="font-medium text-xs uppercase text-muted-foreground mb-1">Cabeçalho Institucional</p>
+                <p className="whitespace-pre-wrap bg-background p-2 rounded border">{modeloSelecionado.cabecalho_institucional}</p>
+              </div>
+              <div>
+                <p className="font-medium text-xs uppercase text-muted-foreground mb-1">Texto Introdutório</p>
+                <p className="whitespace-pre-wrap bg-background p-2 rounded border">{modeloSelecionado.texto_introdutorio}</p>
+              </div>
+              <div>
+                <p className="font-medium text-xs uppercase text-muted-foreground mb-1">Notas e Condições</p>
+                <p className="whitespace-pre-wrap bg-background p-2 rounded border text-xs">{modeloSelecionado.notas_condicoes}</p>
+              </div>
+              <div>
+                <p className="font-medium text-xs uppercase text-muted-foreground mb-1">Assinatura</p>
+                <p className="whitespace-pre-wrap bg-background p-2 rounded border">{modeloSelecionado.assinatura_padrao}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Dados do Contato</CardTitle>
@@ -270,32 +302,23 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Serviços e Valores</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Preencha os valores para cada serviço. Deixe em branco para usar "A combinar".
+              </p>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {servicos.map((categoria, catIndex) => (
-                <div key={catIndex} className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold">{categoria.categoria}</h4>
-                    <p className="text-sm text-muted-foreground">{categoria.subcategoria}</p>
+            <CardContent className="space-y-3">
+              {servicos.map((item, index) => (
+                <div key={index} className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
+                  <div className="flex-1">
+                    <p className="font-medium">{item.nome}</p>
+                    <p className="text-sm text-muted-foreground">Unidade: {item.unidade}</p>
                   </div>
-                  <div className="grid gap-3">
-                    {categoria.itens.map((item, itemIndex) => (
-                      <div key={itemIndex} className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
-                        <div className="flex-1">
-                          <p className="font-medium">{item.nome}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Valor padrão: {item.valor} ({item.unidade})
-                          </p>
-                        </div>
-                        <Input
-                          className="w-40"
-                          placeholder={item.valor}
-                          value={item.valorEditado || ""}
-                          onChange={(e) => handleServicoValueChange(catIndex, itemIndex, e.target.value)}
-                        />
-                      </div>
-                    ))}
-                  </div>
+                  <Input
+                    className="w-40"
+                    placeholder="R$ 0,00"
+                    value={item.valorEditado || ""}
+                    onChange={(e) => handleServicoValueChange(index, e.target.value)}
+                  />
                 </div>
               ))}
             </CardContent>
@@ -323,9 +346,13 @@ export function PropostaForm({ onSuccess, clienteId, oportunidadeId }: PropostaF
           name="observacoes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Observações</FormLabel>
+              <FormLabel>Observações Adicionais</FormLabel>
               <FormControl>
-                <Textarea rows={4} {...field} />
+                <Textarea 
+                  rows={4} 
+                  placeholder="Observações específicas para esta proposta (serão adicionadas ao documento)"
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
