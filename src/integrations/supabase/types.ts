@@ -489,6 +489,54 @@ export type Database = {
           },
         ]
       }
+      modelos_proposta: {
+        Row: {
+          anexos_padrao: Json | null
+          assinatura_padrao: string
+          ativo: boolean
+          cabecalho_institucional: string
+          created_at: string
+          created_by: string | null
+          estrutura_servicos: Json
+          id: string
+          nome: string
+          notas_condicoes: string
+          texto_introdutorio: string
+          tipo: Database["public"]["Enums"]["tipo_modelo_proposta"]
+          updated_at: string
+        }
+        Insert: {
+          anexos_padrao?: Json | null
+          assinatura_padrao: string
+          ativo?: boolean
+          cabecalho_institucional: string
+          created_at?: string
+          created_by?: string | null
+          estrutura_servicos?: Json
+          id?: string
+          nome: string
+          notas_condicoes: string
+          texto_introdutorio: string
+          tipo: Database["public"]["Enums"]["tipo_modelo_proposta"]
+          updated_at?: string
+        }
+        Update: {
+          anexos_padrao?: Json | null
+          assinatura_padrao?: string
+          ativo?: boolean
+          cabecalho_institucional?: string
+          created_at?: string
+          created_by?: string | null
+          estrutura_servicos?: Json
+          id?: string
+          nome?: string
+          notas_condicoes?: string
+          texto_introdutorio?: string
+          tipo?: Database["public"]["Enums"]["tipo_modelo_proposta"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ocorrencias: {
         Row: {
           contrato_id: string
@@ -734,6 +782,173 @@ export type Database = {
         }
         Relationships: []
       }
+      proposta_historico: {
+        Row: {
+          alteracoes: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          observacao: string | null
+          proposta_id: string
+          status_anterior: Database["public"]["Enums"]["status_proposta"] | null
+          status_novo: Database["public"]["Enums"]["status_proposta"] | null
+          versao: number
+        }
+        Insert: {
+          alteracoes: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          observacao?: string | null
+          proposta_id: string
+          status_anterior?:
+            | Database["public"]["Enums"]["status_proposta"]
+            | null
+          status_novo?: Database["public"]["Enums"]["status_proposta"] | null
+          versao: number
+        }
+        Update: {
+          alteracoes?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          observacao?: string | null
+          proposta_id?: string
+          status_anterior?:
+            | Database["public"]["Enums"]["status_proposta"]
+            | null
+          status_novo?: Database["public"]["Enums"]["status_proposta"] | null
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposta_historico_proposta_id_fkey"
+            columns: ["proposta_id"]
+            isOneToOne: false
+            referencedRelation: "propostas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      propostas: {
+        Row: {
+          aprovada_em: string | null
+          assinatura_padrao: string
+          cabecalho_institucional: string
+          cliente_id: string
+          contato_cargo: string | null
+          contato_email: string | null
+          contato_nome: string | null
+          contato_telefone: string | null
+          created_at: string
+          created_by: string | null
+          enviada_em: string | null
+          id: string
+          modelo_id: string
+          notas_condicoes: string
+          numero_proposta: string
+          observacoes: string | null
+          oportunidade_id: string | null
+          pdf_url: string | null
+          prazo_validade: string | null
+          rejeitada_em: string | null
+          responsavel_id: string | null
+          servicos: Json
+          status: Database["public"]["Enums"]["status_proposta"]
+          texto_introdutorio: string
+          updated_at: string
+          valor_total: number | null
+          versao: number
+        }
+        Insert: {
+          aprovada_em?: string | null
+          assinatura_padrao: string
+          cabecalho_institucional: string
+          cliente_id: string
+          contato_cargo?: string | null
+          contato_email?: string | null
+          contato_nome?: string | null
+          contato_telefone?: string | null
+          created_at?: string
+          created_by?: string | null
+          enviada_em?: string | null
+          id?: string
+          modelo_id: string
+          notas_condicoes: string
+          numero_proposta: string
+          observacoes?: string | null
+          oportunidade_id?: string | null
+          pdf_url?: string | null
+          prazo_validade?: string | null
+          rejeitada_em?: string | null
+          responsavel_id?: string | null
+          servicos?: Json
+          status?: Database["public"]["Enums"]["status_proposta"]
+          texto_introdutorio: string
+          updated_at?: string
+          valor_total?: number | null
+          versao?: number
+        }
+        Update: {
+          aprovada_em?: string | null
+          assinatura_padrao?: string
+          cabecalho_institucional?: string
+          cliente_id?: string
+          contato_cargo?: string | null
+          contato_email?: string | null
+          contato_nome?: string | null
+          contato_telefone?: string | null
+          created_at?: string
+          created_by?: string | null
+          enviada_em?: string | null
+          id?: string
+          modelo_id?: string
+          notas_condicoes?: string
+          numero_proposta?: string
+          observacoes?: string | null
+          oportunidade_id?: string | null
+          pdf_url?: string | null
+          prazo_validade?: string | null
+          rejeitada_em?: string | null
+          responsavel_id?: string | null
+          servicos?: Json
+          status?: Database["public"]["Enums"]["status_proposta"]
+          texto_introdutorio?: string
+          updated_at?: string
+          valor_total?: number | null
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "propostas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "propostas_modelo_id_fkey"
+            columns: ["modelo_id"]
+            isOneToOne: false
+            referencedRelation: "modelos_proposta"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "propostas_oportunidade_id_fkey"
+            columns: ["oportunidade_id"]
+            isOneToOne: false
+            referencedRelation: "oportunidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "propostas_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       propostas_cliente: {
         Row: {
           cliente_id: string
@@ -933,6 +1148,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      gerar_numero_proposta: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -961,9 +1177,19 @@ export type Database = {
         | "fechamento"
         | "ganho"
         | "perdido"
+      status_proposta: "rascunho" | "enviada" | "aprovada" | "rejeitada"
       status_tarefa: "pendente" | "em_andamento" | "concluida" | "cancelada"
       status_visita: "a_agendar" | "agendada" | "realizada" | "cancelada"
       tipo_evento: "reuniao" | "follow_up" | "apresentacao" | "visita" | "outro"
+      tipo_modelo_proposta:
+        | "alfandegada_fcl"
+        | "alfandegada_lcl"
+        | "alfandegada_fcl_lcl"
+        | "break_bulk"
+        | "exportacao"
+        | "transporte"
+        | "armazem_geral"
+        | "aerea"
       tipo_ocorrencia:
         | "reclamacao"
         | "duvida"
@@ -1124,9 +1350,20 @@ export const Constants = {
         "ganho",
         "perdido",
       ],
+      status_proposta: ["rascunho", "enviada", "aprovada", "rejeitada"],
       status_tarefa: ["pendente", "em_andamento", "concluida", "cancelada"],
       status_visita: ["a_agendar", "agendada", "realizada", "cancelada"],
       tipo_evento: ["reuniao", "follow_up", "apresentacao", "visita", "outro"],
+      tipo_modelo_proposta: [
+        "alfandegada_fcl",
+        "alfandegada_lcl",
+        "alfandegada_fcl_lcl",
+        "break_bulk",
+        "exportacao",
+        "transporte",
+        "armazem_geral",
+        "aerea",
+      ],
       tipo_ocorrencia: [
         "reclamacao",
         "duvida",
