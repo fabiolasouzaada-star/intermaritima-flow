@@ -12,7 +12,8 @@ import {
   LogOut,
   Target,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  FileSpreadsheet
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,6 +35,7 @@ const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Clientes", url: "/clientes", icon: Users },
   { title: "Pipeline", url: "/pipeline", icon: Workflow },
+  { title: "Propostas", url: "/propostas", icon: FileSpreadsheet },
   { title: "Contratos", url: "/contratos", icon: FileText },
   { title: "Calendário", url: "/calendario", icon: Calendar },
   { title: "Visitas", url: "/visitas", icon: ClipboardList },
