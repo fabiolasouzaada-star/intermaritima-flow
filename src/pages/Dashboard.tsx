@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { 
   Users, 
@@ -11,6 +12,7 @@ import {
   PackageSearch
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useClientes } from "@/hooks/useClientes";
 import { useOportunidades } from "@/hooks/useOportunidades";
@@ -21,6 +23,8 @@ import { useTarefas } from "@/hooks/useTarefas";
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
 export default function Dashboard() {
+  const [comercialFilter, setComercialFilter] = useState("todos");
+  
   const { data: clientes, isLoading: loadingClientes } = useClientes();
   const { data: oportunidades, isLoading: loadingOportunidades } = useOportunidades();
   const { data: contratos, isLoading: loadingContratos } = useContratos();
@@ -29,18 +33,68 @@ export default function Dashboard() {
 
   const isLoading = loadingClientes || loadingOportunidades || loadingContratos || loadingVisitas || loadingTarefas;
 
+  // Extrair comerciais únicos (códigos)
+  const comerciaisDisponiveis = useMemo(() => {
+    if (!clientes) return [];
+    const codigos = new Set<string>();
+    clientes.forEach(c => {
+      if (c.responsavel_codigo) {
+        codigos.add(c.responsavel_codigo);
+      }
+    });
+    return Array.from(codigos).sort();
+  }, [clientes]);
+
+  // Filtrar clientes pelo comercial
+  const clientesFiltrados = useMemo(() => {
+    if (!clientes) return [];
+    if (comercialFilter === "todos") return clientes;
+    return clientes.filter(c => c.responsavel_codigo === comercialFilter);
+  }, [clientes, comercialFilter]);
+
+  // IDs dos clientes filtrados para filtrar outras entidades
+  const clienteIds = useMemo(() => new Set(clientesFiltrados.map(c => c.id)), [clientesFiltrados]);
+
+  // Filtrar oportunidades
+  const oportunidadesFiltradas = useMemo(() => {
+    if (!oportunidades) return [];
+    if (comercialFilter === "todos") return oportunidades;
+    return oportunidades.filter(o => clienteIds.has(o.cliente_id));
+  }, [oportunidades, comercialFilter, clienteIds]);
+
+  // Filtrar contratos
+  const contratosFiltrados = useMemo(() => {
+    if (!contratos) return [];
+    if (comercialFilter === "todos") return contratos;
+    return contratos.filter(c => clienteIds.has(c.cliente_id));
+  }, [contratos, comercialFilter, clienteIds]);
+
+  // Filtrar visitas
+  const visitasFiltradas = useMemo(() => {
+    if (!visitas) return [];
+    if (comercialFilter === "todos") return visitas;
+    return visitas.filter(v => clienteIds.has(v.cliente_id));
+  }, [visitas, comercialFilter, clienteIds]);
+
+  // Filtrar tarefas
+  const tarefasFiltradas = useMemo(() => {
+    if (!tarefas) return [];
+    if (comercialFilter === "todos") return tarefas;
+    return tarefas.filter(t => t.cliente_id && clienteIds.has(t.cliente_id));
+  }, [tarefas, comercialFilter, clienteIds]);
+
   // Métricas de Clientes
-  const clientesAtivos = clientes?.filter(c => c.status === "ativo").length || 0;
-  const clientesInativos = clientes?.filter(c => c.status === "inativo").length || 0;
+  const clientesAtivos = clientesFiltrados.filter(c => c.status === "ativo").length;
+  const clientesInativos = clientesFiltrados.filter(c => c.status === "inativo").length;
 
   // Métricas de Oportunidades
-  const oportunidadesGanhas = oportunidades?.filter(o => o.status === "ganho") || [];
+  const oportunidadesGanhas = oportunidadesFiltradas.filter(o => o.status === "ganho");
   const totalReceitaFechada = oportunidadesGanhas.reduce((acc, o) => acc + (o.valor || 0), 0);
-  const oportunidadesAbertas = oportunidades?.filter(o => !["ganho", "perdido"].includes(o.status)) || [];
+  const oportunidadesAbertas = oportunidadesFiltradas.filter(o => !["ganho", "perdido"].includes(o.status));
   const totalReceitaPrevista = oportunidadesAbertas.reduce((acc, o) => acc + ((o.valor || 0) * (o.probabilidade || 0) / 100), 0);
   
   // Taxa de conversão
-  const totalOportunidades = oportunidades?.length || 0;
+  const totalOportunidades = oportunidadesFiltradas.length;
   const taxaConversao = totalOportunidades > 0 
     ? Math.round((oportunidadesGanhas.length / totalOportunidades) * 100) 
     : 0;
@@ -49,26 +103,26 @@ export default function Dashboard() {
   const hoje = new Date();
   const em30dias = new Date();
   em30dias.setDate(hoje.getDate() + 30);
-  const contratosAVencer = contratos?.filter(c => {
+  const contratosAVencer = contratosFiltrados.filter(c => {
     if (!c.data_fim) return false;
     const dataFim = new Date(c.data_fim);
     return dataFim >= hoje && dataFim <= em30dias && c.status === "ativo";
-  }).length || 0;
+  }).length;
 
   // Visitas realizadas (total)
-  const visitasRealizadas = visitas?.filter(v => v.status === "realizada").length || 0;
+  const visitasRealizadas = visitasFiltradas.filter(v => v.status === "realizada").length;
 
   // Follow-ups pendentes (tarefas pendentes)
-  const followUpsPendentes = tarefas?.filter(t => 
+  const followUpsPendentes = tarefasFiltradas.filter(t => 
     t.status === "pendente" || t.status === "em_andamento"
-  ).length || 0;
+  ).length;
 
   // Dados para gráfico de pipeline
   const pipelineData = [
-    { name: "Qualificação", value: oportunidades?.filter(o => o.status === "qualificacao").length || 0 },
-    { name: "Proposta", value: oportunidades?.filter(o => o.status === "proposta").length || 0 },
-    { name: "Negociação", value: oportunidades?.filter(o => o.status === "negociacao").length || 0 },
-    { name: "Fechamento", value: oportunidades?.filter(o => o.status === "fechamento").length || 0 },
+    { name: "Qualificação", value: oportunidadesFiltradas.filter(o => o.status === "qualificacao").length },
+    { name: "Proposta", value: oportunidadesFiltradas.filter(o => o.status === "proposta").length },
+    { name: "Negociação", value: oportunidadesFiltradas.filter(o => o.status === "negociacao").length },
+    { name: "Fechamento", value: oportunidadesFiltradas.filter(o => o.status === "fechamento").length },
     { name: "Ganho", value: oportunidadesGanhas.length },
   ].filter(d => d.value > 0);
 
@@ -76,12 +130,12 @@ export default function Dashboard() {
   const clientesStatusData = [
     { name: "Ativos", value: clientesAtivos },
     { name: "Inativos", value: clientesInativos },
-    { name: "Prospectos", value: clientes?.filter(c => c.status === "prospecto").length || 0 },
+    { name: "Prospectos", value: clientesFiltrados.filter(c => c.status === "prospecto").length },
   ].filter(d => d.value > 0);
 
   // Dados para segmentos
   const segmentosMap = new Map<string, number>();
-  clientes?.forEach(c => {
+  clientesFiltrados.forEach(c => {
     if (c.segmentos) {
       c.segmentos.forEach(seg => {
         segmentosMap.set(seg, (segmentosMap.get(seg) || 0) + 1);
@@ -108,9 +162,25 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard Comercial</h1>
-        <p className="text-muted-foreground">Visão geral do CRM Intermarítima</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard Comercial</h1>
+          <p className="text-muted-foreground">Visão geral do CRM Intermarítima</p>
+        </div>
+        <Select value={comercialFilter} onValueChange={setComercialFilter}>
+          <SelectTrigger className="w-[200px]">
+            <Users className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="Filtrar Comercial" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os Comerciais</SelectItem>
+            {comerciaisDisponiveis.map((codigo) => (
+              <SelectItem key={codigo} value={codigo}>
+                {codigo}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

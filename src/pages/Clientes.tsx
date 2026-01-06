@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Eye, Trash2 } from "lucide-react";
+import { Plus, Search, Eye, Trash2, Users } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useClientes, useDeleteCliente } from "@/hooks/useClientes";
@@ -14,11 +14,24 @@ import { useNavigate } from "react-router-dom";
 export default function Clientes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
+  const [comercialFilter, setComercialFilter] = useState("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
   
   const { data: clientes, isLoading } = useClientes();
   const deleteCliente = useDeleteCliente();
   const navigate = useNavigate();
+
+  // Extrair comerciais únicos (códigos)
+  const comerciaisDisponiveis = useMemo(() => {
+    if (!clientes) return [];
+    const codigos = new Set<string>();
+    clientes.forEach(c => {
+      if (c.responsavel_codigo) {
+        codigos.add(c.responsavel_codigo);
+      }
+    });
+    return Array.from(codigos).sort();
+  }, [clientes]);
 
   const filteredClientes = clientes?.filter(cliente => {
     const matchesSearch = 
@@ -26,8 +39,9 @@ export default function Clientes() {
       (cliente.cnpj && cliente.cnpj.includes(searchTerm));
     
     const matchesStatus = statusFilter === "todos" || cliente.status === statusFilter;
+    const matchesComercial = comercialFilter === "todos" || cliente.responsavel_codigo === comercialFilter;
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesComercial;
   }) || [];
 
   const getStatusBadge = (status: string) => {
@@ -72,7 +86,7 @@ export default function Clientes() {
           <CardTitle>Filtros</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -82,6 +96,20 @@ export default function Clientes() {
                 className="pl-10"
               />
             </div>
+            <Select value={comercialFilter} onValueChange={setComercialFilter}>
+              <SelectTrigger>
+                <Users className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Filtrar por comercial" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os Comerciais</SelectItem>
+                {comerciaisDisponiveis.map((codigo) => (
+                  <SelectItem key={codigo} value={codigo}>
+                    {codigo}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="Filtrar por status" />
@@ -108,6 +136,7 @@ export default function Clientes() {
                 <TableHead>Empresa</TableHead>
                 <TableHead>CNPJ</TableHead>
                 <TableHead>Segmento</TableHead>
+                <TableHead>Comercial</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Potencial</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -116,7 +145,7 @@ export default function Clientes() {
             <TableBody>
               {filteredClientes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     Nenhum cliente encontrado
                   </TableCell>
                 </TableRow>
@@ -142,6 +171,11 @@ export default function Clientes() {
                       ) : (
                         "-"
                       )}
+                    </TableCell>
+                    <TableCell>
+                      {cliente.responsavel_codigo ? (
+                        <Badge variant="outline">{cliente.responsavel_codigo}</Badge>
+                      ) : "-"}
                     </TableCell>
                     <TableCell>{getStatusBadge(cliente.status)}</TableCell>
                     <TableCell>{cliente.potencial || "-"}</TableCell>

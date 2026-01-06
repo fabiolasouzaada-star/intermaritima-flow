@@ -4,11 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CalendarDays, Clock, AlertCircle, MapPin, ChevronLeft, ChevronRight, List, Grid3X3 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CalendarDays, Clock, AlertCircle, MapPin, ChevronLeft, ChevronRight, List, Grid3X3, Users } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { useVisitas } from "@/hooks/useVisitas";
 import { useTarefas } from "@/hooks/useTarefas";
-import { format, isToday, isSameDay, addDays, startOfDay, startOfWeek, endOfWeek, eachDayOfInterval, subDays, isBefore } from "date-fns";
+import { useClientes } from "@/hooks/useClientes";
+import { format, isToday, isSameDay, addDays, startOfDay, startOfWeek, endOfWeek, eachDayOfInterval, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -18,6 +20,7 @@ type Evento = {
   tipo: "visita" | "tarefa";
   titulo: string;
   cliente?: string;
+  clienteId?: string;
   data: Date;
   hora: string;
   status: string;
@@ -26,16 +29,45 @@ type Evento = {
 export default function Calendario() {
   const [date, setDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<"agenda" | "calendar">("agenda");
+  const [comercialFilter, setComercialFilter] = useState("todos");
   const { data: visitas, isLoading: isLoadingVisitas } = useVisitas();
   const { data: tarefas, isLoading: isLoadingTarefas } = useTarefas();
+  const { data: clientes } = useClientes();
+
+  // Extrair comerciais únicos (códigos) dos clientes
+  const comerciaisDisponiveis = useMemo(() => {
+    if (!clientes) return [];
+    const codigos = new Set<string>();
+    clientes.forEach(c => {
+      if (c.responsavel_codigo) {
+        codigos.add(c.responsavel_codigo);
+      }
+    });
+    return Array.from(codigos).sort();
+  }, [clientes]);
+
+  // Mapa de cliente_id para responsavel_codigo
+  const clienteToComercial = useMemo(() => {
+    const map = new Map<string, string>();
+    clientes?.forEach(c => {
+      if (c.responsavel_codigo) {
+        map.set(c.id, c.responsavel_codigo);
+      }
+    });
+    return map;
+  }, [clientes]);
 
   // Alertas para visitas do dia
   const visitasHoje = useMemo(() => {
     if (!visitas) return [];
-    return visitas.filter(v => 
+    let filtradas = visitas.filter(v => 
       isToday(new Date(v.data_visita)) && v.status === "agendada"
     );
-  }, [visitas]);
+    if (comercialFilter !== "todos") {
+      filtradas = filtradas.filter(v => clienteToComercial.get(v.cliente_id) === comercialFilter);
+    }
+    return filtradas;
+  }, [visitas, comercialFilter, clienteToComercial]);
 
   // Mostrar alerta de visitas do dia ao carregar
   useEffect(() => {
@@ -59,6 +91,7 @@ export default function Calendario() {
           tipo: "visita",
           titulo: v.objetivo || "Visita",
           cliente: v.clientes?.empresa,
+          clienteId: v.cliente_id,
           data: dataVisita,
           hora: format(dataVisita, "HH:mm"),
           status: v.status,
@@ -74,6 +107,7 @@ export default function Calendario() {
             tipo: "tarefa",
             titulo: t.titulo,
             cliente: t.clientes?.empresa,
+            clienteId: t.cliente_id || undefined,
             data: new Date(t.data_vencimento),
             hora: "00:00",
             status: t.status,
@@ -85,6 +119,15 @@ export default function Calendario() {
     return eventos.sort((a, b) => a.data.getTime() - b.data.getTime());
   }, [visitas, tarefas]);
 
+  // Filtrar eventos por comercial
+  const eventosFiltrados = useMemo(() => {
+    if (comercialFilter === "todos") return todosEventos;
+    return todosEventos.filter(e => {
+      if (!e.clienteId) return false;
+      return clienteToComercial.get(e.clienteId) === comercialFilter;
+    });
+  }, [todosEventos, comercialFilter, clienteToComercial]);
+
   // Eventos agrupados por dia para visão de agenda (próximos 30 dias)
   const eventosAgrupados = useMemo(() => {
     const hoje = startOfDay(new Date());
@@ -93,13 +136,13 @@ export default function Calendario() {
     const dias = eachDayOfInterval({ start: hoje, end: limite });
     
     return dias.map(dia => {
-      const eventosDoDia = todosEventos.filter(e => isSameDay(e.data, dia));
+      const eventosDoDia = eventosFiltrados.filter(e => isSameDay(e.data, dia));
       return {
         data: dia,
         eventos: eventosDoDia.sort((a, b) => a.hora.localeCompare(b.hora)),
       };
     }).filter(d => d.eventos.length > 0);
-  }, [todosEventos]);
+  }, [eventosFiltrados]);
 
   // Eventos da semana atual
   const eventosSemana = useMemo(() => {
@@ -108,18 +151,18 @@ export default function Calendario() {
     const dias = eachDayOfInterval({ start: inicioSemana, end: fimSemana });
     
     return dias.map(dia => {
-      const eventosDoDia = todosEventos.filter(e => isSameDay(e.data, dia));
+      const eventosDoDia = eventosFiltrados.filter(e => isSameDay(e.data, dia));
       return {
         data: dia,
         eventos: eventosDoDia.sort((a, b) => a.hora.localeCompare(b.hora)),
       };
     });
-  }, [todosEventos, date]);
+  }, [eventosFiltrados, date]);
 
   // Dias com eventos para marcar no calendário
   const diasComEventos = useMemo(() => {
-    return todosEventos.map(e => e.data);
-  }, [todosEventos]);
+    return eventosFiltrados.map(e => e.data);
+  }, [eventosFiltrados]);
 
   const getTipoIcon = (tipo: string) => {
     switch (tipo) {
@@ -242,18 +285,34 @@ export default function Calendario() {
           <h1 className="text-2xl md:text-3xl font-bold">Calendário Comercial</h1>
           <p className="text-muted-foreground text-sm md:text-base">Agenda de visitas, reuniões e compromissos</p>
         </div>
-        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "agenda" | "calendar")}>
-          <TabsList>
-            <TabsTrigger value="agenda" className="gap-2">
-              <List className="h-4 w-4" />
-              Agenda
-            </TabsTrigger>
-            <TabsTrigger value="calendar" className="gap-2">
-              <Grid3X3 className="h-4 w-4" />
-              Calendário
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex items-center gap-2">
+          <Select value={comercialFilter} onValueChange={setComercialFilter}>
+            <SelectTrigger className="w-[180px]">
+              <Users className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Filtrar Comercial" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Comerciais</SelectItem>
+              {comerciaisDisponiveis.map((codigo) => (
+                <SelectItem key={codigo} value={codigo}>
+                  {codigo}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "agenda" | "calendar")}>
+            <TabsList>
+              <TabsTrigger value="agenda" className="gap-2">
+                <List className="h-4 w-4" />
+                Agenda
+              </TabsTrigger>
+              <TabsTrigger value="calendar" className="gap-2">
+                <Grid3X3 className="h-4 w-4" />
+                Calendário
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       {/* Alerta de visitas do dia */}

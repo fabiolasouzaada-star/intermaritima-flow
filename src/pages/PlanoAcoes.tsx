@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { usePlanoAcoes, useDeletePlanoAcao, type PlanoAcao, type StatusAcao, type PrioridadeAcao } from "@/hooks/usePlanoAcoes";
+import { useClientes } from "@/hooks/useClientes";
 import { PlanoAcaoForm } from "@/components/forms/PlanoAcaoForm";
 import { PlanoAcaoEditForm } from "@/components/forms/PlanoAcaoEditForm";
 
@@ -40,19 +41,31 @@ export default function PlanoAcoes() {
   const [comercialFilter, setComercialFilter] = useState<string>("all");
 
   const { data: acoes, isLoading } = usePlanoAcoes();
+  const { data: clientes } = useClientes();
   const deleteAcao = useDeletePlanoAcao();
 
-  // Lista de comerciais únicos para o filtro
-  const comerciais = useMemo(() => {
-    if (!acoes) return [];
-    const uniqueComerciais = new Map<string, { id: string; nome: string }>();
-    acoes.forEach((acao) => {
-      if (acao.created_by && acao.criador?.nome) {
-        uniqueComerciais.set(acao.created_by, { id: acao.created_by, nome: acao.criador.nome });
+  // Extrair comerciais únicos (códigos) dos clientes
+  const comerciaisDisponiveis = useMemo(() => {
+    if (!clientes) return [];
+    const codigos = new Set<string>();
+    clientes.forEach(c => {
+      if (c.responsavel_codigo) {
+        codigos.add(c.responsavel_codigo);
       }
     });
-    return Array.from(uniqueComerciais.values()).sort((a, b) => a.nome.localeCompare(b.nome));
-  }, [acoes]);
+    return Array.from(codigos).sort();
+  }, [clientes]);
+
+  // Mapa de cliente_id para responsavel_codigo
+  const clienteToComercial = useMemo(() => {
+    const map = new Map<string, string>();
+    clientes?.forEach(c => {
+      if (c.responsavel_codigo) {
+        map.set(c.id, c.responsavel_codigo);
+      }
+    });
+    return map;
+  }, [clientes]);
 
   const filteredAcoes = useMemo(() => {
     if (!acoes) return [];
@@ -63,10 +76,14 @@ export default function PlanoAcoes() {
         acao.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === "all" || acao.status === statusFilter;
       const matchesPrioridade = prioridadeFilter === "all" || acao.prioridade === prioridadeFilter;
-      const matchesComercial = comercialFilter === "all" || acao.created_by === comercialFilter;
+      
+      // Filtro por comercial (baseado no cliente)
+      const comercialDoCliente = clienteToComercial.get(acao.cliente_id);
+      const matchesComercial = comercialFilter === "all" || comercialDoCliente === comercialFilter;
+      
       return matchesSearch && matchesStatus && matchesPrioridade && matchesComercial;
     });
-  }, [acoes, searchTerm, statusFilter, prioridadeFilter, comercialFilter]);
+  }, [acoes, searchTerm, statusFilter, prioridadeFilter, comercialFilter, clienteToComercial]);
 
   const stats = useMemo(() => {
     const dataToCount = comercialFilter === "all" ? acoes : filteredAcoes;
@@ -174,9 +191,9 @@ export default function PlanoAcoes() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os comerciais</SelectItem>
-            {comerciais.map((comercial) => (
-              <SelectItem key={comercial.id} value={comercial.id}>
-                {comercial.nome}
+            {comerciaisDisponiveis.map((codigo) => (
+              <SelectItem key={codigo} value={codigo}>
+                {codigo}
               </SelectItem>
             ))}
           </SelectContent>
@@ -248,11 +265,10 @@ export default function PlanoAcoes() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {acao.criador?.nome ? (
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          {acao.criador.nome}
-                        </div>
+                      {clienteToComercial.get(acao.cliente_id) ? (
+                        <Badge variant="outline">
+                          {clienteToComercial.get(acao.cliente_id)}
+                        </Badge>
                       ) : (
                         "-"
                       )}
@@ -318,7 +334,7 @@ export default function PlanoAcoes() {
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground">Comercial</h4>
-                  <p>{selectedAcao.criador?.nome || "-"}</p>
+                  <p>{clienteToComercial.get(selectedAcao.cliente_id) || "-"}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
