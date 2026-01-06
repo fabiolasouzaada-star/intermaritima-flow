@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -7,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Calendar, TrendingUp, GripVertical } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DollarSign, Calendar, TrendingUp, GripVertical, ClipboardList } from "lucide-react";
 import { useUpdateOportunidade, type Oportunidade } from "@/hooks/useOportunidades";
+import { useCreatePlanoAcao } from "@/hooks/usePlanoAcoes";
 import { OportunidadeEditForm } from "@/components/forms/OportunidadeEditForm";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -59,6 +62,7 @@ const MOTIVOS_PERDA = [
 ];
 
 export function PipelineKanban({ oportunidades }: PipelineKanbanProps) {
+  const navigate = useNavigate();
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [editingOportunidade, setEditingOportunidade] = useState<Oportunidade | null>(null);
   const [perdaDialogOpen, setPerdaDialogOpen] = useState(false);
@@ -66,6 +70,33 @@ export function PipelineKanban({ oportunidades }: PipelineKanbanProps) {
   const [motivoPerda, setMotivoPerda] = useState("");
   const [descricaoPerda, setDescricaoPerda] = useState("");
   const updateOportunidade = useUpdateOportunidade();
+  const createPlanoAcao = useCreatePlanoAcao();
+
+  const handleCreatePlanoAcao = async (e: React.MouseEvent, deal: Oportunidade) => {
+    e.stopPropagation();
+    
+    const valorFormatado = deal.valor 
+      ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(deal.valor)
+      : '';
+    
+    const descricao = [
+      `Oportunidade: ${deal.titulo}`,
+      valorFormatado ? `Valor: ${valorFormatado}` : '',
+      deal.probabilidade ? `Probabilidade: ${deal.probabilidade}%` : '',
+      deal.previsao_fechamento ? `Previsão: ${new Date(deal.previsao_fechamento).toLocaleDateString('pt-BR')}` : '',
+      deal.descricao || ''
+    ].filter(Boolean).join('\n');
+
+    await createPlanoAcao.mutateAsync({
+      cliente_id: deal.cliente_id,
+      titulo: `Monitoramento: ${deal.titulo}`,
+      descricao,
+      prioridade: deal.probabilidade && deal.probabilidade >= 70 ? "alta" : "media",
+      data_limite: deal.previsao_fechamento || undefined,
+    });
+
+    navigate("/plano-acoes");
+  };
 
   const groupedOportunidades = oportunidades.reduce((acc, oportunidade) => {
     const status = oportunidade.status;
@@ -185,6 +216,24 @@ export function PipelineKanban({ oportunidades }: PipelineKanbanProps) {
                               </h3>
                               <p className="text-xs text-muted-foreground truncate">{deal.titulo}</p>
                             </div>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 flex-shrink-0"
+                                    onClick={(e) => handleCreatePlanoAcao(e, deal)}
+                                    disabled={createPlanoAcao.isPending}
+                                  >
+                                    <ClipboardList className="h-3.5 w-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Criar Plano de Ação</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </div>
                           <div className="space-y-1 text-xs pl-6">
                             {deal.valor && (
