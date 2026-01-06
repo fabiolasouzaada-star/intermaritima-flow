@@ -1,6 +1,9 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -9,7 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ClipboardList } from "lucide-react";
 import { Oportunidade } from "@/hooks/useOportunidades";
+import { useCreatePlanoAcao } from "@/hooks/usePlanoAcoes";
 
 interface PipelineListViewProps {
   oportunidades: Oportunidade[];
@@ -35,6 +40,35 @@ const statusColors: Record<string, string> = {
 };
 
 export function PipelineListView({ oportunidades, onCardClick }: PipelineListViewProps) {
+  const navigate = useNavigate();
+  const createPlanoAcao = useCreatePlanoAcao();
+
+  const handleCreatePlanoAcao = async (e: React.MouseEvent, op: Oportunidade) => {
+    e.stopPropagation();
+    
+    const valorFormatado = op.valor 
+      ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(op.valor)
+      : '';
+    
+    const descricao = [
+      `Oportunidade: ${op.titulo}`,
+      valorFormatado ? `Valor: ${valorFormatado}` : '',
+      op.probabilidade ? `Probabilidade: ${op.probabilidade}%` : '',
+      op.previsao_fechamento ? `Previsão: ${new Date(op.previsao_fechamento).toLocaleDateString('pt-BR')}` : '',
+      op.descricao || ''
+    ].filter(Boolean).join('\n');
+
+    await createPlanoAcao.mutateAsync({
+      cliente_id: op.cliente_id,
+      titulo: `Monitoramento: ${op.titulo}`,
+      descricao,
+      prioridade: op.probabilidade && op.probabilidade >= 70 ? "alta" : "media",
+      data_limite: op.previsao_fechamento || undefined,
+    });
+
+    navigate("/plano-acoes");
+  };
+
   return (
     <div className="border rounded-lg">
       <Table>
@@ -46,12 +80,13 @@ export function PipelineListView({ oportunidades, onCardClick }: PipelineListVie
             <TableHead className="text-right">Valor</TableHead>
             <TableHead className="text-center">Probabilidade</TableHead>
             <TableHead>Previsão Fechamento</TableHead>
+            <TableHead className="w-[60px]">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {oportunidades.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                 Nenhuma oportunidade encontrada
               </TableCell>
             </TableRow>
@@ -84,6 +119,26 @@ export function PipelineListView({ oportunidades, onCardClick }: PipelineListVie
                   {op.previsao_fechamento
                     ? format(new Date(op.previsao_fechamento), "dd/MM/yyyy", { locale: ptBR })
                     : "—"}
+                </TableCell>
+                <TableCell>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => handleCreatePlanoAcao(e, op)}
+                          disabled={createPlanoAcao.isPending}
+                        >
+                          <ClipboardList className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Criar Plano de Ação</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </TableCell>
               </TableRow>
             ))
