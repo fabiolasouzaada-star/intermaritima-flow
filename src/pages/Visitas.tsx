@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Calendar, User, LayoutGrid, List } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useVisitas, type Visita } from "@/hooks/useVisitas";
+import { useProfiles } from "@/hooks/useProfiles";
+import { useUserRole } from "@/hooks/useUserRole";
 import { VisitaForm } from "@/components/forms/VisitaForm";
 import { VisitasKanban } from "@/components/visitas/VisitasKanban";
 import { VisitaDetailDialog } from "@/components/visitas/VisitaDetailDialog";
@@ -15,17 +18,42 @@ export default function Visitas() {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
   const [selectedVisita, setSelectedVisita] = useState<Visita | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [comercialFilter, setComercialFilter] = useState("todos");
   const { data: visitas, isLoading } = useVisitas();
+  const { data: profiles } = useProfiles();
+  const { canViewAll } = useUserRole();
+
+  // Extrair comerciais únicos das visitas
+  const comerciais = useMemo(() => {
+    if (!visitas) return [];
+    const uniqueCreators = new Map();
+    visitas.forEach(v => {
+      if (v.created_by && !uniqueCreators.has(v.created_by)) {
+        const profile = profiles?.find(p => p.id === v.created_by);
+        if (profile) {
+          uniqueCreators.set(v.created_by, profile);
+        }
+      }
+    });
+    return Array.from(uniqueCreators.values());
+  }, [visitas, profiles]);
+
+  // Filtrar por comercial
+  const visitasFiltradas = useMemo(() => {
+    if (!visitas) return [];
+    if (comercialFilter === "todos") return visitas;
+    return visitas.filter(v => v.created_by === comercialFilter);
+  }, [visitas, comercialFilter]);
+
+  const visitasAgendadas = visitasFiltradas.filter(v => v.status === "agendada");
+  const visitasRealizadas = visitasFiltradas.filter(v => v.status === "realizada");
 
   const handleVisitaClick = (visita: Visita) => {
     setSelectedVisita(visita);
     setDetailOpen(true);
   };
 
-  const visitasAgendadas = visitas?.filter(v => v.status === "agendada") || [];
-  const visitasRealizadas = visitas?.filter(v => v.status === "realizada") || [];
-
-  const VisitaCard = ({ visita }: { visita: NonNullable<typeof visitas>[0] }) => (
+  const VisitaCard = ({ visita }: { visita: Visita }) => (
     <Card className="p-6">
       <div className="space-y-4">
         <div className="flex items-start justify-between">
@@ -101,6 +129,21 @@ export default function Visitas() {
           <p className="text-muted-foreground">Gestão completa de visitas comerciais</p>
         </div>
         <div className="flex items-center gap-2">
+          {canViewAll && (
+            <Select value={comercialFilter} onValueChange={setComercialFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar Comercial" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os Comerciais</SelectItem>
+                {comerciais.map((comercial) => (
+                  <SelectItem key={comercial.id} value={comercial.id}>
+                    {comercial.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <div className="flex border rounded-lg">
             <Button
               variant={viewMode === "kanban" ? "default" : "ghost"}
@@ -165,7 +208,7 @@ export default function Visitas() {
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{visitas?.length || 0}</div>
+            <div className="text-2xl font-bold">{visitasFiltradas.length}</div>
             <p className="text-xs text-muted-foreground">Total registrado</p>
           </CardContent>
         </Card>
@@ -178,7 +221,7 @@ export default function Visitas() {
       />
 
       {viewMode === "kanban" ? (
-        <VisitasKanban visitas={visitas || []} onVisitaClick={handleVisitaClick} />
+        <VisitasKanban visitas={visitasFiltradas} onVisitaClick={handleVisitaClick} />
       ) : (
         <Tabs defaultValue="agendadas" className="space-y-4">
           <TabsList>
@@ -217,7 +260,7 @@ export default function Visitas() {
 
           <TabsContent value="todas">
             <div className="space-y-4">
-              {visitas?.map((visita) => (
+              {visitasFiltradas.map((visita) => (
                 <VisitaCard key={visita.id} visita={visita} />
               ))}
             </div>

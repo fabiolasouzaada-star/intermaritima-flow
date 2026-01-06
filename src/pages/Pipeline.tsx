@@ -4,24 +4,55 @@ import { Button } from "@/components/ui/button";
 import { DollarSign, Calendar, TrendingUp, Plus, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useOportunidades } from "@/hooks/useOportunidades";
+import { useProfiles } from "@/hooks/useProfiles";
 import { OportunidadeForm } from "@/components/forms/OportunidadeForm";
 import { PipelineKanban } from "@/components/pipeline/PipelineKanban";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export default function Pipeline() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [clienteFilter, setClienteFilter] = useState("");
+  const [comercialFilter, setComercialFilter] = useState("todos");
   const { data: oportunidades, isLoading } = useOportunidades();
+  const { data: profiles } = useProfiles();
+  const { canViewAll } = useUserRole();
+
+  // Extrair comerciais únicos das oportunidades
+  const comerciais = useMemo(() => {
+    if (!oportunidades) return [];
+    const uniqueCreators = new Map();
+    oportunidades.forEach(op => {
+      if (op.created_by && !uniqueCreators.has(op.created_by)) {
+        const profile = profiles?.find(p => p.id === op.created_by);
+        if (profile) {
+          uniqueCreators.set(op.created_by, profile);
+        }
+      }
+    });
+    return Array.from(uniqueCreators.values());
+  }, [oportunidades, profiles]);
 
   const filteredOportunidades = useMemo(() => {
     if (!oportunidades) return [];
-    if (!clienteFilter.trim()) return oportunidades;
+    let filtered = oportunidades;
+
+    // Filtro por comercial
+    if (comercialFilter && comercialFilter !== "todos") {
+      filtered = filtered.filter(op => op.created_by === comercialFilter);
+    }
+
+    // Filtro por cliente
+    if (clienteFilter.trim()) {
+      const searchTerm = clienteFilter.toLowerCase().trim();
+      filtered = filtered.filter(op => 
+        op.clientes?.empresa?.toLowerCase().includes(searchTerm)
+      );
+    }
     
-    const searchTerm = clienteFilter.toLowerCase().trim();
-    return oportunidades.filter(op => 
-      op.clientes?.empresa?.toLowerCase().includes(searchTerm)
-    );
-  }, [oportunidades, clienteFilter]);
+    return filtered;
+  }, [oportunidades, clienteFilter, comercialFilter]);
 
   const totalDeals = filteredOportunidades.length;
   const totalValue = filteredOportunidades.reduce((sum, op) => sum + (op.valor || 0), 0);
@@ -41,6 +72,21 @@ export default function Pipeline() {
           <p className="text-muted-foreground">Arraste os cards para mover entre etapas</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          {canViewAll && (
+            <Select value={comercialFilter} onValueChange={setComercialFilter}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Filtrar Comercial" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os Comerciais</SelectItem>
+                {comerciais.map((comercial) => (
+                  <SelectItem key={comercial.id} value={comercial.id}>
+                    {comercial.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input

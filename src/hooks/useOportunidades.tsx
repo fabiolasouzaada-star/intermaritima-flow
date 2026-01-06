@@ -5,6 +5,7 @@ import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase
 
 export type Oportunidade = Tables<"oportunidades"> & {
   clientes?: { empresa: string };
+  created_by: string | null;
 };
 export type OportunidadeInsert = TablesInsert<"oportunidades">;
 export type OportunidadeUpdate = TablesUpdate<"oportunidades">;
