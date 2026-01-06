@@ -1,19 +1,25 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Calendar, TrendingUp, Plus, Search, Users } from "lucide-react";
+import { DollarSign, Calendar, TrendingUp, Plus, Search, Users, LayoutGrid, List } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useOportunidades } from "@/hooks/useOportunidades";
+import { useOportunidades, Oportunidade } from "@/hooks/useOportunidades";
 import { useClientes } from "@/hooks/useClientes";
 import { OportunidadeForm } from "@/components/forms/OportunidadeForm";
+import { OportunidadeEditForm } from "@/components/forms/OportunidadeEditForm";
 import { PipelineKanban } from "@/components/pipeline/PipelineKanban";
+import { PipelineListView } from "@/components/pipeline/PipelineListView";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export default function Pipeline() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedOportunidade, setSelectedOportunidade] = useState<Oportunidade | null>(null);
   const [clienteFilter, setClienteFilter] = useState("");
   const [comercialFilter, setComercialFilter] = useState("todos");
+  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const { data: oportunidades, isLoading } = useOportunidades();
   const { data: clientes } = useClientes();
 
@@ -66,6 +72,11 @@ export default function Pipeline() {
     ? ((filteredOportunidades.filter(op => op.status === 'ganho').length) / totalDeals * 100).toFixed(1)
     : "0.0";
 
+  const handleCardClick = (oportunidade: Oportunidade) => {
+    setSelectedOportunidade(oportunidade);
+    setEditDialogOpen(true);
+  };
+
   if (isLoading) {
     return <div className="p-8 text-center">Carregando...</div>;
   }
@@ -75,9 +86,26 @@ export default function Pipeline() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold">Pipeline de Vendas</h1>
-          <p className="text-muted-foreground">Arraste os cards para mover entre etapas</p>
+          <p className="text-muted-foreground">
+            {viewMode === "kanban" 
+              ? "Arraste os cards para mover entre etapas" 
+              : "Clique em uma linha para editar"}
+          </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <ToggleGroup 
+            type="single" 
+            value={viewMode} 
+            onValueChange={(value) => value && setViewMode(value as "kanban" | "list")}
+            className="border rounded-md"
+          >
+            <ToggleGroupItem value="kanban" aria-label="Visualização Kanban">
+              <LayoutGrid className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="list" aria-label="Visualização Lista">
+              <List className="h-4 w-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
           <Select value={comercialFilter} onValueChange={setComercialFilter}>
             <SelectTrigger className="w-full sm:w-48">
               <Users className="h-4 w-4 mr-2" />
@@ -155,7 +183,25 @@ export default function Pipeline() {
         </Card>
       </div>
 
-      <PipelineKanban oportunidades={filteredOportunidades} />
+      {viewMode === "kanban" ? (
+        <PipelineKanban oportunidades={filteredOportunidades} />
+      ) : (
+        <PipelineListView oportunidades={filteredOportunidades} onCardClick={handleCardClick} />
+      )}
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Oportunidade</DialogTitle>
+          </DialogHeader>
+          {selectedOportunidade && (
+            <OportunidadeEditForm 
+              oportunidade={selectedOportunidade} 
+              onSuccess={() => setEditDialogOpen(false)} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
