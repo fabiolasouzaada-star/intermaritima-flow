@@ -12,7 +12,8 @@ import {
   Target,
   TrendingUp,
   TrendingDown,
-  ListTodo
+  ListTodo,
+  ShieldCheck
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -39,6 +40,7 @@ const menuItems = [
   { title: "Visitas/Reuniões", url: "/visitas", icon: ClipboardList },
   { title: "Tarefas", url: "/tarefas", icon: CheckSquare },
   { title: "Plano de Ações", url: "/plano-acoes", icon: ListTodo },
+  { title: "Qualidade de Dados", url: "/qualidade-dados", icon: ShieldCheck },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
 ];
 
