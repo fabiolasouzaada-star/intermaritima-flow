@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Search, Filter, Eye, Pencil, Trash2, Calendar, User, Building2 } from "lucide-react";
+import { Plus, Search, Filter, Eye, Pencil, Trash2, Calendar, User, Building2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -37,9 +37,22 @@ export default function PlanoAcoes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [prioridadeFilter, setPrioridadeFilter] = useState<string>("all");
+  const [comercialFilter, setComercialFilter] = useState<string>("all");
 
   const { data: acoes, isLoading } = usePlanoAcoes();
   const deleteAcao = useDeletePlanoAcao();
+
+  // Lista de comerciais únicos para o filtro
+  const comerciais = useMemo(() => {
+    if (!acoes) return [];
+    const uniqueComerciais = new Map<string, { id: string; nome: string }>();
+    acoes.forEach((acao) => {
+      if (acao.created_by && acao.criador?.nome) {
+        uniqueComerciais.set(acao.created_by, { id: acao.created_by, nome: acao.criador.nome });
+      }
+    });
+    return Array.from(uniqueComerciais.values()).sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [acoes]);
 
   const filteredAcoes = useMemo(() => {
     if (!acoes) return [];
@@ -50,19 +63,21 @@ export default function PlanoAcoes() {
         acao.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === "all" || acao.status === statusFilter;
       const matchesPrioridade = prioridadeFilter === "all" || acao.prioridade === prioridadeFilter;
-      return matchesSearch && matchesStatus && matchesPrioridade;
+      const matchesComercial = comercialFilter === "all" || acao.created_by === comercialFilter;
+      return matchesSearch && matchesStatus && matchesPrioridade && matchesComercial;
     });
-  }, [acoes, searchTerm, statusFilter, prioridadeFilter]);
+  }, [acoes, searchTerm, statusFilter, prioridadeFilter, comercialFilter]);
 
   const stats = useMemo(() => {
-    if (!acoes) return { total: 0, pendentes: 0, emAndamento: 0, concluidas: 0 };
+    const dataToCount = comercialFilter === "all" ? acoes : filteredAcoes;
+    if (!dataToCount) return { total: 0, pendentes: 0, emAndamento: 0, concluidas: 0 };
     return {
-      total: acoes.length,
-      pendentes: acoes.filter((a) => a.status === "pendente").length,
-      emAndamento: acoes.filter((a) => a.status === "em_andamento").length,
-      concluidas: acoes.filter((a) => a.status === "concluida").length,
+      total: dataToCount.length,
+      pendentes: dataToCount.filter((a) => a.status === "pendente").length,
+      emAndamento: dataToCount.filter((a) => a.status === "em_andamento").length,
+      concluidas: dataToCount.filter((a) => a.status === "concluida").length,
     };
-  }, [acoes]);
+  }, [acoes, filteredAcoes, comercialFilter]);
 
   const handleView = (acao: PlanoAcao) => {
     setSelectedAcao(acao);
@@ -142,8 +157,8 @@ export default function PlanoAcoes() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col gap-4 md:flex-row">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar por título, cliente ou descrição..."
@@ -152,6 +167,20 @@ export default function PlanoAcoes() {
             className="pl-9"
           />
         </div>
+        <Select value={comercialFilter} onValueChange={setComercialFilter}>
+          <SelectTrigger className="w-[200px]">
+            <Users className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Comercial" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os comerciais</SelectItem>
+            {comerciais.map((comercial) => (
+              <SelectItem key={comercial.id} value={comercial.id}>
+                {comercial.nome}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]">
             <Filter className="mr-2 h-4 w-4" />
@@ -188,10 +217,10 @@ export default function PlanoAcoes() {
               <TableRow>
                 <TableHead>Título</TableHead>
                 <TableHead>Cliente</TableHead>
+                <TableHead>Comercial</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Prioridade</TableHead>
                 <TableHead>Prazo</TableHead>
-                <TableHead>Responsável</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -219,6 +248,16 @@ export default function PlanoAcoes() {
                       </div>
                     </TableCell>
                     <TableCell>
+                      {acao.criador?.nome ? (
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          {acao.criador.nome}
+                        </div>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell>
                       <Badge variant={statusConfig[acao.status].variant}>
                         {statusConfig[acao.status].label}
                       </Badge>
@@ -233,16 +272,6 @@ export default function PlanoAcoes() {
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           {format(new Date(acao.data_limite), "dd/MM/yyyy", { locale: ptBR })}
-                        </div>
-                      ) : (
-                        "-"
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {acao.profiles?.nome ? (
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          {acao.profiles.nome}
                         </div>
                       ) : (
                         "-"
@@ -288,8 +317,8 @@ export default function PlanoAcoes() {
                   <p>{selectedAcao.clientes?.empresa || "-"}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground">Responsável</h4>
-                  <p>{selectedAcao.profiles?.nome || "-"}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground">Comercial</h4>
+                  <p>{selectedAcao.criador?.nome || "-"}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

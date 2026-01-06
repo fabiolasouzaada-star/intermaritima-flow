@@ -20,6 +20,7 @@ export interface PlanoAcao {
   updated_at: string;
   clientes?: { empresa: string };
   profiles?: { nome: string };
+  criador?: { nome: string; email: string };
 }
 
 export interface PlanoAcaoInsert {
@@ -52,12 +53,34 @@ export function usePlanoAcoes() {
         .select(`
           *,
           clientes(empresa),
-          profiles(nome)
+          profiles:responsavel_id(nome)
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as PlanoAcao[];
+      
+      // Buscar informações do criador separadamente
+      const creatorIds = [...new Set(data?.map(a => a.created_by).filter(Boolean))] as string[];
+      let criadoresMap: Record<string, { nome: string; email: string }> = {};
+      
+      if (creatorIds.length > 0) {
+        const { data: criadores } = await supabase
+          .from("profiles")
+          .select("id, nome, email")
+          .in("id", creatorIds);
+        
+        if (criadores) {
+          criadoresMap = criadores.reduce((acc, c) => {
+            acc[c.id] = { nome: c.nome, email: c.email };
+            return acc;
+          }, {} as Record<string, { nome: string; email: string }>);
+        }
+      }
+      
+      return (data || []).map(acao => ({
+        ...acao,
+        criador: acao.created_by ? criadoresMap[acao.created_by] : undefined
+      })) as PlanoAcao[];
     },
   });
 }
