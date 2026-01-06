@@ -4,11 +4,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, AlertCircle, Clock, CheckCircle2, LayoutGrid, List, User, Search, Filter } from "lucide-react";
+import { Plus, AlertCircle, Clock, CheckCircle2, LayoutGrid, List, User, Search, Filter, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTarefas, useUpdateTarefa, type Tarefa } from "@/hooks/useTarefas";
+import { useClientes } from "@/hooks/useClientes";
 import { TarefaForm } from "@/components/forms/TarefaForm";
 import { KanbanBoard } from "@/components/tarefas/KanbanBoard";
 import { TarefaDetailDialog } from "@/components/tarefas/TarefaDetailDialog";
@@ -25,8 +26,10 @@ export default function Tarefas() {
   const [filtroPrazo, setFiltroPrazo] = useState<string>("todos");
   const [filtroPrioridade, setFiltroPrioridade] = useState<string>("todos");
   const [filtroCliente, setFiltroCliente] = useState<string>("todos");
+  const [comercialFilter, setComercialFilter] = useState<string>("todos");
   
   const { data: tarefas, isLoading } = useTarefas();
+  const { data: clientes } = useClientes();
   const updateTarefa = useUpdateTarefa();
 
   const hoje = new Date();
@@ -38,14 +41,37 @@ export default function Tarefas() {
     return new Date(year, month - 1, day);
   };
 
+  // Extrair comerciais únicos (códigos) dos clientes
+  const comerciaisDisponiveis = useMemo(() => {
+    if (!clientes) return [];
+    const codigos = new Set<string>();
+    clientes.forEach(c => {
+      if (c.responsavel_codigo) {
+        codigos.add(c.responsavel_codigo);
+      }
+    });
+    return Array.from(codigos).sort();
+  }, [clientes]);
+
+  // Mapa de cliente_id para responsavel_codigo
+  const clienteToComercial = useMemo(() => {
+    const map = new Map<string, string>();
+    clientes?.forEach(c => {
+      if (c.responsavel_codigo) {
+        map.set(c.id, c.responsavel_codigo);
+      }
+    });
+    return map;
+  }, [clientes]);
+
   // Lista de clientes únicos para o filtro
   const clientesUnicos = useMemo(() => {
-    const clientes = tarefas
+    const clientesList = tarefas
       ?.filter(t => t.clientes?.empresa)
       .map(t => t.clientes!.empresa)
       .filter((value, index, self) => self.indexOf(value) === index)
       .sort() || [];
-    return clientes;
+    return clientesList;
   }, [tarefas]);
 
   // Aplicar filtros
@@ -53,6 +79,12 @@ export default function Tarefas() {
     if (!tarefas) return [];
     
     return tarefas.filter(tarefa => {
+      // Filtro por comercial (baseado no cliente)
+      if (comercialFilter !== "todos") {
+        const comercialDoCliente = tarefa.cliente_id ? clienteToComercial.get(tarefa.cliente_id) : null;
+        if (comercialDoCliente !== comercialFilter) return false;
+      }
+
       // Busca por texto
       if (searchTerm) {
         const termo = searchTerm.toLowerCase();
@@ -90,7 +122,7 @@ export default function Tarefas() {
 
       return true;
     });
-  }, [tarefas, searchTerm, filtroPrazo, filtroPrioridade, filtroCliente, hoje]);
+  }, [tarefas, searchTerm, filtroPrazo, filtroPrioridade, filtroCliente, comercialFilter, clienteToComercial, hoje]);
 
   const tarefasHoje = tarefasFiltradas.filter((t) => {
     if (!t.data_vencimento || t.status === "concluida") return false;
@@ -148,9 +180,10 @@ export default function Tarefas() {
     setFiltroPrazo("todos");
     setFiltroPrioridade("todos");
     setFiltroCliente("todos");
+    setComercialFilter("todos");
   };
 
-  const temFiltrosAtivos = searchTerm || filtroPrazo !== "todos" || filtroPrioridade !== "todos" || filtroCliente !== "todos";
+  const temFiltrosAtivos = searchTerm || filtroPrazo !== "todos" || filtroPrioridade !== "todos" || filtroCliente !== "todos" || comercialFilter !== "todos";
 
   const getTarefasList = (tarefasList: Tarefa[]) => (
     <div className="space-y-3">
@@ -281,6 +314,21 @@ export default function Tarefas() {
             />
           </div>
           <div className="flex flex-wrap gap-2">
+            <Select value={comercialFilter} onValueChange={setComercialFilter}>
+              <SelectTrigger className="w-[150px]">
+                <Users className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Comercial" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos Comerciais</SelectItem>
+                {comerciaisDisponiveis.map((codigo) => (
+                  <SelectItem key={codigo} value={codigo}>
+                    {codigo}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Select value={filtroPrazo} onValueChange={setFiltroPrazo}>
               <SelectTrigger className="w-[150px]">
                 <Clock className="h-4 w-4 mr-2" />

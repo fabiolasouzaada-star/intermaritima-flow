@@ -2,13 +2,12 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, User, LayoutGrid, List } from "lucide-react";
+import { Plus, Calendar, User, LayoutGrid, List, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useVisitas, type Visita } from "@/hooks/useVisitas";
-import { useProfiles } from "@/hooks/useProfiles";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useClientes } from "@/hooks/useClientes";
 import { VisitaForm } from "@/components/forms/VisitaForm";
 import { VisitasKanban } from "@/components/visitas/VisitasKanban";
 import { VisitaDetailDialog } from "@/components/visitas/VisitaDetailDialog";
@@ -20,30 +19,37 @@ export default function Visitas() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [comercialFilter, setComercialFilter] = useState("todos");
   const { data: visitas, isLoading } = useVisitas();
-  const { data: profiles } = useProfiles();
-  const { canViewAll } = useUserRole();
+  const { data: clientes } = useClientes();
 
-  // Extrair comerciais únicos das visitas
-  const comerciais = useMemo(() => {
-    if (!visitas) return [];
-    const uniqueCreators = new Map();
-    visitas.forEach(v => {
-      if (v.created_by && !uniqueCreators.has(v.created_by)) {
-        const profile = profiles?.find(p => p.id === v.created_by);
-        if (profile) {
-          uniqueCreators.set(v.created_by, profile);
-        }
+  // Extrair comerciais únicos (códigos) dos clientes
+  const comerciaisDisponiveis = useMemo(() => {
+    if (!clientes) return [];
+    const codigos = new Set<string>();
+    clientes.forEach(c => {
+      if (c.responsavel_codigo) {
+        codigos.add(c.responsavel_codigo);
       }
     });
-    return Array.from(uniqueCreators.values());
-  }, [visitas, profiles]);
+    return Array.from(codigos).sort();
+  }, [clientes]);
 
-  // Filtrar por comercial
+  // Mapa de cliente_id para responsavel_codigo
+  const clienteToComercial = useMemo(() => {
+    const map = new Map<string, string>();
+    clientes?.forEach(c => {
+      if (c.responsavel_codigo) {
+        map.set(c.id, c.responsavel_codigo);
+      }
+    });
+    return map;
+  }, [clientes]);
+
+  // Filtrar por comercial (baseado no cliente)
   const visitasFiltradas = useMemo(() => {
     if (!visitas) return [];
     if (comercialFilter === "todos") return visitas;
-    return visitas.filter(v => v.created_by === comercialFilter);
-  }, [visitas, comercialFilter]);
+    return visitas.filter(v => clienteToComercial.get(v.cliente_id) === comercialFilter);
+  }, [visitas, comercialFilter, clienteToComercial]);
 
   const visitasAgendadas = visitasFiltradas.filter(v => v.status === "agendada");
   const visitasRealizadas = visitasFiltradas.filter(v => v.status === "realizada");
@@ -129,21 +135,20 @@ export default function Visitas() {
           <p className="text-muted-foreground">Gestão completa de visitas comerciais</p>
         </div>
         <div className="flex items-center gap-2">
-          {canViewAll && (
-            <Select value={comercialFilter} onValueChange={setComercialFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filtrar Comercial" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os Comerciais</SelectItem>
-                {comerciais.map((comercial) => (
-                  <SelectItem key={comercial.id} value={comercial.id}>
-                    {comercial.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          <Select value={comercialFilter} onValueChange={setComercialFilter}>
+            <SelectTrigger className="w-[180px]">
+              <Users className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Filtrar Comercial" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Comerciais</SelectItem>
+              {comerciaisDisponiveis.map((codigo) => (
+                <SelectItem key={codigo} value={codigo}>
+                  {codigo}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <div className="flex border rounded-lg">
             <Button
               variant={viewMode === "kanban" ? "default" : "ghost"}
