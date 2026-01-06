@@ -13,7 +13,8 @@ import {
   TrendingUp,
   TrendingDown,
   ListTodo,
-  ShieldCheck
+  ShieldCheck,
+  Briefcase
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,6 +35,7 @@ import {
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Clientes", url: "/clientes", icon: Users },
+  { title: "Carteira Comercial", url: "/carteira-comercial", icon: Briefcase },
   { title: "Pipeline", url: "/pipeline", icon: Workflow },
   { title: "Contratos", url: "/contratos", icon: FileText },
   { title: "Calendário", url: "/calendario", icon: Calendar },
