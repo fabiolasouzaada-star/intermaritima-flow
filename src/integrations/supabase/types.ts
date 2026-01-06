@@ -698,6 +698,66 @@ export type Database = {
           },
         ]
       }
+      plano_acoes: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          created_by: string | null
+          data_limite: string | null
+          descricao: string | null
+          id: string
+          observacoes: string | null
+          prioridade: Database["public"]["Enums"]["prioridade_acao"]
+          responsavel_id: string | null
+          status: Database["public"]["Enums"]["status_acao"]
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          created_by?: string | null
+          data_limite?: string | null
+          descricao?: string | null
+          id?: string
+          observacoes?: string | null
+          prioridade?: Database["public"]["Enums"]["prioridade_acao"]
+          responsavel_id?: string | null
+          status?: Database["public"]["Enums"]["status_acao"]
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_limite?: string | null
+          descricao?: string | null
+          id?: string
+          observacoes?: string | null
+          prioridade?: Database["public"]["Enums"]["prioridade_acao"]
+          responsavel_id?: string | null
+          status?: Database["public"]["Enums"]["status_acao"]
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plano_acoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plano_acoes_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pos_venda: {
         Row: {
           contrato_id: string
@@ -1088,6 +1148,7 @@ export type Database = {
           data_visita: string
           dores_percebidas: string | null
           id: string
+          modalidade: Database["public"]["Enums"]["modalidade_visita"] | null
           objetivo: string | null
           oportunidades_identificadas: string | null
           proximos_passos: string | null
@@ -1103,6 +1164,7 @@ export type Database = {
           data_visita: string
           dores_percebidas?: string | null
           id?: string
+          modalidade?: Database["public"]["Enums"]["modalidade_visita"] | null
           objetivo?: string | null
           oportunidades_identificadas?: string | null
           proximos_passos?: string | null
@@ -1118,6 +1180,7 @@ export type Database = {
           data_visita?: string
           dores_percebidas?: string | null
           id?: string
+          modalidade?: Database["public"]["Enums"]["modalidade_visita"] | null
           objetivo?: string | null
           oportunidades_identificadas?: string | null
           proximos_passos?: string | null
@@ -1160,6 +1223,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "user"
+      modalidade_visita: "presencial" | "remota"
+      prioridade_acao: "baixa" | "media" | "alta" | "urgente"
       prioridade_tarefa: "baixa" | "media" | "alta" | "urgente"
       segmento_cliente:
         | "industrial"
@@ -1167,6 +1232,7 @@ export type Database = {
         | "varejo"
         | "tecnologia"
         | "outros"
+      status_acao: "pendente" | "em_andamento" | "concluida" | "cancelada"
       status_cliente: "ativo" | "inativo" | "prospecto"
       status_contrato: "ativo" | "suspenso" | "encerrado" | "renovacao"
       status_ocorrencia: "aberta" | "em_analise" | "resolvida" | "fechada"
@@ -1331,6 +1397,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "user"],
+      modalidade_visita: ["presencial", "remota"],
+      prioridade_acao: ["baixa", "media", "alta", "urgente"],
       prioridade_tarefa: ["baixa", "media", "alta", "urgente"],
       segmento_cliente: [
         "industrial",
@@ -1339,6 +1407,7 @@ export const Constants = {
         "tecnologia",
         "outros",
       ],
+      status_acao: ["pendente", "em_andamento", "concluida", "cancelada"],
       status_cliente: ["ativo", "inativo", "prospecto"],
       status_contrato: ["ativo", "suspenso", "encerrado", "renovacao"],
       status_ocorrencia: ["aberta", "em_analise", "resolvida", "fechada"],

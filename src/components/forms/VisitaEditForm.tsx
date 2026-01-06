@@ -18,6 +18,9 @@ export function VisitaEditForm({ visita, onSuccess }: VisitaEditFormProps) {
   const [dataVisita, setDataVisita] = useState(
     visita.data_visita ? new Date(visita.data_visita).toISOString().slice(0, 16) : ""
   );
+  const [modalidade, setModalidade] = useState<"presencial" | "remota">(
+    (visita as any).modalidade || "presencial"
+  );
   const [objetivo, setObjetivo] = useState(visita.objetivo || "");
   const [situacaoAtual, setSituacaoAtual] = useState(visita.situacao_atual || "");
   const [oportunidades, setOportunidades] = useState(visita.oportunidades_identificadas || "");
@@ -34,6 +37,7 @@ export function VisitaEditForm({ visita, onSuccess }: VisitaEditFormProps) {
       id: visita.id,
       data: {
         data_visita: dataVisita,
+        modalidade,
         objetivo: objetivo || null,
         situacao_atual: situacaoAtual || null,
         oportunidades_identificadas: oportunidades || null,
@@ -54,7 +58,7 @@ export function VisitaEditForm({ visita, onSuccess }: VisitaEditFormProps) {
       </div>
 
       <div>
-        <Label htmlFor="data">Data da Visita *</Label>
+        <Label htmlFor="data">Data da Visita/Reunião *</Label>
         <Input
           id="data"
           type="datetime-local"
@@ -64,19 +68,33 @@ export function VisitaEditForm({ visita, onSuccess }: VisitaEditFormProps) {
         />
       </div>
 
-      <div>
-        <Label htmlFor="status">Status *</Label>
-        <Select value={status} onValueChange={(value) => setStatus(value as StatusVisita)}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="a_agendar">A Agendar</SelectItem>
-            <SelectItem value="agendada">Agendada</SelectItem>
-            <SelectItem value="realizada">Realizada</SelectItem>
-            <SelectItem value="cancelada">Cancelada</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="modalidade">Modalidade *</Label>
+          <Select value={modalidade} onValueChange={(value) => setModalidade(value as "presencial" | "remota")}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="presencial">Presencial</SelectItem>
+              <SelectItem value="remota">Remota</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="status">Status *</Label>
+          <Select value={status} onValueChange={(value) => setStatus(value as StatusVisita)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="a_agendar">A Agendar</SelectItem>
+              <SelectItem value="agendada">Agendada</SelectItem>
+              <SelectItem value="realizada">Realizada</SelectItem>
+              <SelectItem value="cancelada">Cancelada</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div>
@@ -130,7 +148,7 @@ export function VisitaEditForm({ visita, onSuccess }: VisitaEditFormProps) {
       </div>
 
       <Button type="submit" className="w-full" disabled={updateVisita.isPending}>
-        {updateVisita.isPending ? "Salvando..." : "Salvar Alterações"}
+        {updateVisita.isPending ? "Salvando..." : "Salvar Visita/Reunião"}
       </Button>
     </form>
   );
