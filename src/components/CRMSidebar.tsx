@@ -7,13 +7,12 @@ import {
   ClipboardList,
   CheckSquare,
   Grid3x3,
-  MessageSquareMore,
   BarChart3,
   LogOut,
   Target,
   TrendingUp,
   TrendingDown,
-  FileSpreadsheet
+  ListTodo
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,11 +34,11 @@ const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Clientes", url: "/clientes", icon: Users },
   { title: "Pipeline", url: "/pipeline", icon: Workflow },
-  { title: "Propostas", url: "/propostas", icon: FileSpreadsheet },
   { title: "Contratos", url: "/contratos", icon: FileText },
   { title: "Calendário", url: "/calendario", icon: Calendar },
-  { title: "Visitas", url: "/visitas", icon: ClipboardList },
+  { title: "Visitas/Reuniões", url: "/visitas", icon: ClipboardList },
   { title: "Tarefas", url: "/tarefas", icon: CheckSquare },
+  { title: "Plano de Ações", url: "/plano-acoes", icon: ListTodo },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
 ];
 

@@ -19,6 +19,7 @@ interface VisitaFormProps {
 export function VisitaForm({ clienteId, onSuccess }: VisitaFormProps) {
   const [selectedClienteId, setSelectedClienteId] = useState(clienteId || "");
   const [dataVisita, setDataVisita] = useState("");
+  const [modalidade, setModalidade] = useState<"presencial" | "remota">("presencial");
   const [objetivo, setObjetivo] = useState("");
   const [situacaoAtual, setSituacaoAtual] = useState("");
   const [oportunidades, setOportunidades] = useState("");
@@ -51,6 +52,7 @@ export function VisitaForm({ clienteId, onSuccess }: VisitaFormProps) {
     await createVisita.mutateAsync({
       cliente_id: selectedClienteId,
       data_visita: dataVisita,
+      modalidade,
       objetivo: objetivo || undefined,
       situacao_atual: situacaoAtual || undefined,
       oportunidades_identificadas: oportunidades || undefined,
@@ -102,7 +104,7 @@ export function VisitaForm({ clienteId, onSuccess }: VisitaFormProps) {
       )}
 
       <div>
-        <Label htmlFor="data">Data da Visita *</Label>
+        <Label htmlFor="data">Data da Visita/Reunião *</Label>
         <Input
           id="data"
           type="datetime-local"
@@ -112,19 +114,33 @@ export function VisitaForm({ clienteId, onSuccess }: VisitaFormProps) {
         />
       </div>
 
-      <div>
-        <Label htmlFor="status">Status *</Label>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="modalidade">Modalidade *</Label>
+          <Select value={modalidade} onValueChange={(value) => setModalidade(value as "presencial" | "remota")}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="presencial">Presencial</SelectItem>
+              <SelectItem value="remota">Remota</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="status">Status *</Label>
         <Select value={status} onValueChange={(value) => setStatus(value as StatusVisita)}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="a_agendar">A Agendar</SelectItem>
-            <SelectItem value="agendada">Agendada</SelectItem>
-            <SelectItem value="realizada">Realizada</SelectItem>
-            <SelectItem value="cancelada">Cancelada</SelectItem>
-          </SelectContent>
-        </Select>
+            <SelectContent>
+              <SelectItem value="a_agendar">A Agendar</SelectItem>
+              <SelectItem value="agendada">Agendada</SelectItem>
+              <SelectItem value="realizada">Realizada</SelectItem>
+              <SelectItem value="cancelada">Cancelada</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div>
@@ -178,7 +194,7 @@ export function VisitaForm({ clienteId, onSuccess }: VisitaFormProps) {
       </div>
 
       <Button type="submit" className="w-full" disabled={createVisita.isPending}>
-        {createVisita.isPending ? "Criando..." : "Criar Visita"}
+        {createVisita.isPending ? "Criando..." : "Criar Visita/Reunião"}
       </Button>
     </form>
   );

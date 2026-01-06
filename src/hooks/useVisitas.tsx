@@ -3,11 +3,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
+export type ModalidadeVisita = "presencial" | "remota";
+
 export type Visita = Tables<"visitas"> & {
   clientes?: { empresa: string };
+  modalidade?: ModalidadeVisita;
 };
-export type VisitaInsert = TablesInsert<"visitas">;
-export type VisitaUpdate = TablesUpdate<"visitas">;
+export type VisitaInsert = TablesInsert<"visitas"> & {
+  modalidade?: ModalidadeVisita;
+};
+export type VisitaUpdate = TablesUpdate<"visitas"> & {
+  modalidade?: ModalidadeVisita;
+};
 
 export function useVisitas() {
   return useQuery({
