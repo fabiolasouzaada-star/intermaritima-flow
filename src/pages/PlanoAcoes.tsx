@@ -238,19 +238,20 @@ export default function PlanoAcoes() {
                 <TableHead>Status</TableHead>
                 <TableHead>Prioridade</TableHead>
                 <TableHead>Prazo</TableHead>
+                <TableHead className="max-w-[200px]">Observações</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell colSpan={8} className="h-24 text-center">
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : filteredAcoes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell colSpan={8} className="h-24 text-center">
                     Nenhuma ação encontrada
                   </TableCell>
                 </TableRow>
@@ -292,6 +293,11 @@ export default function PlanoAcoes() {
                       ) : (
                         "-"
                       )}
+                    </TableCell>
+                    <TableCell className="max-w-[200px]">
+                      <span className="line-clamp-2 text-sm text-muted-foreground">
+                        {acao.observacoes || "-"}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
