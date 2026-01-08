@@ -1020,6 +1020,8 @@ export type Database = {
           observacoes: string | null
           proposta_url: string | null
           servico: string
+          status: string | null
+          tipo_servico: string | null
           updated_at: string
           vencimento_proposta: string | null
         }
@@ -1033,6 +1035,8 @@ export type Database = {
           observacoes?: string | null
           proposta_url?: string | null
           servico: string
+          status?: string | null
+          tipo_servico?: string | null
           updated_at?: string
           vencimento_proposta?: string | null
         }
@@ -1046,6 +1050,8 @@ export type Database = {
           observacoes?: string | null
           proposta_url?: string | null
           servico?: string
+          status?: string | null
+          tipo_servico?: string | null
           updated_at?: string
           vencimento_proposta?: string | null
         }
