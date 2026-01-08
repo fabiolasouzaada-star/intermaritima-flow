@@ -63,25 +63,24 @@ export function PropostaClienteForm({ proposta, onSuccess }: PropostaClienteForm
 
   const onSubmit = async (values: FormData) => {
     try {
+      const payload = {
+        numero_proposta: values.numero_proposta,
+        cliente_id: values.cliente_id,
+        servico: values.tipo_servico,
+        tipo_servico: values.tipo_servico,
+        status: values.status,
+        data_proposta: values.data_proposta || null,
+        vencimento_proposta: values.vencimento_proposta || null,
+        observacoes: values.observacoes || null,
+      };
+
       if (proposta) {
         await updateProposta.mutateAsync({
           id: proposta.id,
-          data: {
-            ...values,
-            servico: values.tipo_servico,
-          },
+          data: payload,
         });
       } else {
-        await createProposta.mutateAsync({
-          numero_proposta: values.numero_proposta,
-          cliente_id: values.cliente_id,
-          servico: values.tipo_servico,
-          tipo_servico: values.tipo_servico,
-          status: values.status,
-          data_proposta: values.data_proposta,
-          vencimento_proposta: values.vencimento_proposta,
-          observacoes: values.observacoes,
-        });
+        await createProposta.mutateAsync(payload);
       }
       onSuccess?.();
     } catch (error) {
