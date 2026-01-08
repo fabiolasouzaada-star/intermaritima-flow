@@ -79,9 +79,15 @@ export default function ControlePropostas() {
           <h1 className="text-3xl font-bold">Controle de Propostas</h1>
           <p className="text-muted-foreground">Gerencie propostas por cliente e serviço</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={handleDialogClose}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) setEditProposta(null);
+        }}>
           <DialogTrigger asChild>
-            <Button className="gap-2" onClick={() => setEditProposta(null)}>
+            <Button className="gap-2" onClick={() => {
+              setEditProposta(null);
+              setDialogOpen(true);
+            }}>
               <Plus className="h-4 w-4" />
               Nova Proposta
             </Button>
@@ -92,7 +98,10 @@ export default function ControlePropostas() {
             </DialogHeader>
             <PropostaClienteForm 
               proposta={editProposta || undefined} 
-              onSuccess={handleDialogClose} 
+              onSuccess={() => {
+                setDialogOpen(false);
+                setEditProposta(null);
+              }} 
             />
           </DialogContent>
         </Dialog>
