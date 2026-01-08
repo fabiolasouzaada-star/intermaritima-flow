@@ -53,7 +53,7 @@ export function usePropostasCliente() {
           *,
           clientes(empresa, cnpj)
         `)
-        .order("created_at", { ascending: false });
+        .order("numero_proposta", { ascending: true });
 
       if (error) throw error;
       return data as PropostaCliente[];
