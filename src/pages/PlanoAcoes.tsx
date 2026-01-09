@@ -137,7 +137,7 @@ export default function PlanoAcoes() {
               Nova Ação
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Nova Ação</DialogTitle>
               <DialogDescription>Crie uma nova ação para acompanhamento de cliente</DialogDescription>
@@ -444,7 +444,7 @@ export default function PlanoAcoes() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Ação</DialogTitle>
             <DialogDescription>Atualize os dados da ação</DialogDescription>
