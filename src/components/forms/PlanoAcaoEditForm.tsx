@@ -104,10 +104,13 @@ export function PlanoAcaoEditForm({ acao, onSuccess }: PlanoAcaoEditFormProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="pendente">Pendente</SelectItem>
-              <SelectItem value="em_andamento">Em Andamento</SelectItem>
-              <SelectItem value="concluida">Concluída</SelectItem>
-              <SelectItem value="cancelada">Cancelada</SelectItem>
+              <SelectItem value="qualificacao">Qualificação</SelectItem>
+              <SelectItem value="proposta">Proposta</SelectItem>
+              <SelectItem value="negociacao">Negociação</SelectItem>
+              <SelectItem value="fechamento">Fechamento</SelectItem>
+              <SelectItem value="ganho">Ganho</SelectItem>
+              <SelectItem value="perdido">Perdido</SelectItem>
+              <SelectItem value="sem_retorno">Sem Retorno</SelectItem>
             </SelectContent>
           </Select>
         </div>

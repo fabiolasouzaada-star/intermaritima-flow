@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export type StatusAcao = "pendente" | "em_andamento" | "concluida" | "cancelada";
+// Usando os mesmos status do Pipeline (Oportunidades)
+export type StatusAcao = "qualificacao" | "proposta" | "negociacao" | "fechamento" | "ganho" | "perdido" | "sem_retorno";
 export type PrioridadeAcao = "baixa" | "media" | "alta" | "urgente";
 
 export type TipoServicoAcao = "ALF" | "TR" | "AG" | "OP" | "EXP";

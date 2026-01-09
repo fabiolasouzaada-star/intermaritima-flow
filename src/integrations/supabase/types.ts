@@ -709,7 +709,7 @@ export type Database = {
           observacoes: string | null
           prioridade: Database["public"]["Enums"]["prioridade_acao"]
           responsavel_id: string | null
-          status: Database["public"]["Enums"]["status_acao"]
+          status: Database["public"]["Enums"]["status_oportunidade"]
           tipo_servico: string | null
           titulo: string
           updated_at: string
@@ -724,7 +724,7 @@ export type Database = {
           observacoes?: string | null
           prioridade?: Database["public"]["Enums"]["prioridade_acao"]
           responsavel_id?: string | null
-          status?: Database["public"]["Enums"]["status_acao"]
+          status?: Database["public"]["Enums"]["status_oportunidade"]
           tipo_servico?: string | null
           titulo: string
           updated_at?: string
@@ -739,7 +739,7 @@ export type Database = {
           observacoes?: string | null
           prioridade?: Database["public"]["Enums"]["prioridade_acao"]
           responsavel_id?: string | null
-          status?: Database["public"]["Enums"]["status_acao"]
+          status?: Database["public"]["Enums"]["status_oportunidade"]
           tipo_servico?: string | null
           titulo?: string
           updated_at?: string
