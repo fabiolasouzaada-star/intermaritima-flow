@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Search, Filter, Eye, Pencil, Trash2, Calendar, User, Building2, Users } from "lucide-react";
+import { Plus, Search, Filter, Eye, Pencil, Trash2, Calendar, User, Building2, Users, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -10,10 +10,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { usePlanoAcoes, useDeletePlanoAcao, type PlanoAcao, type StatusAcao, type PrioridadeAcao } from "@/hooks/usePlanoAcoes";
+import { usePlanoAcoes, useDeletePlanoAcao, type PlanoAcao, type StatusAcao, type PrioridadeAcao, type TipoServicoAcao } from "@/hooks/usePlanoAcoes";
 import { useClientes } from "@/hooks/useClientes";
 import { PlanoAcaoForm } from "@/components/forms/PlanoAcaoForm";
 import { PlanoAcaoEditForm } from "@/components/forms/PlanoAcaoEditForm";
+
+const TIPOS_SERVICO: { value: TipoServicoAcao; label: string }[] = [
+  { value: "ALF", label: "ALF - Alfandegado" },
+  { value: "TR", label: "TR - Transporte" },
+  { value: "AG", label: "AG - Armazém Geral" },
+  { value: "OP", label: "OP - Operação" },
+  { value: "EXP", label: "EXP - Exportação" },
+];
 
 const statusConfig: Record<StatusAcao, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   pendente: { label: "Pendente", variant: "secondary" },
@@ -39,6 +47,7 @@ export default function PlanoAcoes() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [prioridadeFilter, setPrioridadeFilter] = useState<string>("all");
   const [comercialFilter, setComercialFilter] = useState<string>("all");
+  const [servicoFilter, setServicoFilter] = useState<string>("all");
 
   const { data: acoes, isLoading } = usePlanoAcoes();
   const { data: clientes } = useClientes();
@@ -76,14 +85,15 @@ export default function PlanoAcoes() {
         acao.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === "all" || acao.status === statusFilter;
       const matchesPrioridade = prioridadeFilter === "all" || acao.prioridade === prioridadeFilter;
+      const matchesServico = servicoFilter === "all" || acao.tipo_servico === servicoFilter;
       
       // Filtro por comercial (baseado no cliente)
       const comercialDoCliente = clienteToComercial.get(acao.cliente_id);
       const matchesComercial = comercialFilter === "all" || comercialDoCliente === comercialFilter;
       
-      return matchesSearch && matchesStatus && matchesPrioridade && matchesComercial;
+      return matchesSearch && matchesStatus && matchesPrioridade && matchesComercial && matchesServico;
     });
-  }, [acoes, searchTerm, statusFilter, prioridadeFilter, comercialFilter, clienteToComercial]);
+  }, [acoes, searchTerm, statusFilter, prioridadeFilter, comercialFilter, servicoFilter, clienteToComercial]);
 
   const stats = useMemo(() => {
     const dataToCount = comercialFilter === "all" ? acoes : filteredAcoes;
@@ -236,6 +246,20 @@ export default function PlanoAcoes() {
             <SelectItem value="urgente">Urgente</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={servicoFilter} onValueChange={setServicoFilter}>
+          <SelectTrigger className="w-[180px]">
+            <Briefcase className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Serviço" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os serviços</SelectItem>
+            {TIPOS_SERVICO.map((tipo) => (
+              <SelectItem key={tipo.value} value={tipo.value}>
+                {tipo.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Table */}
@@ -247,6 +271,7 @@ export default function PlanoAcoes() {
                 <TableHead>Título</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Comercial</TableHead>
+                <TableHead>Serviço</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Prioridade</TableHead>
                 <TableHead>Prazo</TableHead>
@@ -257,13 +282,13 @@ export default function PlanoAcoes() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center">
+                  <TableCell colSpan={10} className="h-24 text-center">
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : filteredAcoes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center">
+                  <TableCell colSpan={10} className="h-24 text-center">
                     Nenhuma ação encontrada
                   </TableCell>
                 </TableRow>
@@ -281,6 +306,15 @@ export default function PlanoAcoes() {
                       {clienteToComercial.get(acao.cliente_id) ? (
                         <Badge variant="outline">
                           {clienteToComercial.get(acao.cliente_id)}
+                        </Badge>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {acao.tipo_servico ? (
+                        <Badge variant="secondary">
+                          {acao.tipo_servico}
                         </Badge>
                       ) : (
                         "-"
@@ -369,13 +403,23 @@ export default function PlanoAcoes() {
                   </Badge>
                 </div>
               </div>
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground">Prazo</h4>
-                <p>
-                  {selectedAcao.data_limite
-                    ? format(new Date(selectedAcao.data_limite), "dd/MM/yyyy", { locale: ptBR })
-                    : "Sem prazo definido"}
-                </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground">Tipo de Serviço</h4>
+                  {selectedAcao.tipo_servico ? (
+                    <Badge variant="secondary">{selectedAcao.tipo_servico}</Badge>
+                  ) : (
+                    <p className="text-muted-foreground">Não definido</p>
+                  )}
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground">Prazo</h4>
+                  <p>
+                    {selectedAcao.data_limite
+                      ? format(new Date(selectedAcao.data_limite), "dd/MM/yyyy", { locale: ptBR })
+                      : "Sem prazo definido"}
+                  </p>
+                </div>
               </div>
               {selectedAcao.descricao && (
                 <div>

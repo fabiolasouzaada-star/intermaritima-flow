@@ -5,6 +5,8 @@ import { toast } from "sonner";
 export type StatusAcao = "pendente" | "em_andamento" | "concluida" | "cancelada";
 export type PrioridadeAcao = "baixa" | "media" | "alta" | "urgente";
 
+export type TipoServicoAcao = "ALF" | "TR" | "AG" | "OP" | "EXP";
+
 export interface PlanoAcao {
   id: string;
   cliente_id: string;
@@ -15,6 +17,7 @@ export interface PlanoAcao {
   data_limite: string | null;
   responsavel_id: string | null;
   observacoes: string | null;
+  tipo_servico: TipoServicoAcao | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -32,6 +35,7 @@ export interface PlanoAcaoInsert {
   data_limite?: string;
   responsavel_id?: string;
   observacoes?: string;
+  tipo_servico?: TipoServicoAcao;
 }
 
 export interface PlanoAcaoUpdate {
@@ -42,6 +46,7 @@ export interface PlanoAcaoUpdate {
   data_limite?: string | null;
   responsavel_id?: string | null;
   observacoes?: string | null;
+  tipo_servico?: TipoServicoAcao | null;
 }
 
 export function usePlanoAcoes() {

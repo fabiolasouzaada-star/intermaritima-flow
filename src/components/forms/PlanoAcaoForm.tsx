@@ -4,10 +4,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCreatePlanoAcao, type StatusAcao, type PrioridadeAcao } from "@/hooks/usePlanoAcoes";
+import { useCreatePlanoAcao, type StatusAcao, type PrioridadeAcao, type TipoServicoAcao } from "@/hooks/usePlanoAcoes";
 import { useClientes } from "@/hooks/useClientes";
 import { useProfiles } from "@/hooks/useProfiles";
 import { Loader2, Search } from "lucide-react";
+
+const TIPOS_SERVICO: { value: TipoServicoAcao; label: string }[] = [
+  { value: "ALF", label: "ALF - Alfandegado" },
+  { value: "TR", label: "TR - Transporte" },
+  { value: "AG", label: "AG - Armazém Geral" },
+  { value: "OP", label: "OP - Operação" },
+  { value: "EXP", label: "EXP - Exportação" },
+];
 
 interface PlanoAcaoFormProps {
   clienteId?: string;
@@ -20,6 +28,7 @@ export function PlanoAcaoForm({ clienteId, onSuccess }: PlanoAcaoFormProps) {
   const [descricao, setDescricao] = useState("");
   const [status, setStatus] = useState<StatusAcao>("pendente");
   const [prioridade, setPrioridade] = useState<PrioridadeAcao>("media");
+  const [tipoServico, setTipoServico] = useState<TipoServicoAcao | "">("");
   const [dataLimite, setDataLimite] = useState("");
   const [responsavelId, setResponsavelId] = useState("");
   const [observacoes, setObservacoes] = useState("");
@@ -46,6 +55,7 @@ export function PlanoAcaoForm({ clienteId, onSuccess }: PlanoAcaoFormProps) {
       descricao: descricao || undefined,
       status,
       prioridade,
+      tipo_servico: tipoServico || undefined,
       data_limite: dataLimite || undefined,
       responsavel_id: responsavelId || undefined,
       observacoes: observacoes || undefined,
@@ -113,6 +123,22 @@ export function PlanoAcaoForm({ clienteId, onSuccess }: PlanoAcaoFormProps) {
           placeholder="Descreva a ação..."
           rows={3}
         />
+      </div>
+
+      <div>
+        <Label htmlFor="tipo_servico">Tipo de Serviço</Label>
+        <Select value={tipoServico} onValueChange={(v) => setTipoServico(v as TipoServicoAcao)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione o tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            {TIPOS_SERVICO.map((tipo) => (
+              <SelectItem key={tipo.value} value={tipo.value}>
+                {tipo.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
