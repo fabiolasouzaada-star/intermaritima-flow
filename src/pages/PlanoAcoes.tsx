@@ -15,13 +15,18 @@ import { useClientes } from "@/hooks/useClientes";
 import { PlanoAcaoForm } from "@/components/forms/PlanoAcaoForm";
 import { PlanoAcaoEditForm } from "@/components/forms/PlanoAcaoEditForm";
 
-const TIPOS_SERVICO: { value: TipoServicoAcao; label: string }[] = [
-  { value: "ALF", label: "ALF - Alfandegado" },
-  { value: "TR", label: "TR - Transporte" },
-  { value: "AG", label: "AG - Armazém Geral" },
-  { value: "OP", label: "OP - Operação" },
-  { value: "EXP", label: "EXP - Exportação" },
+const TIPOS_SERVICO: { value: TipoServicoAcao; label: string; color: string }[] = [
+  { value: "ALF", label: "ALF - Alfandegado", color: "bg-blue-500 text-white" },
+  { value: "TR", label: "TR - Transporte", color: "bg-orange-500 text-white" },
+  { value: "AG", label: "AG - Armazém Geral", color: "bg-emerald-500 text-white" },
+  { value: "OP", label: "OP - Operação", color: "bg-purple-500 text-white" },
+  { value: "EXP", label: "EXP - Exportação", color: "bg-rose-500 text-white" },
 ];
+
+const getServicoColor = (tipo: TipoServicoAcao | null | undefined): string => {
+  const servico = TIPOS_SERVICO.find(s => s.value === tipo);
+  return servico?.color || "bg-gray-500 text-white";
+};
 
 // Status alinhado com o Pipeline (Oportunidades)
 const statusConfig: Record<StatusAcao, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -356,7 +361,7 @@ export default function PlanoAcoes() {
                     </TableCell>
                     <TableCell>
                       {acao.tipo_servico ? (
-                        <Badge variant="secondary">
+                        <Badge className={getServicoColor(acao.tipo_servico)}>
                           {acao.tipo_servico}
                         </Badge>
                       ) : (
