@@ -139,7 +139,10 @@ export default function PlanoAcoes() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card 
+          className="cursor-pointer transition-all hover:ring-2 hover:ring-primary"
+          onClick={() => setStatusFilter(statusFilter === "all" ? "all" : "all")}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total</CardTitle>
           </CardHeader>
@@ -147,7 +150,10 @@ export default function PlanoAcoes() {
             <div className="text-2xl font-bold">{stats.total}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all hover:ring-2 hover:ring-amber-500 ${statusFilter === "pendente" ? "ring-2 ring-amber-500" : ""}`}
+          onClick={() => setStatusFilter(statusFilter === "pendente" ? "all" : "pendente")}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
           </CardHeader>
@@ -155,7 +161,10 @@ export default function PlanoAcoes() {
             <div className="text-2xl font-bold text-amber-600">{stats.pendentes}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all hover:ring-2 hover:ring-blue-500 ${statusFilter === "em_andamento" ? "ring-2 ring-blue-500" : ""}`}
+          onClick={() => setStatusFilter(statusFilter === "em_andamento" ? "all" : "em_andamento")}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Em Andamento</CardTitle>
           </CardHeader>
@@ -163,7 +172,10 @@ export default function PlanoAcoes() {
             <div className="text-2xl font-bold text-blue-600">{stats.emAndamento}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all hover:ring-2 hover:ring-green-500 ${statusFilter === "concluida" ? "ring-2 ring-green-500" : ""}`}
+          onClick={() => setStatusFilter(statusFilter === "concluida" ? "all" : "concluida")}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Concluídas</CardTitle>
           </CardHeader>

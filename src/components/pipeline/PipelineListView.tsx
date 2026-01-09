@@ -28,6 +28,7 @@ const statusMap: Record<string, string> = {
   fechamento: "Fechamento",
   ganho: "Ganho",
   perdido: "Perdido",
+  sem_retorno: "Sem Retorno",
 };
 
 const statusColors: Record<string, string> = {
@@ -37,6 +38,7 @@ const statusColors: Record<string, string> = {
   fechamento: "bg-orange-100 text-orange-800",
   ganho: "bg-green-100 text-green-800",
   perdido: "bg-red-100 text-red-800",
+  sem_retorno: "bg-slate-100 text-slate-800",
 };
 
 export function PipelineListView({ oportunidades, onCardClick }: PipelineListViewProps) {
