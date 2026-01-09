@@ -23,11 +23,15 @@ const TIPOS_SERVICO: { value: TipoServicoAcao; label: string }[] = [
   { value: "EXP", label: "EXP - Exportação" },
 ];
 
+// Status alinhado com o Pipeline (Oportunidades)
 const statusConfig: Record<StatusAcao, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  pendente: { label: "Pendente", variant: "secondary" },
-  em_andamento: { label: "Em Andamento", variant: "default" },
-  concluida: { label: "Concluída", variant: "outline" },
-  cancelada: { label: "Cancelada", variant: "destructive" },
+  qualificacao: { label: "Qualificação", variant: "secondary" },
+  proposta: { label: "Proposta", variant: "default" },
+  negociacao: { label: "Negociação", variant: "default" },
+  fechamento: { label: "Fechamento", variant: "default" },
+  ganho: { label: "Ganho", variant: "outline" },
+  perdido: { label: "Perdido", variant: "destructive" },
+  sem_retorno: { label: "Sem Retorno", variant: "destructive" },
 };
 
 const prioridadeConfig: Record<PrioridadeAcao, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -97,12 +101,15 @@ export default function PlanoAcoes() {
 
   const stats = useMemo(() => {
     const dataToCount = comercialFilter === "all" ? acoes : filteredAcoes;
-    if (!dataToCount) return { total: 0, pendentes: 0, emAndamento: 0, concluidas: 0 };
+    if (!dataToCount) return { total: 0, qualificacao: 0, proposta: 0, negociacao: 0, fechamento: 0, ganho: 0, perdido: 0 };
     return {
       total: dataToCount.length,
-      pendentes: dataToCount.filter((a) => a.status === "pendente").length,
-      emAndamento: dataToCount.filter((a) => a.status === "em_andamento").length,
-      concluidas: dataToCount.filter((a) => a.status === "concluida").length,
+      qualificacao: dataToCount.filter((a) => a.status === "qualificacao").length,
+      proposta: dataToCount.filter((a) => a.status === "proposta").length,
+      negociacao: dataToCount.filter((a) => a.status === "negociacao").length,
+      fechamento: dataToCount.filter((a) => a.status === "fechamento").length,
+      ganho: dataToCount.filter((a) => a.status === "ganho").length,
+      perdido: dataToCount.filter((a) => a.status === "perdido").length,
     };
   }, [acoes, filteredAcoes, comercialFilter]);
 
@@ -148,10 +155,10 @@ export default function PlanoAcoes() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-7">
         <Card 
           className="cursor-pointer transition-all hover:ring-2 hover:ring-primary"
-          onClick={() => setStatusFilter(statusFilter === "all" ? "all" : "all")}
+          onClick={() => setStatusFilter("all")}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total</CardTitle>
@@ -161,36 +168,69 @@ export default function PlanoAcoes() {
           </CardContent>
         </Card>
         <Card 
-          className={`cursor-pointer transition-all hover:ring-2 hover:ring-amber-500 ${statusFilter === "pendente" ? "ring-2 ring-amber-500" : ""}`}
-          onClick={() => setStatusFilter(statusFilter === "pendente" ? "all" : "pendente")}
+          className={`cursor-pointer transition-all hover:ring-2 hover:ring-amber-500 ${statusFilter === "qualificacao" ? "ring-2 ring-amber-500" : ""}`}
+          onClick={() => setStatusFilter(statusFilter === "qualificacao" ? "all" : "qualificacao")}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
+            <CardTitle className="text-sm font-medium">Qualificação</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-600">{stats.pendentes}</div>
+            <div className="text-2xl font-bold text-amber-600">{stats.qualificacao}</div>
           </CardContent>
         </Card>
         <Card 
-          className={`cursor-pointer transition-all hover:ring-2 hover:ring-blue-500 ${statusFilter === "em_andamento" ? "ring-2 ring-blue-500" : ""}`}
-          onClick={() => setStatusFilter(statusFilter === "em_andamento" ? "all" : "em_andamento")}
+          className={`cursor-pointer transition-all hover:ring-2 hover:ring-blue-500 ${statusFilter === "proposta" ? "ring-2 ring-blue-500" : ""}`}
+          onClick={() => setStatusFilter(statusFilter === "proposta" ? "all" : "proposta")}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Em Andamento</CardTitle>
+            <CardTitle className="text-sm font-medium">Proposta</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.emAndamento}</div>
+            <div className="text-2xl font-bold text-blue-600">{stats.proposta}</div>
           </CardContent>
         </Card>
         <Card 
-          className={`cursor-pointer transition-all hover:ring-2 hover:ring-green-500 ${statusFilter === "concluida" ? "ring-2 ring-green-500" : ""}`}
-          onClick={() => setStatusFilter(statusFilter === "concluida" ? "all" : "concluida")}
+          className={`cursor-pointer transition-all hover:ring-2 hover:ring-purple-500 ${statusFilter === "negociacao" ? "ring-2 ring-purple-500" : ""}`}
+          onClick={() => setStatusFilter(statusFilter === "negociacao" ? "all" : "negociacao")}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Concluídas</CardTitle>
+            <CardTitle className="text-sm font-medium">Negociação</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.concluidas}</div>
+            <div className="text-2xl font-bold text-purple-600">{stats.negociacao}</div>
+          </CardContent>
+        </Card>
+        <Card 
+          className={`cursor-pointer transition-all hover:ring-2 hover:ring-indigo-500 ${statusFilter === "fechamento" ? "ring-2 ring-indigo-500" : ""}`}
+          onClick={() => setStatusFilter(statusFilter === "fechamento" ? "all" : "fechamento")}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Fechamento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-indigo-600">{stats.fechamento}</div>
+          </CardContent>
+        </Card>
+        <Card 
+          className={`cursor-pointer transition-all hover:ring-2 hover:ring-green-500 ${statusFilter === "ganho" ? "ring-2 ring-green-500" : ""}`}
+          onClick={() => setStatusFilter(statusFilter === "ganho" ? "all" : "ganho")}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Ganho</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{stats.ganho}</div>
+          </CardContent>
+        </Card>
+        <Card 
+          className={`cursor-pointer transition-all hover:ring-2 hover:ring-red-500 ${statusFilter === "perdido" ? "ring-2 ring-red-500" : ""}`}
+          onClick={() => setStatusFilter(statusFilter === "perdido" ? "all" : "perdido")}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Perdido</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{stats.perdido}</div>
           </CardContent>
         </Card>
       </div>
@@ -227,10 +267,13 @@ export default function PlanoAcoes() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os status</SelectItem>
-            <SelectItem value="pendente">Pendente</SelectItem>
-            <SelectItem value="em_andamento">Em Andamento</SelectItem>
-            <SelectItem value="concluida">Concluída</SelectItem>
-            <SelectItem value="cancelada">Cancelada</SelectItem>
+            <SelectItem value="qualificacao">Qualificação</SelectItem>
+            <SelectItem value="proposta">Proposta</SelectItem>
+            <SelectItem value="negociacao">Negociação</SelectItem>
+            <SelectItem value="fechamento">Fechamento</SelectItem>
+            <SelectItem value="ganho">Ganho</SelectItem>
+            <SelectItem value="perdido">Perdido</SelectItem>
+            <SelectItem value="sem_retorno">Sem Retorno</SelectItem>
           </SelectContent>
         </Select>
         <Select value={prioridadeFilter} onValueChange={setPrioridadeFilter}>
