@@ -180,20 +180,27 @@ export function PipelineKanban({ oportunidades }: PipelineKanbanProps) {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 overflow-x-auto pb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 overflow-x-auto pb-4">
         {STATUS_COLUMNS.map((statusKey) => {
           const deals = groupedOportunidades[statusKey] || [];
+          const totalValue = deals.reduce((sum, deal) => sum + (deal.valor || 0), 0);
+          const formattedTotal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' }).format(totalValue);
           return (
             <Card 
               key={statusKey} 
-              className="min-w-[250px]"
+              className="min-w-[220px]"
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, statusKey)}
             >
               <CardHeader className={`${statusColors[statusKey]} text-white rounded-t-lg py-3`}>
-                <CardTitle className="text-sm font-medium flex items-center justify-between">
-                  {statusMap[statusKey]}
-                  <Badge className="bg-white/20 text-white border-0">{deals.length}</Badge>
+                <CardTitle className="text-sm font-medium flex flex-col gap-1">
+                  <div className="flex items-center justify-between">
+                    {statusMap[statusKey]}
+                    <Badge className="bg-white/20 text-white border-0">{deals.length}</Badge>
+                  </div>
+                  <div className="text-xs font-normal opacity-90">
+                    {formattedTotal}
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-2 bg-muted/30 min-h-[400px]">
