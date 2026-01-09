@@ -4,18 +4,24 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Eye, Trash2, Users } from "lucide-react";
+import { Plus, Search, Eye, Trash2, Users, LayoutGrid, List, ArrowUpAZ, ArrowDownAZ, Building2, Phone, Mail } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useClientes, useDeleteCliente } from "@/hooks/useClientes";
 import { ClienteForm } from "@/components/forms/ClienteForm";
 import { useNavigate } from "react-router-dom";
+
+type SortOrder = "az" | "za";
+type ViewMode = "list" | "cards";
 
 export default function Clientes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [comercialFilter, setComercialFilter] = useState("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("az");
   
   const { data: clientes, isLoading } = useClientes();
   const deleteCliente = useDeleteCliente();
@@ -33,16 +39,24 @@ export default function Clientes() {
     return Array.from(codigos).sort();
   }, [clientes]);
 
-  const filteredClientes = clientes?.filter(cliente => {
-    const matchesSearch = 
-      cliente.empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (cliente.cnpj && cliente.cnpj.includes(searchTerm));
-    
-    const matchesStatus = statusFilter === "todos" || cliente.status === statusFilter;
-    const matchesComercial = comercialFilter === "todos" || cliente.responsavel_codigo === comercialFilter;
+  const filteredClientes = useMemo(() => {
+    const filtered = clientes?.filter(cliente => {
+      const matchesSearch = 
+        cliente.empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (cliente.cnpj && cliente.cnpj.includes(searchTerm));
+      
+      const matchesStatus = statusFilter === "todos" || cliente.status === statusFilter;
+      const matchesComercial = comercialFilter === "todos" || cliente.responsavel_codigo === comercialFilter;
 
-    return matchesSearch && matchesStatus && matchesComercial;
-  }) || [];
+      return matchesSearch && matchesStatus && matchesComercial;
+    }) || [];
+
+    // Sort by empresa name
+    return filtered.sort((a, b) => {
+      const comparison = a.empresa.localeCompare(b.empresa, 'pt-BR');
+      return sortOrder === "az" ? comparison : -comparison;
+    });
+  }, [clientes, searchTerm, statusFilter, comercialFilter, sortOrder]);
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string }> = {
@@ -126,72 +140,182 @@ export default function Clientes() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle>Lista de Clientes ({filteredClientes.length})</CardTitle>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSortOrder(sortOrder === "az" ? "za" : "az")}
+              className="gap-2"
+            >
+              {sortOrder === "az" ? (
+                <ArrowUpAZ className="h-4 w-4" />
+              ) : (
+                <ArrowDownAZ className="h-4 w-4" />
+              )}
+              {sortOrder === "az" ? "A-Z" : "Z-A"}
+            </Button>
+            <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as ViewMode)}>
+              <ToggleGroupItem value="list" aria-label="Lista">
+                <List className="h-4 w-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="cards" aria-label="Cartões">
+                <LayoutGrid className="h-4 w-4" />
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Empresa</TableHead>
-                <TableHead>CNPJ</TableHead>
-                <TableHead>Segmento</TableHead>
-                <TableHead>Comercial</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Potencial</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredClientes.length === 0 ? (
+          {viewMode === "list" ? (
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                    Nenhum cliente encontrado
-                  </TableCell>
+                  <TableHead>Empresa</TableHead>
+                  <TableHead>CNPJ</TableHead>
+                  <TableHead>Segmento</TableHead>
+                  <TableHead>Comercial</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Potencial</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredClientes.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                      Nenhum cliente encontrado
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredClientes.map((cliente) => (
+                    <TableRow key={cliente.id} className="cursor-pointer hover:bg-muted/50">
+                      <TableCell className="font-medium">{cliente.empresa}</TableCell>
+                      <TableCell>{cliente.cnpj || "-"}</TableCell>
+                      <TableCell>
+                        {cliente.segmentos && cliente.segmentos.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {cliente.segmentos.slice(0, 2).map((seg) => (
+                              <Badge key={seg} variant="outline" className="text-xs">
+                                {seg}
+                              </Badge>
+                            ))}
+                            {cliente.segmentos.length > 2 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{cliente.segmentos.length - 2}
+                              </Badge>
+                            )}
+                          </div>
+                        ) : (
+                          "-"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {cliente.responsavel_codigo ? (
+                          <Badge variant="outline">{cliente.responsavel_codigo}</Badge>
+                        ) : "-"}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(cliente.status)}</TableCell>
+                      <TableCell>{cliente.potencial || "-"}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => navigate(`/cliente/${cliente.id}`)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              if (confirm("Tem certeza que deseja excluir este cliente?")) {
+                                deleteCliente.mutate(cliente.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredClientes.length === 0 ? (
+                <div className="col-span-full text-center text-muted-foreground py-8">
+                  Nenhum cliente encontrado
+                </div>
               ) : (
                 filteredClientes.map((cliente) => (
-                  <TableRow key={cliente.id} className="cursor-pointer hover:bg-muted/50">
-                    <TableCell className="font-medium">{cliente.empresa}</TableCell>
-                    <TableCell>{cliente.cnpj || "-"}</TableCell>
-                    <TableCell>
-                      {cliente.segmentos && cliente.segmentos.length > 0 ? (
+                  <Card 
+                    key={cliente.id} 
+                    className="cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => navigate(`/cliente/${cliente.id}`)}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-5 w-5 text-muted-foreground" />
+                          <CardTitle className="text-base line-clamp-1">{cliente.empresa}</CardTitle>
+                        </div>
+                        {getStatusBadge(cliente.status)}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {cliente.cnpj && (
+                        <p className="text-sm text-muted-foreground">
+                          CNPJ: {cliente.cnpj}
+                        </p>
+                      )}
+                      
+                      {cliente.segmentos && cliente.segmentos.length > 0 && (
                         <div className="flex flex-wrap gap-1">
-                          {cliente.segmentos.slice(0, 2).map((seg) => (
+                          {cliente.segmentos.slice(0, 3).map((seg) => (
                             <Badge key={seg} variant="outline" className="text-xs">
                               {seg}
                             </Badge>
                           ))}
-                          {cliente.segmentos.length > 2 && (
+                          {cliente.segmentos.length > 3 && (
                             <Badge variant="outline" className="text-xs">
-                              +{cliente.segmentos.length - 2}
+                              +{cliente.segmentos.length - 3}
                             </Badge>
                           )}
                         </div>
-                      ) : (
-                        "-"
                       )}
-                    </TableCell>
-                    <TableCell>
-                      {cliente.responsavel_codigo ? (
-                        <Badge variant="outline">{cliente.responsavel_codigo}</Badge>
-                      ) : "-"}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(cliente.status)}</TableCell>
-                    <TableCell>{cliente.potencial || "-"}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+
+                      <div className="flex items-center justify-between pt-2 border-t">
+                        {cliente.responsavel_codigo ? (
+                          <Badge variant="secondary">{cliente.responsavel_codigo}</Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Sem responsável</span>
+                        )}
+                        {cliente.potencial && (
+                          <span className="text-sm font-medium">{cliente.potencial}</span>
+                        )}
+                      </div>
+
+                      <div className="flex justify-end gap-2 pt-2">
                         <Button 
-                          variant="ghost" 
+                          variant="outline" 
                           size="sm"
-                          onClick={() => navigate(`/cliente/${cliente.id}`)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/cliente/${cliente.id}`);
+                          }}
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-4 w-4 mr-1" />
+                          Ver
                         </Button>
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             if (confirm("Tem certeza que deseja excluir este cliente?")) {
                               deleteCliente.mutate(cliente.id);
                             }
@@ -200,12 +324,12 @@ export default function Clientes() {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </CardContent>
+                  </Card>
                 ))
               )}
-            </TableBody>
-          </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
