@@ -1,5 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { CRMSidebar } from "@/components/CRMSidebar";
+import { NotificationCenter } from "@/components/NotificationCenter";
 import logoIntermaritima from "@/assets/logo-intermaritima.png";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -19,6 +20,7 @@ export function CRMLayout({ children }: { children: React.ReactNode }) {
               className="h-6 md:h-8" 
             />
             <div className="ml-auto flex items-center gap-2 md:gap-4">
+              <NotificationCenter />
               <span className="text-xs md:text-sm text-muted-foreground hidden sm:inline">Comercial</span>
             </div>
           </header>

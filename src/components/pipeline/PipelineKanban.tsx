@@ -27,7 +27,8 @@ const statusMap: Record<StatusOportunidade, string> = {
   negociacao: "Negociação",
   fechamento: "Fechamento",
   ganho: "Ganho",
-  perdido: "Perdido"
+  perdido: "Perdido",
+  sem_retorno: "Sem Retorno"
 };
 
 const statusColors: Record<StatusOportunidade, string> = {
@@ -36,7 +37,8 @@ const statusColors: Record<StatusOportunidade, string> = {
   negociacao: "bg-orange-500",
   fechamento: "bg-green-600",
   ganho: "bg-green-700",
-  perdido: "bg-red-500"
+  perdido: "bg-red-500",
+  sem_retorno: "bg-slate-400"
 };
 
 const STATUS_COLUMNS: StatusOportunidade[] = [
@@ -45,7 +47,8 @@ const STATUS_COLUMNS: StatusOportunidade[] = [
   "negociacao",
   "fechamento",
   "ganho",
-  "perdido"
+  "perdido",
+  "sem_retorno"
 ];
 
 const MOTIVOS_PERDA = [

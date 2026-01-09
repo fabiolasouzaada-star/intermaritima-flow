@@ -1217,6 +1217,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_stale_opportunities: { Args: never; Returns: undefined }
       gerar_numero_proposta: { Args: never; Returns: string }
       has_role: {
         Args: {
@@ -1250,6 +1251,7 @@ export type Database = {
         | "fechamento"
         | "ganho"
         | "perdido"
+        | "sem_retorno"
       status_proposta: "rascunho" | "enviada" | "aprovada" | "rejeitada"
       status_tarefa: "pendente" | "em_andamento" | "concluida" | "cancelada"
       status_visita: "a_agendar" | "agendada" | "realizada" | "cancelada"
@@ -1425,6 +1427,7 @@ export const Constants = {
         "fechamento",
         "ganho",
         "perdido",
+        "sem_retorno",
       ],
       status_proposta: ["rascunho", "enviada", "aprovada", "rejeitada"],
       status_tarefa: ["pendente", "em_andamento", "concluida", "cancelada"],
