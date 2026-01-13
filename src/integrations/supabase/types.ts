@@ -812,6 +812,120 @@ export type Database = {
           },
         ]
       }
+      pre_alerta_itens: {
+        Row: {
+          armador: string | null
+          cliente_cnpj: string | null
+          cliente_id: string | null
+          cliente_nome: string
+          cntr_numero: string | null
+          comercial_responsavel: string | null
+          created_at: string
+          created_by: string | null
+          eta: string | null
+          id: string
+          is_cliente_intermaritima: boolean | null
+          navio: string
+          nv: string | null
+          observacoes: string | null
+          peso_bruto: number | null
+          quantidade: number | null
+          status_comercial: string | null
+          tipo_carga: string | null
+          tipo_container: string | null
+          updated_at: string
+          upload_id: string | null
+        }
+        Insert: {
+          armador?: string | null
+          cliente_cnpj?: string | null
+          cliente_id?: string | null
+          cliente_nome: string
+          cntr_numero?: string | null
+          comercial_responsavel?: string | null
+          created_at?: string
+          created_by?: string | null
+          eta?: string | null
+          id?: string
+          is_cliente_intermaritima?: boolean | null
+          navio: string
+          nv?: string | null
+          observacoes?: string | null
+          peso_bruto?: number | null
+          quantidade?: number | null
+          status_comercial?: string | null
+          tipo_carga?: string | null
+          tipo_container?: string | null
+          updated_at?: string
+          upload_id?: string | null
+        }
+        Update: {
+          armador?: string | null
+          cliente_cnpj?: string | null
+          cliente_id?: string | null
+          cliente_nome?: string
+          cntr_numero?: string | null
+          comercial_responsavel?: string | null
+          created_at?: string
+          created_by?: string | null
+          eta?: string | null
+          id?: string
+          is_cliente_intermaritima?: boolean | null
+          navio?: string
+          nv?: string | null
+          observacoes?: string | null
+          peso_bruto?: number | null
+          quantidade?: number | null
+          status_comercial?: string | null
+          tipo_carga?: string | null
+          tipo_container?: string | null
+          updated_at?: string
+          upload_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pre_alerta_itens_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pre_alerta_itens_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "pre_alerta_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pre_alerta_uploads: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          nome_arquivo: string
+          processado: boolean | null
+          total_registros: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome_arquivo: string
+          processado?: boolean | null
+          total_registros?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome_arquivo?: string
+          processado?: boolean | null
+          total_registros?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
