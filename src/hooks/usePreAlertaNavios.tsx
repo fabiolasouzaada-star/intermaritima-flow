@@ -47,6 +47,8 @@ export interface NavioAgregado {
   eta: string | null;
   armador: string | null;
   total_cntr: number;
+  cntr_20: number;
+  cntr_40: number;
   total_clientes: number;
   clientes_intermaritima: number;
   clientes_nao_cadastrados: number;
@@ -175,6 +177,8 @@ export function useNaviosAgregados(filters?: PreAlertaFilters) {
           eta: item.eta,
           armador: item.armador,
           total_cntr: 0,
+          cntr_20: 0,
+          cntr_40: 0,
           total_clientes: new Set<string>(),
           clientes_intermaritima: new Set<string>(),
           clientes_nao_cadastrados: new Set<string>(),
@@ -183,6 +187,15 @@ export function useNaviosAgregados(filters?: PreAlertaFilters) {
         };
       }
       acc[key].total_cntr += item.quantidade;
+      
+      // Categorize by container type (20' or 40')
+      const tipo = item.tipo_container?.toUpperCase() || '';
+      if (tipo.includes('20')) {
+        acc[key].cntr_20 += item.quantidade;
+      } else if (tipo.includes('40')) {
+        acc[key].cntr_40 += item.quantidade;
+      }
+      
       acc[key].total_clientes.add(item.cliente_nome);
       if (item.is_cliente_intermaritima) {
         acc[key].clientes_intermaritima.add(item.cliente_nome);
