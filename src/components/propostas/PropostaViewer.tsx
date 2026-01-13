@@ -1,13 +1,10 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Proposta, CategoriaServico, useUpdateProposta, usePropostaHistorico } from "@/hooks/usePropostas";
-import { Download, Send, CheckCircle, XCircle, FileText, History, Edit } from "lucide-react";
-import { toast } from "sonner";
-import jsPDF from "jspdf";
+import { Send, CheckCircle, XCircle, FileText, History, Edit } from "lucide-react";
 
 interface PropostaViewerProps {
   proposta: Proposta;
@@ -22,7 +19,6 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 };
 
 export function PropostaViewer({ proposta, onClose }: PropostaViewerProps) {
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const updateProposta = useUpdateProposta();
   const { data: historico } = usePropostaHistorico(proposta.id);
 
@@ -41,240 +37,6 @@ export function PropostaViewer({ proposta, onClose }: PropostaViewerProps) {
       data: updates,
       criarHistorico: true,
     });
-  };
-
-  const generatePDF = async () => {
-    setIsGeneratingPdf(true);
-    try {
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 20;
-      let y = 25;
-
-      // === CABEÇALHO INSTITUCIONAL ===
-      doc.setFontSize(16);
-      doc.setFont("helvetica", "bold");
-      doc.text("INTERMARÍTIMA", pageWidth / 2, y, { align: "center" });
-      y += 7;
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.text("Portos e Logística S.A.", pageWidth / 2, y, { align: "center" });
-      y += 15;
-
-      // Linha decorativa
-      doc.setDrawColor(0, 100, 180);
-      doc.setLineWidth(1);
-      doc.line(margin, y, pageWidth - margin, y);
-      y += 15;
-
-      // === TÍTULO DA PROPOSTA ===
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text(`Proposta Comercial Número ${proposta.numero_proposta}`, pageWidth / 2, y, { align: "center" });
-      y += 10;
-
-      // Data
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Salvador, ${new Date(proposta.created_at).toLocaleDateString("pt-BR", { 
-        day: "numeric", 
-        month: "long", 
-        year: "numeric" 
-      })}`, pageWidth / 2, y, { align: "center" });
-      y += 15;
-
-      // === DADOS DO CLIENTE ===
-      doc.setFontSize(10);
-      doc.text("À", margin, y);
-      y += 6;
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      doc.text(proposta.clientes?.empresa || "Cliente", margin, y);
-      y += 6;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      
-      if (proposta.contato_nome) {
-        doc.text(`ATT.: ${proposta.contato_nome}`, margin, y);
-        y += 5;
-      }
-      if (proposta.contato_email) {
-        doc.text(`Email: ${proposta.contato_email}`, margin, y);
-        y += 5;
-      }
-      y += 10;
-
-      // === REFERÊNCIA ===
-      doc.setFont("helvetica", "bold");
-      doc.text(`Ref. - ${proposta.modelos_proposta?.nome || "Proposta Comercial"}`, margin, y);
-      y += 12;
-
-      // === TEXTO INTRODUTÓRIO ===
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      const introLines = doc.splitTextToSize(proposta.texto_introdutorio, pageWidth - margin * 2);
-      introLines.forEach((line: string) => {
-        if (y > 270) {
-          doc.addPage();
-          y = 25;
-        }
-        doc.text(line, margin, y);
-        y += 5;
-      });
-      
-      // Assinatura da primeira página
-      y += 10;
-      doc.setFont("helvetica", "normal");
-      doc.text("Fabíola Souza", margin, y);
-      y += 5;
-      doc.text("Intermarítima Portos e Logística S.A.", margin, y);
-
-      // === PÁGINAS DE SERVIÇOS ===
-      if (categorias && categorias.length > 0) {
-        categorias.forEach((categoria) => {
-          doc.addPage();
-          y = 25;
-
-          // Header da página
-          doc.setFontSize(10);
-          doc.setFont("helvetica", "normal");
-          doc.text("INTERMARÍTIMA", margin, 15);
-          doc.text("CERTIFIED OEA", pageWidth - margin - 30, 15);
-
-          // Título da categoria
-          doc.setFontSize(12);
-          doc.setFont("helvetica", "bold");
-          doc.text(categoria.categoria, margin, y);
-          y += 10;
-
-          // Tabela de serviços
-          doc.setFontSize(9);
-          
-          // Cabeçalho da tabela
-          doc.setFillColor(240, 240, 240);
-          doc.rect(margin, y - 4, pageWidth - margin * 2, 8, "F");
-          doc.setFont("helvetica", "bold");
-          doc.text("Serviço", margin + 2, y);
-          doc.text("Unidade", pageWidth - 70, y);
-          doc.text("Valor", pageWidth - margin - 20, y, { align: "right" });
-          y += 10;
-
-          doc.setFont("helvetica", "normal");
-          categoria.itens.forEach((item) => {
-            if (y > 265) {
-              doc.addPage();
-              y = 25;
-              // Header da nova página
-              doc.setFontSize(10);
-              doc.text("INTERMARÍTIMA", margin, 15);
-              doc.setFontSize(9);
-            }
-            
-            // Nome do serviço (pode quebrar linha)
-            const nomeLines = doc.splitTextToSize(item.nome, 90);
-            doc.text(nomeLines, margin + 2, y);
-            
-            // Unidade e valor
-            doc.text(item.unidade, pageWidth - 70, y);
-            doc.text(item.valorEditado || item.valor, pageWidth - margin - 2, y, { align: "right" });
-            
-            y += Math.max(nomeLines.length * 4, 6) + 2;
-            
-            // Linha separadora
-            doc.setDrawColor(220, 220, 220);
-            doc.setLineWidth(0.1);
-            doc.line(margin, y - 1, pageWidth - margin, y - 1);
-          });
-        });
-      }
-
-      // === NOTAS E CONDIÇÕES ===
-      doc.addPage();
-      y = 25;
-      
-      // Header
-      doc.setFontSize(10);
-      doc.text("INTERMARÍTIMA", margin, 15);
-      doc.text("CERTIFIED OEA", pageWidth - margin - 30, 15);
-
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      const notesLines = doc.splitTextToSize(proposta.notas_condicoes, pageWidth - margin * 2);
-      notesLines.forEach((line: string) => {
-        if (y > 270) {
-          doc.addPage();
-          y = 25;
-          doc.text("INTERMARÍTIMA", margin, 15);
-        }
-        doc.text(line, margin, y);
-        y += 4.5;
-      });
-
-      // === OBSERVAÇÕES ADICIONAIS ===
-      if (proposta.observacoes) {
-        y += 10;
-        if (y > 240) {
-          doc.addPage();
-          y = 25;
-        }
-        doc.setFontSize(11);
-        doc.setFont("helvetica", "bold");
-        doc.text("Observações Adicionais:", margin, y);
-        y += 7;
-        
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-        const obsLines = doc.splitTextToSize(proposta.observacoes, pageWidth - margin * 2);
-        obsLines.forEach((line: string) => {
-          if (y > 270) {
-            doc.addPage();
-            y = 25;
-          }
-          doc.text(line, margin, y);
-          y += 5;
-        });
-      }
-
-      // === ASSINATURAS ===
-      y += 20;
-      if (y > 220) {
-        doc.addPage();
-        y = 100;
-      }
-
-      // Assinatura Intermarítima
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.text("Intermarítima Portos e Logística S.A.", margin, y);
-      y += 20;
-      doc.line(margin, y, margin + 70, y);
-      y += 5;
-      doc.text("Nome: Fabíola Souza", margin, y);
-      y += 5;
-      doc.text("Cargo: Gerente Comercial", margin, y);
-      y += 5;
-      doc.text("E-mail: fabiola.souza@intermaritima.com.br", margin, y);
-
-      // Assinatura Cliente
-      const clienteX = pageWidth / 2 + 10;
-      y -= 35;
-      doc.text("Cliente:", clienteX, y);
-      y += 20;
-      doc.line(clienteX, y, clienteX + 70, y);
-      y += 5;
-      doc.text("Nome:", clienteX, y);
-      y += 5;
-      doc.text("Tel:", clienteX, y);
-
-      // Salvar
-      doc.save(`Proposta_${proposta.numero_proposta}.pdf`);
-      toast.success("PDF gerado com sucesso!");
-    } catch (error) {
-      toast.error("Erro ao gerar PDF");
-      console.error(error);
-    } finally {
-      setIsGeneratingPdf(false);
-    }
   };
 
   return (
@@ -303,10 +65,6 @@ export function PropostaViewer({ proposta, onClose }: PropostaViewerProps) {
               </Button>
             </>
           )}
-          <Button onClick={generatePDF} disabled={isGeneratingPdf}>
-            <Download className="h-4 w-4 mr-2" />
-            {isGeneratingPdf ? "Gerando..." : "Gerar PDF"}
-          </Button>
         </div>
       </div>
 
