@@ -30,6 +30,7 @@ import FSImportadores from "./pages/FSImportadores";
 import FSExportadores from "./pages/FSExportadores";
 import FSLogistica from "./pages/FSLogistica";
 import FSFreightForwarders from "./pages/FSFreightForwarders";
+import PreAlertaNavios from "./pages/PreAlertaNavios";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
@@ -73,6 +74,7 @@ const App = () => (
             <Route path="/pipeline-retomada" element={<ProtectedRoute><CRMLayout><PipelineRetomada /></CRMLayout></ProtectedRoute>} />
             <Route path="/dashboard-fs" element={<ProtectedRoute><CRMLayout><DashboardFS /></CRMLayout></ProtectedRoute>} />
             <Route path="/controle-propostas" element={<ProtectedRoute><CRMLayout><ControlePropostas /></CRMLayout></ProtectedRoute>} />
+            <Route path="/pre-alerta-navios" element={<ProtectedRoute><CRMLayout><PreAlertaNavios /></CRMLayout></ProtectedRoute>} />
             
             <Route path="/fs-concorrentes" element={<ProtectedRoute><CRMLayout><FSConcorrentes /></CRMLayout></ProtectedRoute>} />
             <Route path="/fs-multiterminal" element={<ProtectedRoute><CRMLayout><FSMultiterminal /></CRMLayout></ProtectedRoute>} />
