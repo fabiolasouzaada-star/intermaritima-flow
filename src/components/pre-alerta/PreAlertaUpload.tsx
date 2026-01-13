@@ -12,30 +12,54 @@ interface PreAlertaUploadProps {
   onSuccess?: () => void;
 }
 
-// Column mapping - adjust based on actual Excel structure
+// Column mapping - expanded to catch more variations
 const COLUMN_MAPPING = {
-  navio: ["navio", "vessel", "ship", "embarcação"],
-  nv: ["nv", "viagem", "voyage", "voyage_number"],
-  eta: ["eta", "chegada", "arrival", "data_chegada", "previsao"],
-  armador: ["armador", "carrier", "linha", "shipowner", "shipping_line"],
-  cliente_nome: ["cliente", "consignee", "consignatário", "importador", "customer", "nome_cliente"],
-  cliente_cnpj: ["cnpj", "cnpj_cliente", "tax_id"],
-  cntr_numero: ["container", "cntr", "número_container", "container_number"],
-  tipo_container: ["tipo", "type", "tipo_container", "container_type", "size_type"],
-  quantidade: ["quantidade", "qty", "qtd", "qtde", "count"],
-  tipo_carga: ["carga", "cargo", "mercadoria", "commodity"],
-  peso_bruto: ["peso", "weight", "peso_bruto", "gross_weight"],
+  navio: ["navio", "vessel", "ship", "embarcacao", "embarcação", "nome_navio", "nome navio", "nomenavio", "nome do navio"],
+  nv: ["nv", "viagem", "voyage", "voyage_number", "num_viagem", "numero_viagem", "numero viagem", "n viagem", "n.viagem"],
+  eta: ["eta", "chegada", "arrival", "data_chegada", "previsao", "previsão", "data chegada", "dt chegada", "dt_chegada", "data eta", "prev chegada"],
+  armador: ["armador", "carrier", "linha", "shipowner", "shipping_line", "cia maritima", "companhia", "linha maritima", "shipping"],
+  cliente_nome: ["cliente", "consignee", "consignatário", "consignatario", "importador", "customer", "nome_cliente", "nome cliente", "razao social", "razão social", "empresa", "destinatario", "destinatário", "nome", "recebedor", "consig", "clie"],
+  cliente_cnpj: ["cnpj", "cnpj_cliente", "tax_id", "cnpj cliente", "documento", "cpf_cnpj", "cpf/cnpj"],
+  cntr_numero: ["container", "cntr", "numero_container", "container_number", "num container", "n container", "conteiner", "contêiner", "num_cntr", "numero cntr", "numero container"],
+  tipo_container: ["tipo", "type", "tipo_container", "container_type", "size_type", "tipo container", "tp container", "tp_cntr", "tipo cntr", "size", "tamanho", "tam"],
+  quantidade: ["quantidade", "qty", "qtd", "qtde", "count", "quant", "qde", "qt", "qtdd", "unidades", "un", "und"],
+  tipo_carga: ["carga", "cargo", "mercadoria", "commodity", "produto", "descricao", "descrição", "desc carga", "tipo carga", "natureza"],
+  peso_bruto: ["peso", "weight", "peso_bruto", "gross_weight", "peso bruto", "kg", "peso kg", "tonelada", "ton"],
 };
 
+function normalizeText(text: string): string {
+  return text?.toString()
+    .toLowerCase()
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+    .replace(/[^a-z0-9]/g, " ") // Substituir caracteres especiais por espaço
+    .replace(/\s+/g, " ") // Múltiplos espaços -> um espaço
+    .trim();
+}
+
 function findColumnIndex(headers: string[], possibleNames: string[]): number {
-  const normalizedHeaders = headers.map(h => 
-    h?.toString().toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "_")
-  );
-  
-  for (const name of possibleNames) {
-    const normalizedName = name.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "_");
-    const index = normalizedHeaders.findIndex(h => h.includes(normalizedName) || normalizedName.includes(h));
-    if (index !== -1) return index;
+  for (let i = 0; i < headers.length; i++) {
+    const normalizedHeader = normalizeText(headers[i] || "");
+    
+    for (const name of possibleNames) {
+      const normalizedName = normalizeText(name);
+      
+      // Verificar match exato
+      if (normalizedHeader === normalizedName) return i;
+      
+      // Verificar se contém
+      if (normalizedHeader.includes(normalizedName) || normalizedName.includes(normalizedHeader)) {
+        return i;
+      }
+      
+      // Verificar match sem espaços
+      const headerNoSpace = normalizedHeader.replace(/\s/g, "");
+      const nameNoSpace = normalizedName.replace(/\s/g, "");
+      if (headerNoSpace === nameNoSpace || headerNoSpace.includes(nameNoSpace) || nameNoSpace.includes(headerNoSpace)) {
+        return i;
+      }
+    }
   }
   return -1;
 }
@@ -111,15 +135,23 @@ export function PreAlertaUpload({ onSuccess }: PreAlertaUploadProps) {
         columnIndices[field] = findColumnIndex(headers, possibleNames);
       }
 
-      // Check if cliente_nome was found (required field)
+      // Log headers found for debugging
+      console.log("Headers encontrados:", headers);
+      console.log("Índices mapeados:", columnIndices);
+
+      // Check required columns with better error message
+      const missingColumns: string[] = [];
       if (columnIndices.cliente_nome === -1) {
-        toast.error("Coluna 'Cliente' não encontrada na planilha");
-        return;
+        missingColumns.push("Cliente");
+      }
+      if (columnIndices.navio === -1) {
+        missingColumns.push("Navio");
       }
 
-      // Also need navio
-      if (columnIndices.navio === -1) {
-        toast.error("Coluna 'Navio' não encontrada na planilha");
+      if (missingColumns.length > 0) {
+        toast.error(`Colunas obrigatórias não encontradas: ${missingColumns.join(", ")}. Headers encontrados: ${headers.filter(h => h).slice(0, 10).join(", ")}`);
+        setPreview({ headers, rows: [], fileName: file.name });
+        setMappedData([]);
         return;
       }
 
