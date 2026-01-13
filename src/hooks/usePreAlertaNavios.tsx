@@ -321,6 +321,60 @@ export function useDeletePreAlertaItens() {
   });
 }
 
+export function useDeleteNavioItens() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ navio, nv }: { navio: string; nv: string | null }) => {
+      let query = supabase
+        .from("pre_alerta_itens")
+        .delete()
+        .eq("navio", navio);
+      
+      if (nv) {
+        query = query.eq("nv", nv);
+      } else {
+        query = query.is("nv", null);
+      }
+
+      const { error } = await query;
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pre-alerta-itens"] });
+      queryClient.invalidateQueries({ queryKey: ["pre-alerta-uploads"] });
+      toast.success("Navio excluído com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Erro ao excluir navio:", error);
+      toast.error("Erro ao excluir navio");
+    },
+  });
+}
+
+export function useCleanupOldNavios() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const tenDaysAgo = new Date();
+      tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+      const cutoffDate = tenDaysAgo.toISOString().split('T')[0];
+
+      const { error } = await supabase
+        .from("pre_alerta_itens")
+        .delete()
+        .lt("eta", cutoffDate);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pre-alerta-itens"] });
+      queryClient.invalidateQueries({ queryKey: ["pre-alerta-uploads"] });
+    },
+  });
+}
+
 export function usePreAlertaStats(filters?: PreAlertaFilters) {
   const { data: itens, isLoading } = usePreAlertaItens(filters);
 
