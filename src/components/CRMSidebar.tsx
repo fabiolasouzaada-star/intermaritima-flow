@@ -15,7 +15,8 @@ import {
   ListTodo,
   ShieldCheck,
   Briefcase,
-  FileCheck
+  FileCheck,
+  Ship
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,6 +39,7 @@ const menuItems = [
   { title: "Clientes", url: "/clientes", icon: Users },
   { title: "Carteira Comercial", url: "/carteira-comercial", icon: Briefcase },
   { title: "Pipeline", url: "/pipeline", icon: Workflow },
+  { title: "Pré-Alerta Navios", url: "/pre-alerta-navios", icon: Ship },
   { title: "Controle Propostas", url: "/controle-propostas", icon: FileCheck },
   { title: "Contratos", url: "/contratos", icon: FileText },
   { title: "Calendário", url: "/calendario", icon: Calendar },
