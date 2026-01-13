@@ -67,23 +67,31 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
         cliente_id: item.cliente_id,
         is_cliente_intermaritima: item.is_cliente_intermaritima,
         total_cntr: 0,
-        tipos_container: new Set<string>(),
+        cntr_20: 0,
+        cntr_40: 0,
         status_comercial: item.status_comercial,
         itens: [],
       };
     }
     acc[key].total_cntr += item.quantidade;
-    if (item.tipo_container) {
-      acc[key].tipos_container.add(item.tipo_container);
+    
+    // Categorize by container type (20' or 40')
+    const tipo = item.tipo_container?.toUpperCase() || '';
+    if (tipo.includes('20')) {
+      acc[key].cntr_20 += item.quantidade;
+    } else if (tipo.includes('40')) {
+      acc[key].cntr_40 += item.quantidade;
     }
+    
     acc[key].itens.push(item);
     return acc;
   }, {} as Record<string, any>);
 
-  const clientes = Object.values(clienteAgregado).map((c: any) => ({
-    ...c,
-    tipos_container: Array.from(c.tipos_container),
-  }));
+  const clientes = Object.values(clienteAgregado);
+  
+  // Calculate ship totals by type
+  const totalCntr20 = clientes.reduce((sum: number, c: any) => sum + c.cntr_20, 0);
+  const totalCntr40 = clientes.reduce((sum: number, c: any) => sum + c.cntr_40, 0);
 
   const handleStatusChange = async (clienteNome: string, newStatus: string) => {
     const clienteData = clienteAgregado[clienteNome];
@@ -229,7 +237,7 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
             </div>
             <div className="flex items-center gap-2 text-sm">
               <Container className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Total CNTR:</span>
+              <span className="text-muted-foreground">Total:</span>
               <span className="font-bold text-lg">{navio.total_cntr}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
@@ -239,11 +247,14 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
             </div>
           </div>
 
-          {/* Container types */}
-          <div className="flex flex-wrap gap-2">
-            {navio.tipos_container.map((tipo) => (
-              <Badge key={tipo} variant="secondary">{tipo}</Badge>
-            ))}
+          {/* Container types summary */}
+          <div className="flex flex-wrap gap-4">
+            <Badge variant="secondary" className="text-sm px-3 py-1">
+              20': <span className="font-bold ml-1">{totalCntr20}</span>
+            </Badge>
+            <Badge variant="secondary" className="text-sm px-3 py-1">
+              40': <span className="font-bold ml-1">{totalCntr40}</span>
+            </Badge>
           </div>
 
           {/* Clients table */}
@@ -252,8 +263,9 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead>Cliente</TableHead>
-                  <TableHead className="text-center">CNTR</TableHead>
-                  <TableHead className="text-center">Tipos</TableHead>
+                  <TableHead className="text-center">Total</TableHead>
+                  <TableHead className="text-center">20'</TableHead>
+                  <TableHead className="text-center">40'</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
@@ -277,18 +289,18 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
                         {cliente.total_cntr}
                       </TableCell>
                       <TableCell className="text-center">
-                        <div className="flex flex-wrap gap-1 justify-center">
-                          {cliente.tipos_container.slice(0, 2).map((tipo: string) => (
-                            <Badge key={tipo} variant="outline" className="text-xs">
-                              {tipo}
-                            </Badge>
-                          ))}
-                          {cliente.tipos_container.length > 2 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{cliente.tipos_container.length - 2}
-                            </Badge>
-                          )}
-                        </div>
+                        {cliente.cntr_20 > 0 ? (
+                          <Badge variant="outline" className="text-xs">{cliente.cntr_20}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {cliente.cntr_40 > 0 ? (
+                          <Badge variant="outline" className="text-xs">{cliente.cntr_40}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         <Select

@@ -178,10 +178,11 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
                   className="cursor-pointer hover:bg-muted text-center"
                   onClick={() => handleSort("total_cntr")}
                 >
-                  CNTR
+                  Total
                   <SortIcon field="total_cntr" />
                 </TableHead>
-                <TableHead className="text-center">Tipos CNTR</TableHead>
+                <TableHead className="text-center">20'</TableHead>
+                <TableHead className="text-center">40'</TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted text-center"
                   onClick={() => handleSort("total_clientes")}
@@ -199,7 +200,7 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
             <TableBody>
               {filteredNavios.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                     Nenhum navio encontrado
                   </TableCell>
                 </TableRow>
@@ -228,18 +229,18 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
-                      <div className="flex flex-wrap gap-1 justify-center">
-                        {navio.tipos_container.slice(0, 3).map((tipo) => (
-                          <Badge key={tipo} variant="outline" className="text-xs">
-                            {tipo}
-                          </Badge>
-                        ))}
-                        {navio.tipos_container.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{navio.tipos_container.length - 3}
-                          </Badge>
-                        )}
-                      </div>
+                      {navio.cntr_20 > 0 ? (
+                        <Badge variant="outline" className="text-xs">{navio.cntr_20}</Badge>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {navio.cntr_40 > 0 ? (
+                        <Badge variant="outline" className="text-xs">{navio.cntr_40}</Badge>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-center">{navio.total_clientes}</TableCell>
                     <TableCell className="text-center">
