@@ -20,10 +20,21 @@ import {
   Users,
   CheckCircle2,
   XCircle,
-  Eye
+  Eye,
+  Trash2
 } from "lucide-react";
-import { NavioAgregado } from "@/hooks/usePreAlertaNavios";
+import { NavioAgregado, useDeleteNavioItens } from "@/hooks/usePreAlertaNavios";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface PreAlertaTableProps {
   navios: NavioAgregado[];
@@ -38,6 +49,9 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<SortField>("eta");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [navioToDelete, setNavioToDelete] = useState<NavioAgregado | null>(null);
+  
+  const deleteNavioMutation = useDeleteNavioItens();
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -45,6 +59,16 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
     } else {
       setSortField(field);
       setSortDirection("asc");
+    }
+  };
+
+  const handleDeleteNavio = () => {
+    if (navioToDelete) {
+      deleteNavioMutation.mutate({ 
+        navio: navioToDelete.navio, 
+        nv: navioToDelete.nv 
+      });
+      setNavioToDelete(null);
     }
   };
 
@@ -232,17 +256,30 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onNavioClick(navio);
-                        }}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Ver
-                      </Button>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onNavioClick(navio);
+                          }}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Ver
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setNavioToDelete(navio);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -251,6 +288,27 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
           </Table>
         </div>
       </div>
+
+      <AlertDialog open={!!navioToDelete} onOpenChange={(open) => !open && setNavioToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Navio</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o navio <strong>{navioToDelete?.navio}</strong> e todos os seus registros?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteNavio}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

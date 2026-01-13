@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Ship } from "lucide-react";
 import { 
   usePreAlertaItens, 
   useNaviosAgregados, 
   usePreAlertaStats,
+  useCleanupOldNavios,
   PreAlertaFilters,
   NavioAgregado
 } from "@/hooks/usePreAlertaNavios";
@@ -21,6 +22,14 @@ export default function PreAlertaNavios() {
   const { data: itens, isLoading: isLoadingItens } = usePreAlertaItens(filters);
   const { data: navios, isLoading: isLoadingNavios } = useNaviosAgregados(filters);
   const { stats, isLoading: isLoadingStats } = usePreAlertaStats(filters);
+  
+  // Auto cleanup: remove records with ETA older than 10 days
+  const cleanupMutation = useCleanupOldNavios();
+  
+  useEffect(() => {
+    // Run cleanup once when component mounts
+    cleanupMutation.mutate();
+  }, []);
 
   // Extract unique values for filter dropdowns
   const filterOptions = useMemo(() => {
