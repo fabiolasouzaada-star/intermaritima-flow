@@ -16,7 +16,7 @@ interface PreAlertaUploadProps {
 const COLUMN_MAPPING = {
   navio: ["navio", "vessel", "ship", "embarcacao", "embarcação", "nome_navio", "nome navio", "nomenavio", "nome do navio"],
   nv: ["nv", "viagem", "voyage", "voyage_number", "num_viagem", "numero_viagem", "numero viagem", "n viagem", "n.viagem"],
-  eta: ["previsao", "previsão", "previsao:", "previsão:", "eta", "chegada", "arrival", "data_chegada", "data chegada", "dt chegada", "dt_chegada", "data eta", "prev chegada"],
+  eta: ["previsao", "previsão", "prev", "eta", "chegada", "arrival", "data_chegada", "data chegada", "dt chegada", "dt_chegada", "data eta", "prev chegada", "data prev", "dt prev"],
   armador: ["armador", "carrier", "linha", "shipowner", "shipping_line", "cia maritima", "companhia", "linha maritima", "shipping"],
   cliente_nome: ["cliente", "consignee", "consignatário", "consignatario", "importador", "customer", "nome_cliente", "nome cliente", "razao social", "razão social", "empresa", "destinatario", "destinatário", "nome", "recebedor", "consig", "clie"],
   cliente_cnpj: ["cnpj", "cnpj_cliente", "tax_id", "cnpj cliente", "documento", "cpf_cnpj", "cpf/cnpj"],
@@ -33,32 +33,35 @@ function normalizeText(text: string): string {
     .trim()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "") // Remove acentos
-    .replace(/[^a-z0-9]/g, " ") // Substituir caracteres especiais por espaço
-    .replace(/\s+/g, " ") // Múltiplos espaços -> um espaço
+    .replace(/[^a-z0-9]/g, "") // Remove todos caracteres especiais
     .trim();
 }
 
 function findColumnIndex(headers: string[], possibleNames: string[]): number {
   for (let i = 0; i < headers.length; i++) {
-    const normalizedHeader = normalizeText(headers[i] || "");
+    const headerRaw = headers[i]?.toString() || "";
+    const normalizedHeader = normalizeText(headerRaw);
+    
+    // Skip empty headers
+    if (!normalizedHeader) continue;
     
     for (const name of possibleNames) {
       const normalizedName = normalizeText(name);
       
-      // Verificar match exato
+      // Skip empty names
+      if (!normalizedName) continue;
+      
+      // Exact match
       if (normalizedHeader === normalizedName) return i;
       
-      // Verificar se contém
-      if (normalizedHeader.includes(normalizedName) || normalizedName.includes(normalizedHeader)) {
-        return i;
-      }
+      // Header starts with name (e.g., "previsao" matches "previsao:")
+      if (normalizedHeader.startsWith(normalizedName)) return i;
       
-      // Verificar match sem espaços
-      const headerNoSpace = normalizedHeader.replace(/\s/g, "");
-      const nameNoSpace = normalizedName.replace(/\s/g, "");
-      if (headerNoSpace === nameNoSpace || headerNoSpace.includes(nameNoSpace) || nameNoSpace.includes(headerNoSpace)) {
-        return i;
-      }
+      // Header contains name
+      if (normalizedHeader.includes(normalizedName)) return i;
+      
+      // Name contains header (for short headers)
+      if (normalizedName.includes(normalizedHeader) && normalizedHeader.length >= 3) return i;
     }
   }
   return -1;
