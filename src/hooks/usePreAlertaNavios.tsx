@@ -186,7 +186,6 @@ export function useNaviosAgregados(filters?: PreAlertaFilters) {
           itens: [],
         };
       }
-      acc[key].total_cntr += item.quantidade;
       
       // Categorize by container type (20' or 40')
       const tipo = item.tipo_container?.toUpperCase() || '';
@@ -210,8 +209,15 @@ export function useNaviosAgregados(filters?: PreAlertaFilters) {
     }, {} as Record<string, any>);
 
     for (const key in grouped) {
+      // Total is always sum of 20' + 40'
+      const cntr20 = grouped[key].cntr_20;
+      const cntr40 = grouped[key].cntr_40;
+      
       naviosAgregados.push({
         ...grouped[key],
+        total_cntr: cntr20 + cntr40,
+        cntr_20: cntr20,
+        cntr_40: cntr40,
         total_clientes: grouped[key].total_clientes.size,
         clientes_intermaritima: grouped[key].clientes_intermaritima.size,
         clientes_nao_cadastrados: grouped[key].clientes_nao_cadastrados.size,
@@ -410,7 +416,6 @@ export function usePreAlertaStats(filters?: PreAlertaFilters) {
     itens.forEach(item => {
       navios.add(`${item.navio}-${item.nv || ''}`);
       clientes.add(item.cliente_nome);
-      stats.totalCntr += item.quantidade;
 
       // Count by container type
       const tipo = item.tipo_container?.toUpperCase() || '';
@@ -428,6 +433,8 @@ export function usePreAlertaStats(filters?: PreAlertaFilters) {
       volumePorNavio[navioKey] = (volumePorNavio[navioKey] || 0) + item.quantidade;
     });
 
+    // Total is always the sum of 20' + 40'
+    stats.totalCntr = stats.totalCntr20 + stats.totalCntr40;
     stats.totalNavios = navios.size;
     stats.totalClientes = clientes.size;
     stats.clientesNaoCadastrados = clientesNaoCadastrados.size;
