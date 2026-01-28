@@ -4,10 +4,13 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Filter, X, Search } from "lucide-react";
+import { Filter, X, Search, Check, ChevronsUpDown } from "lucide-react";
 import { PreAlertaFilters as FiltersType } from "@/hooks/usePreAlertaNavios";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 interface PreAlertaFiltersProps {
   filters: FiltersType;
@@ -16,6 +19,7 @@ interface PreAlertaFiltersProps {
   armadores: string[];
   tiposContainer: string[];
   comerciais: string[];
+  clientes: string[];
 }
 
 const STATUS_OPTIONS = [
@@ -33,10 +37,12 @@ export function PreAlertaFiltersComponent({
   armadores,
   tiposContainer,
   comerciais,
+  clientes,
 }: PreAlertaFiltersProps) {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(!isMobile);
   const [localFilters, setLocalFilters] = useState<FiltersType>(filters);
+  const [clienteOpen, setClienteOpen] = useState(false);
 
   useEffect(() => {
     setLocalFilters(filters);
@@ -155,12 +161,64 @@ export function PreAlertaFiltersComponent({
 
               <div className="space-y-2">
                 <Label className="text-xs">Cliente</Label>
-                <Input
-                  placeholder="Buscar cliente..."
-                  value={localFilters.cliente || ""}
-                  onChange={(e) => handleChange("cliente", e.target.value)}
-                  className="h-9"
-                />
+                <Popover open={clienteOpen} onOpenChange={setClienteOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={clienteOpen}
+                      className="h-9 w-full justify-between font-normal"
+                    >
+                      {localFilters.cliente
+                        ? clientes.find((c) => c === localFilters.cliente) || localFilters.cliente
+                        : "Todos"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[280px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Buscar cliente..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value=""
+                            onSelect={() => {
+                              handleChange("cliente", undefined);
+                              setClienteOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                !localFilters.cliente ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            Todos
+                          </CommandItem>
+                          {clientes.map((cliente) => (
+                            <CommandItem
+                              key={cliente}
+                              value={cliente}
+                              onSelect={() => {
+                                handleChange("cliente", cliente);
+                                setClienteOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  localFilters.cliente === cliente ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {cliente}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="space-y-2">
