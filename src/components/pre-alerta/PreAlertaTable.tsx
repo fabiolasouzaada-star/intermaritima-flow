@@ -22,7 +22,8 @@ import {
   CheckCircle2,
   XCircle,
   Eye,
-  Trash2
+  Trash2,
+  Loader2
 } from "lucide-react";
 import { NavioAgregado, useDeleteNavioItens } from "@/hooks/usePreAlertaNavios";
 import { cn } from "@/lib/utils";
@@ -53,6 +54,7 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
   const [navioToDelete, setNavioToDelete] = useState<NavioAgregado | null>(null);
   const [selectedNavios, setSelectedNavios] = useState<Set<string>>(new Set());
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   
   const deleteNavioMutation = useDeleteNavioItens();
 
@@ -81,6 +83,7 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
     // Capture the list before deletion starts
     const naviosToDelete = [...filteredNavios].filter(n => selectedNavios.has(getNavioKey(n)));
     
+    setIsBulkDeleting(true);
     try {
       // Delete all sequentially to avoid race conditions
       for (const navio of naviosToDelete) {
@@ -91,6 +94,7 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
       }
     } finally {
       // Always clean up selection state after all deletions
+      setIsBulkDeleting(false);
       setSelectedNavios(new Set());
       setShowBulkDeleteDialog(false);
     }
@@ -400,7 +404,7 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
       </AlertDialog>
 
       {/* Bulk delete dialog */}
-      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={(open) => !isBulkDeleting && setShowBulkDeleteDialog(open)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Navios Selecionados</AlertDialogTitle>
@@ -410,12 +414,20 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isBulkDeleting}>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Excluir {selectedNavios.size} navio(s)
+              {isBulkDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                <>Excluir {selectedNavios.size} navio(s)</>
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
