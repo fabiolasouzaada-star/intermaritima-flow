@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   ChevronDown, 
   ChevronUp, 
@@ -50,8 +51,12 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
   const [sortField, setSortField] = useState<SortField>("eta");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [navioToDelete, setNavioToDelete] = useState<NavioAgregado | null>(null);
+  const [selectedNavios, setSelectedNavios] = useState<Set<string>>(new Set());
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   
   const deleteNavioMutation = useDeleteNavioItens();
+
+  const getNavioKey = (navio: NavioAgregado) => `${navio.navio}-${navio.nv || ''}`;
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -69,6 +74,40 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
         nv: navioToDelete.nv 
       });
       setNavioToDelete(null);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const naviosToDelete = filteredNavios.filter(n => selectedNavios.has(getNavioKey(n)));
+    
+    for (const navio of naviosToDelete) {
+      await deleteNavioMutation.mutateAsync({ 
+        navio: navio.navio, 
+        nv: navio.nv 
+      });
+    }
+    
+    setSelectedNavios(new Set());
+    setShowBulkDeleteDialog(false);
+  };
+
+  const handleSelectNavio = (navio: NavioAgregado, checked: boolean) => {
+    const key = getNavioKey(navio);
+    const newSelected = new Set(selectedNavios);
+    if (checked) {
+      newSelected.add(key);
+    } else {
+      newSelected.delete(key);
+    }
+    setSelectedNavios(newSelected);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allKeys = new Set(filteredNavios.map(getNavioKey));
+      setSelectedNavios(allKeys);
+    } else {
+      setSelectedNavios(new Set());
     }
   };
 
@@ -112,6 +151,9 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
       return sortDirection === "asc" ? comparison : -comparison;
     });
 
+  const allSelected = filteredNavios.length > 0 && filteredNavios.every(n => selectedNavios.has(getNavioKey(n)));
+  const someSelected = selectedNavios.size > 0;
+
   const getVolumeClass = (volume: number) => {
     if (volume >= 50) return "bg-red-100 text-red-800 font-bold";
     if (volume >= 20) return "bg-orange-100 text-orange-800 font-semibold";
@@ -129,7 +171,7 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -142,6 +184,16 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
         <span className="text-sm text-muted-foreground">
           {filteredNavios.length} navio(s)
         </span>
+        {someSelected && (
+          <Button 
+            variant="destructive" 
+            size="sm"
+            onClick={() => setShowBulkDeleteDialog(true)}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Excluir {selectedNavios.size} selecionado(s)
+          </Button>
+        )}
       </div>
 
       <div className="border rounded-lg overflow-hidden">
@@ -149,6 +201,13 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Selecionar todos"
+                  />
+                </TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted"
                   onClick={() => handleSort("navio")}
@@ -200,96 +259,120 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
             <TableBody>
               {filteredNavios.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                     Nenhum navio encontrado
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredNavios.map((navio, index) => (
-                  <TableRow 
-                    key={`${navio.navio}-${navio.nv}-${index}`}
-                    className={cn(
-                      "hover:bg-muted/50 cursor-pointer",
-                      navio.total_cntr >= 50 && "bg-red-50/50"
-                    )}
-                    onClick={() => onNavioClick(navio)}
-                  >
-                    <TableCell className="font-medium">{navio.navio}</TableCell>
-                    <TableCell>{navio.nv || "-"}</TableCell>
-                    <TableCell>
-                      {navio.eta 
-                        ? format(new Date(navio.eta), "dd/MM/yyyy", { locale: ptBR })
-                        : "-"
-                      }
-                    </TableCell>
-                    <TableCell>{navio.armador || "-"}</TableCell>
-                    <TableCell className="text-center">
-                      <span className={cn("px-2 py-1 rounded", getVolumeClass(navio.total_cntr))}>
-                        {navio.total_cntr}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {navio.cntr_20 > 0 ? (
-                        <Badge variant="outline" className="text-xs">{navio.cntr_20}</Badge>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
+                filteredNavios.map((navio, index) => {
+                  const navioKey = getNavioKey(navio);
+                  const isSelected = selectedNavios.has(navioKey);
+                  
+                  return (
+                    <TableRow 
+                      key={`${navio.navio}-${navio.nv}-${index}`}
+                      className={cn(
+                        "hover:bg-muted/50 cursor-pointer",
+                        navio.total_cntr >= 50 && "bg-red-50/50",
+                        isSelected && "bg-primary/10"
                       )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {navio.cntr_40 > 0 ? (
-                        <Badge variant="outline" className="text-xs">{navio.cntr_40}</Badge>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">{navio.total_clientes}</TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="flex items-center gap-1 text-emerald-600">
-                          <CheckCircle2 className="h-4 w-4" />
-                          {navio.clientes_intermaritima}
+                    >
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={(checked) => handleSelectNavio(navio, !!checked)}
+                          aria-label={`Selecionar ${navio.navio}`}
+                        />
+                      </TableCell>
+                      <TableCell 
+                        className="font-medium"
+                        onClick={() => onNavioClick(navio)}
+                      >
+                        {navio.navio}
+                      </TableCell>
+                      <TableCell onClick={() => onNavioClick(navio)}>
+                        {navio.nv || "-"}
+                      </TableCell>
+                      <TableCell onClick={() => onNavioClick(navio)}>
+                        {navio.eta 
+                          ? format(new Date(navio.eta), "dd/MM/yyyy", { locale: ptBR })
+                          : "-"
+                        }
+                      </TableCell>
+                      <TableCell onClick={() => onNavioClick(navio)}>
+                        {navio.armador || "-"}
+                      </TableCell>
+                      <TableCell className="text-center" onClick={() => onNavioClick(navio)}>
+                        <span className={cn("px-2 py-1 rounded", getVolumeClass(navio.total_cntr))}>
+                          {navio.total_cntr}
                         </span>
-                        <span className="text-muted-foreground">/</span>
-                        <span className="flex items-center gap-1 text-orange-600">
-                          <XCircle className="h-4 w-4" />
-                          {navio.clientes_nao_cadastrados}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onNavioClick(navio);
-                          }}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Ver
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setNavioToDelete(navio);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+                      <TableCell className="text-center" onClick={() => onNavioClick(navio)}>
+                        {navio.cntr_20 > 0 ? (
+                          <Badge variant="outline" className="text-xs">{navio.cntr_20}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center" onClick={() => onNavioClick(navio)}>
+                        {navio.cntr_40 > 0 ? (
+                          <Badge variant="outline" className="text-xs">{navio.cntr_40}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center" onClick={() => onNavioClick(navio)}>
+                        {navio.total_clientes}
+                      </TableCell>
+                      <TableCell className="text-center" onClick={() => onNavioClick(navio)}>
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="flex items-center gap-1 text-emerald-600">
+                            <CheckCircle2 className="h-4 w-4" />
+                            {navio.clientes_intermaritima}
+                          </span>
+                          <span className="text-muted-foreground">/</span>
+                          <span className="flex items-center gap-1 text-orange-600">
+                            <XCircle className="h-4 w-4" />
+                            {navio.clientes_nao_cadastrados}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onNavioClick(navio);
+                            }}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Ver
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setNavioToDelete(navio);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
         </div>
       </div>
 
+      {/* Single delete dialog */}
       <AlertDialog open={!!navioToDelete} onOpenChange={(open) => !open && setNavioToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -306,6 +389,28 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk delete dialog */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Navios Selecionados</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <strong>{selectedNavios.size} navio(s)</strong> e todos os seus registros?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleBulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir {selectedNavios.size} navio(s)
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
