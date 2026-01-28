@@ -55,6 +55,7 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
   const [selectedNavios, setSelectedNavios] = useState<Set<string>>(new Set());
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [isSingleDeleting, setIsSingleDeleting] = useState(false);
   
   const deleteNavioMutation = useDeleteNavioItens();
 
@@ -69,13 +70,18 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
     }
   };
 
-  const handleDeleteNavio = () => {
+  const handleDeleteNavio = async () => {
     if (navioToDelete) {
-      deleteNavioMutation.mutate({ 
-        navio: navioToDelete.navio, 
-        nv: navioToDelete.nv 
-      });
-      setNavioToDelete(null);
+      setIsSingleDeleting(true);
+      try {
+        await deleteNavioMutation.mutateAsync({ 
+          navio: navioToDelete.navio, 
+          nv: navioToDelete.nv 
+        });
+      } finally {
+        setIsSingleDeleting(false);
+        setNavioToDelete(null);
+      }
     }
   };
 
@@ -382,7 +388,7 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
       </div>
 
       {/* Single delete dialog */}
-      <AlertDialog open={!!navioToDelete} onOpenChange={(open) => !open && setNavioToDelete(null)}>
+      <AlertDialog open={!!navioToDelete} onOpenChange={(open) => !isSingleDeleting && !open && setNavioToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Navio</AlertDialogTitle>
@@ -392,12 +398,20 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isSingleDeleting}>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteNavio}
+              disabled={isSingleDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Excluir
+              {isSingleDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                "Excluir"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
