@@ -33,18 +33,20 @@ export default function PreAlertaNavios() {
 
   // Extract unique values for filter dropdowns
   const filterOptions = useMemo(() => {
-    if (!itens) return { navios: [], armadores: [], tiposContainer: [], comerciais: [] };
+    if (!itens) return { navios: [], armadores: [], tiposContainer: [], comerciais: [], clientes: [] };
     
     const naviosSet = new Set<string>();
     const armadoresSet = new Set<string>();
     const tiposContainerSet = new Set<string>();
     const comerciaisSet = new Set<string>();
+    const clientesSet = new Set<string>();
 
     itens.forEach(item => {
       if (item.navio) naviosSet.add(item.navio);
       if (item.armador) armadoresSet.add(item.armador);
       if (item.tipo_container) tiposContainerSet.add(item.tipo_container);
       if (item.comercial_responsavel) comerciaisSet.add(item.comercial_responsavel);
+      if (item.cliente_nome) clientesSet.add(item.cliente_nome);
     });
 
     return {
@@ -52,6 +54,7 @@ export default function PreAlertaNavios() {
       armadores: Array.from(armadoresSet).sort(),
       tiposContainer: Array.from(tiposContainerSet).sort(),
       comerciais: Array.from(comerciaisSet).sort(),
+      clientes: Array.from(clientesSet).sort(),
     };
   }, [itens]);
 
@@ -87,6 +90,7 @@ export default function PreAlertaNavios() {
         armadores={filterOptions.armadores}
         tiposContainer={filterOptions.tiposContainer}
         comerciais={filterOptions.comerciais}
+        clientes={filterOptions.clientes}
       />
 
       {/* Table */}
