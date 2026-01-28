@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Ship, Container, Users, UserPlus, TrendingUp, Package } from "lucide-react";
+import { Ship, Users, UserPlus, TrendingUp, Package } from "lucide-react";
 
 interface PreAlertaCardsProps {
   stats: {
@@ -17,8 +17,8 @@ interface PreAlertaCardsProps {
 export function PreAlertaCards({ stats, isLoading }: PreAlertaCardsProps) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 mb-6">
-        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader className="pb-2">
               <div className="h-4 bg-muted rounded w-2/3" />
@@ -39,13 +39,6 @@ export function PreAlertaCards({ stats, isLoading }: PreAlertaCardsProps) {
       icon: Ship,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
-    },
-    {
-      title: "Total CNTR",
-      value: stats.totalCntr.toLocaleString("pt-BR"),
-      icon: Container,
-      color: "text-emerald-600",
-      bgColor: "bg-emerald-50",
     },
     {
       title: "CNTR 20'",
@@ -87,7 +80,7 @@ export function PreAlertaCards({ stats, isLoading }: PreAlertaCardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 mb-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
       {cards.map((card, index) => (
         <Card key={index} className="hover:shadow-md transition-shadow">
           <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
