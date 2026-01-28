@@ -16,13 +16,13 @@ interface PreAlertaUploadProps {
 const COLUMN_MAPPING = {
   navio: ["navio", "vessel", "ship", "embarcacao", "embarcação", "nome_navio", "nome navio", "nomenavio", "nome do navio"],
   nv: ["nv", "viagem", "voyage", "voyage_number", "num_viagem", "numero_viagem", "numero viagem", "n viagem", "n.viagem"],
-  eta: ["eta", "chegada", "arrival", "data_chegada", "previsao", "previsão", "data chegada", "dt chegada", "dt_chegada", "data eta", "prev chegada"],
+  eta: ["previsao", "previsão", "previsao:", "previsão:", "eta", "chegada", "arrival", "data_chegada", "data chegada", "dt chegada", "dt_chegada", "data eta", "prev chegada"],
   armador: ["armador", "carrier", "linha", "shipowner", "shipping_line", "cia maritima", "companhia", "linha maritima", "shipping"],
   cliente_nome: ["cliente", "consignee", "consignatário", "consignatario", "importador", "customer", "nome_cliente", "nome cliente", "razao social", "razão social", "empresa", "destinatario", "destinatário", "nome", "recebedor", "consig", "clie"],
   cliente_cnpj: ["cnpj", "cnpj_cliente", "tax_id", "cnpj cliente", "documento", "cpf_cnpj", "cpf/cnpj"],
   cntr_numero: ["container", "cntr", "numero_container", "container_number", "num container", "n container", "conteiner", "contêiner", "num_cntr", "numero cntr", "numero container"],
-  tipo_container: ["tipo", "type", "tipo_container", "container_type", "size_type", "tipo container", "tp container", "tp_cntr", "tipo cntr", "size", "tamanho", "tam"],
-  quantidade: ["quantidade", "qty", "qtd", "qtde", "count", "quant", "qde", "qt", "qtdd", "unidades", "un", "und"],
+  qtd_20: ["20", "20'", "20ft", "cntr 20", "20 pes", "20 pés", "qtd 20", "qtd20"],
+  qtd_40: ["40", "40'", "40ft", "cntr 40", "40 pes", "40 pés", "qtd 40", "qtd40"],
   tipo_carga: ["carga", "cargo", "mercadoria", "commodity", "produto", "descricao", "descrição", "desc carga", "tipo carga", "natureza"],
   peso_bruto: ["peso", "weight", "peso_bruto", "gross_weight", "peso bruto", "kg", "peso kg", "tonelada", "ton"],
 };
@@ -155,8 +155,10 @@ export function PreAlertaUpload({ onSuccess }: PreAlertaUploadProps) {
         return;
       }
 
-      // Map data to PreAlertaItem format
-      const mappedItems: Partial<PreAlertaItem>[] = rows.map(row => {
+      // Map data to PreAlertaItem format - create separate rows for 20' and 40' containers
+      const mappedItems: Partial<PreAlertaItem>[] = [];
+      
+      rows.forEach(row => {
         const clienteNome = row[columnIndices.cliente_nome]?.toString().trim() || "";
         const clienteCnpj = columnIndices.cliente_cnpj !== -1 
           ? row[columnIndices.cliente_cnpj]?.toString().trim() 
@@ -168,7 +170,7 @@ export function PreAlertaUpload({ onSuccess }: PreAlertaUploadProps) {
           (clienteCnpj && c.cnpj === clienteCnpj)
         );
 
-        return {
+        const baseItem = {
           navio: row[columnIndices.navio]?.toString().trim() || "N/A",
           nv: columnIndices.nv !== -1 ? row[columnIndices.nv]?.toString().trim() : null,
           eta: columnIndices.eta !== -1 ? parseExcelDate(row[columnIndices.eta]) : null,
@@ -176,18 +178,49 @@ export function PreAlertaUpload({ onSuccess }: PreAlertaUploadProps) {
           cliente_nome: clienteNome,
           cliente_cnpj: clienteCnpj,
           cntr_numero: columnIndices.cntr_numero !== -1 ? row[columnIndices.cntr_numero]?.toString().trim() : null,
-          tipo_container: columnIndices.tipo_container !== -1 ? row[columnIndices.tipo_container]?.toString().trim() : null,
-          quantidade: columnIndices.quantidade !== -1 ? parseInt(row[columnIndices.quantidade]) || 1 : 1,
           tipo_carga: columnIndices.tipo_carga !== -1 ? row[columnIndices.tipo_carga]?.toString().trim() : null,
           peso_bruto: columnIndices.peso_bruto !== -1 ? parseFloat(row[columnIndices.peso_bruto]) || null : null,
           cliente_id: matchedClient?.id || null,
           is_cliente_intermaritima: !!matchedClient,
           status_comercial: "pendente",
         };
-      }).filter(item => item.cliente_nome && item.navio);
 
-      setMappedData(mappedItems);
-      toast.success(`${mappedItems.length} registros processados`);
+        // Get quantities from columns H (20') and I (40') - indices 7 and 8
+        const qtd20 = columnIndices.qtd_20 !== -1 ? parseInt(row[columnIndices.qtd_20]) || 0 : parseInt(row[7]) || 0;
+        const qtd40 = columnIndices.qtd_40 !== -1 ? parseInt(row[columnIndices.qtd_40]) || 0 : parseInt(row[8]) || 0;
+
+        // Create row for 20' containers if quantity > 0
+        if (qtd20 > 0) {
+          mappedItems.push({
+            ...baseItem,
+            tipo_container: "20'",
+            quantidade: qtd20,
+          });
+        }
+
+        // Create row for 40' containers if quantity > 0
+        if (qtd40 > 0) {
+          mappedItems.push({
+            ...baseItem,
+            tipo_container: "40'",
+            quantidade: qtd40,
+          });
+        }
+
+        // If no container quantities, create a single row with quantity 1
+        if (qtd20 === 0 && qtd40 === 0) {
+          mappedItems.push({
+            ...baseItem,
+            tipo_container: null,
+            quantidade: 1,
+          });
+        }
+      });
+      
+      const filteredItems = mappedItems.filter(item => item.cliente_nome && item.navio);
+
+      setMappedData(filteredItems);
+      toast.success(`${filteredItems.length} registros processados`);
     } catch (error) {
       console.error("Erro ao processar arquivo:", error);
       toast.error("Erro ao processar arquivo");

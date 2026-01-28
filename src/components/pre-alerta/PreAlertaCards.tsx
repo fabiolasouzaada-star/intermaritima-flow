@@ -1,10 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Ship, Container, Users, UserPlus, TrendingUp, Loader2 } from "lucide-react";
+import { Ship, Container, Users, UserPlus, TrendingUp, Package } from "lucide-react";
 
 interface PreAlertaCardsProps {
   stats: {
     totalNavios: number;
     totalCntr: number;
+    totalCntr20: number;
+    totalCntr40: number;
     totalClientes: number;
     clientesNaoCadastrados: number;
     navioMaiorVolume: { navio: string; volume: number };
@@ -15,8 +17,8 @@ interface PreAlertaCardsProps {
 export function PreAlertaCards({ stats, isLoading }: PreAlertaCardsProps) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        {[1, 2, 3, 4, 5].map((i) => (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 mb-6">
+        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader className="pb-2">
               <div className="h-4 bg-muted rounded w-2/3" />
@@ -46,6 +48,20 @@ export function PreAlertaCards({ stats, isLoading }: PreAlertaCardsProps) {
       bgColor: "bg-emerald-50",
     },
     {
+      title: "CNTR 20'",
+      value: stats.totalCntr20.toLocaleString("pt-BR"),
+      icon: Package,
+      color: "text-cyan-600",
+      bgColor: "bg-cyan-50",
+    },
+    {
+      title: "CNTR 40'",
+      value: stats.totalCntr40.toLocaleString("pt-BR"),
+      icon: Package,
+      color: "text-teal-600",
+      bgColor: "bg-teal-50",
+    },
+    {
       title: "Clientes Identificados",
       value: stats.totalClientes,
       icon: Users,
@@ -71,7 +87,7 @@ export function PreAlertaCards({ stats, isLoading }: PreAlertaCardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 mb-6">
       {cards.map((card, index) => (
         <Card key={index} className="hover:shadow-md transition-shadow">
           <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">

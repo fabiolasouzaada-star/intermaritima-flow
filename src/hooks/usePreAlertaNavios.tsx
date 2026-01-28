@@ -394,6 +394,8 @@ export function usePreAlertaStats(filters?: PreAlertaFilters) {
   const stats = {
     totalNavios: 0,
     totalCntr: 0,
+    totalCntr20: 0,
+    totalCntr40: 0,
     totalClientes: 0,
     clientesNaoCadastrados: 0,
     navioMaiorVolume: { navio: "", volume: 0 },
@@ -409,6 +411,14 @@ export function usePreAlertaStats(filters?: PreAlertaFilters) {
       navios.add(`${item.navio}-${item.nv || ''}`);
       clientes.add(item.cliente_nome);
       stats.totalCntr += item.quantidade;
+
+      // Count by container type
+      const tipo = item.tipo_container?.toUpperCase() || '';
+      if (tipo.includes('20')) {
+        stats.totalCntr20 += item.quantidade;
+      } else if (tipo.includes('40')) {
+        stats.totalCntr40 += item.quantidade;
+      }
 
       if (!item.is_cliente_intermaritima) {
         clientesNaoCadastrados.add(item.cliente_nome);
