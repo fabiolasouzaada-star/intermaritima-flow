@@ -831,6 +831,7 @@ export type Database = {
           peso_bruto: number | null
           quantidade: number | null
           status_comercial: string | null
+          terminal_direcionamento: string | null
           tipo_carga: string | null
           tipo_container: string | null
           updated_at: string
@@ -854,6 +855,7 @@ export type Database = {
           peso_bruto?: number | null
           quantidade?: number | null
           status_comercial?: string | null
+          terminal_direcionamento?: string | null
           tipo_carga?: string | null
           tipo_container?: string | null
           updated_at?: string
@@ -877,6 +879,7 @@ export type Database = {
           peso_bruto?: number | null
           quantidade?: number | null
           status_comercial?: string | null
+          terminal_direcionamento?: string | null
           tipo_carga?: string | null
           tipo_container?: string | null
           updated_at?: string

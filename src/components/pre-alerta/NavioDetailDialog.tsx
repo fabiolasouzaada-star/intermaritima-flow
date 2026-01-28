@@ -50,6 +50,14 @@ const STATUS_OPTIONS = [
   { value: "descartado", label: "Descartado", color: "bg-red-100 text-red-800" },
 ];
 
+const TERMINAL_OPTIONS = [
+  { value: "sem_direcionamento", label: "Sem Direcionamento", bgColor: "bg-gray-500", textColor: "text-white" },
+  { value: "inter", label: "INTER", bgColor: "bg-emerald-600", textColor: "text-white" },
+  { value: "tecon", label: "TECON", bgColor: "bg-blue-600", textColor: "text-white" },
+  { value: "emporio", label: "EMPÓRIO", bgColor: "bg-gray-900", textColor: "text-white" },
+  { value: "tpc", label: "TPC", bgColor: "bg-red-600", textColor: "text-white" },
+];
+
 export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDialogProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -70,6 +78,7 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
         cntr_20: 0,
         cntr_40: 0,
         status_comercial: item.status_comercial,
+        terminal_direcionamento: (item as any).terminal_direcionamento || 'sem_direcionamento',
         itens: [],
       };
     }
@@ -103,6 +112,19 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
         id: item.id,
         status_comercial: newStatus,
       });
+    }
+  };
+
+  const handleTerminalChange = async (clienteNome: string, newTerminal: string) => {
+    const clienteData = clienteAgregado[clienteNome];
+    if (!clienteData) return;
+
+    // Update all items for this client
+    for (const item of clienteData.itens) {
+      await updateItem.mutateAsync({
+        id: item.id,
+        terminal_direcionamento: newTerminal,
+      } as any);
     }
   };
 
@@ -266,6 +288,7 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
                   <TableHead className="text-center">Total</TableHead>
                   <TableHead className="text-center">20'</TableHead>
                   <TableHead className="text-center">40'</TableHead>
+                  <TableHead className="text-center">Terminal</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
@@ -301,6 +324,36 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Select
+                          value={cliente.terminal_direcionamento || 'sem_direcionamento'}
+                          onValueChange={(value) => handleTerminalChange(cliente.cliente_nome, value)}
+                        >
+                          <SelectTrigger 
+                            className={`h-8 w-36 border-0 ${
+                              TERMINAL_OPTIONS.find(t => t.value === (cliente.terminal_direcionamento || 'sem_direcionamento'))?.bgColor || 'bg-gray-500'
+                            } ${
+                              TERMINAL_OPTIONS.find(t => t.value === (cliente.terminal_direcionamento || 'sem_direcionamento'))?.textColor || 'text-white'
+                            }`}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background z-50">
+                            {TERMINAL_OPTIONS.map((terminal) => (
+                              <SelectItem 
+                                key={terminal.value} 
+                                value={terminal.value}
+                                className="cursor-pointer"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className={`w-3 h-3 rounded-full ${terminal.bgColor}`}></span>
+                                  {terminal.label}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="text-center">
                         <Select
