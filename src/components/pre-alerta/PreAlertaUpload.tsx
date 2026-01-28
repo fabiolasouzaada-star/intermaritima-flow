@@ -70,32 +70,66 @@ function findColumnIndex(headers: string[], possibleNames: string[]): number {
 function parseExcelDate(value: any): string | null {
   if (!value) return null;
   
-  // If it's already a date string
-  if (typeof value === "string") {
-    const parsed = new Date(value);
-    if (!isNaN(parsed.getTime())) {
-      return parsed.toISOString().split("T")[0];
+  // If it's an Excel serial date number
+  if (typeof value === "number") {
+    const date = new Date((value - 25569) * 86400 * 1000);
+    if (!isNaN(date.getTime()) && date.getFullYear() >= 2020 && date.getFullYear() <= 2100) {
+      return date.toISOString().split("T")[0];
     }
-    // Try DD/MM/YYYY format
-    const parts = value.split(/[\/\-]/);
-    if (parts.length === 3) {
-      const [day, month, year] = parts;
+  }
+  
+  // If it's a Date object
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    return value.toISOString().split("T")[0];
+  }
+  
+  // If it's a string
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    
+    // Try DD/MM/YYYY or DD/MM/YY format first (most common in Brazil)
+    const brMatch = trimmed.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+    if (brMatch) {
+      let [, day, month, year] = brMatch;
+      let yearNum = parseInt(year);
+      // Handle 2-digit years
+      if (yearNum < 100) {
+        yearNum = yearNum + 2000;
+      }
+      const date = new Date(yearNum, parseInt(month) - 1, parseInt(day));
+      if (!isNaN(date.getTime()) && date.getFullYear() >= 2020 && date.getFullYear() <= 2100) {
+        return date.toISOString().split("T")[0];
+      }
+    }
+    
+    // Try YYYY-MM-DD format
+    const isoMatch = trimmed.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    if (isoMatch) {
+      const [, year, month, day] = isoMatch;
       const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
       if (!isNaN(date.getTime())) {
         return date.toISOString().split("T")[0];
       }
     }
-    return null;
-  }
-  
-  // If it's an Excel serial date number
-  if (typeof value === "number") {
-    const date = new Date((value - 25569) * 86400 * 1000);
-    if (!isNaN(date.getTime())) {
-      return date.toISOString().split("T")[0];
+    
+    // Try parsing as standard date string
+    const parsed = new Date(trimmed);
+    if (!isNaN(parsed.getTime()) && parsed.getFullYear() >= 2020 && parsed.getFullYear() <= 2100) {
+      return parsed.toISOString().split("T")[0];
     }
   }
   
+  return null;
+}
+
+// Try to find a date value in any cell of the row (fallback for ETA detection)
+function findDateInRow(row: any[], startIndex: number, endIndex: number): string | null {
+  for (let i = startIndex; i <= endIndex && i < row.length; i++) {
+    const dateValue = parseExcelDate(row[i]);
+    if (dateValue) {
+      return dateValue;
+    }
+  }
   return null;
 }
 
@@ -173,10 +207,20 @@ export function PreAlertaUpload({ onSuccess }: PreAlertaUploadProps) {
           (clienteCnpj && c.cnpj === clienteCnpj)
         );
 
+        // Try to get ETA from mapped column, or search in first 10 columns if not found
+        let etaValue: string | null = null;
+        if (columnIndices.eta !== -1) {
+          etaValue = parseExcelDate(row[columnIndices.eta]);
+        }
+        // Fallback: search for a date value in the first 10 columns if ETA column not found or empty
+        if (!etaValue) {
+          etaValue = findDateInRow(row, 0, Math.min(9, row.length - 1));
+        }
+
         const baseItem = {
           navio: row[columnIndices.navio]?.toString().trim() || "N/A",
           nv: columnIndices.nv !== -1 ? row[columnIndices.nv]?.toString().trim() : null,
-          eta: columnIndices.eta !== -1 ? parseExcelDate(row[columnIndices.eta]) : null,
+          eta: etaValue,
           armador: columnIndices.armador !== -1 ? row[columnIndices.armador]?.toString().trim() : null,
           cliente_nome: clienteNome,
           cliente_cnpj: clienteCnpj,
