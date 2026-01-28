@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -63,6 +63,14 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
   const { user } = useAuth();
   const updateItem = useUpdatePreAlertaItem();
   const [isCreating, setIsCreating] = useState<string | null>(null);
+  const [localTerminals, setLocalTerminals] = useState<Record<string, string>>({});
+
+  // Reset local state when dialog opens with new ship
+  useEffect(() => {
+    if (open && navio) {
+      setLocalTerminals({});
+    }
+  }, [open, navio?.navio]);
 
   if (!navio) return null;
 
@@ -78,9 +86,12 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
         cntr_20: 0,
         cntr_40: 0,
         status_comercial: item.status_comercial,
-        terminal_direcionamento: (item as any).terminal_direcionamento || 'sem_direcionamento',
+        terminal_direcionamento: localTerminals[item.cliente_nome] || (item as any).terminal_direcionamento || 'sem_direcionamento',
         itens: [],
       };
+    } else if (localTerminals[item.cliente_nome]) {
+      // Update with local state if available
+      acc[key].terminal_direcionamento = localTerminals[item.cliente_nome];
     }
     acc[key].total_cntr += item.quantidade;
     
@@ -116,12 +127,15 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
   };
 
   const handleTerminalChange = async (clienteNome: string, newTerminal: string) => {
+    // Optimistic update - update UI immediately
+    setLocalTerminals(prev => ({ ...prev, [clienteNome]: newTerminal }));
+    
     const clienteData = clienteAgregado[clienteNome];
     if (!clienteData) return;
 
-    // Update all items for this client
+    // Update all items for this client in background
     for (const item of clienteData.itens) {
-      await updateItem.mutateAsync({
+      updateItem.mutateAsync({
         id: item.id,
         terminal_direcionamento: newTerminal,
       } as any);
