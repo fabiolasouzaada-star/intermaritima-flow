@@ -62,7 +62,7 @@ export interface PreAlertaFilters {
   navio?: string;
   nv?: string;
   armador?: string;
-  cliente?: string;
+  clientes?: string[];
   clienteIntermaritima?: boolean | null;
   tipoContainer?: string;
   volumeMinimo?: number;
@@ -117,8 +117,8 @@ export function usePreAlertaItens(filters?: PreAlertaFilters) {
       if (filters?.armador) {
         query = query.ilike("armador", `%${filters.armador}%`);
       }
-      if (filters?.cliente) {
-        query = query.ilike("cliente_nome", `%${filters.cliente}%`);
+      if (filters?.clientes && filters.clientes.length > 0) {
+        query = query.in("cliente_nome", filters.clientes);
       }
       if (filters?.clienteIntermaritima === true) {
         query = query.eq("is_cliente_intermaritima", true);
