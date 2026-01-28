@@ -14,8 +14,6 @@ import {
   TrendingDown,
   ListTodo,
   ShieldCheck,
-  Briefcase,
-  FileCheck,
   Ship
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -37,10 +35,8 @@ import {
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Clientes", url: "/clientes", icon: Users },
-  { title: "Carteira Comercial", url: "/carteira-comercial", icon: Briefcase },
   { title: "Pipeline", url: "/pipeline", icon: Workflow },
   { title: "Pré-Alerta Navios", url: "/pre-alerta-navios", icon: Ship },
-  { title: "Controle Propostas", url: "/controle-propostas", icon: FileCheck },
   { title: "Contratos", url: "/contratos", icon: FileText },
   { title: "Calendário", url: "/calendario", icon: Calendar },
   { title: "Visitas/Reuniões", url: "/visitas", icon: ClipboardList },
