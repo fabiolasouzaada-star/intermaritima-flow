@@ -78,17 +78,22 @@ export function PreAlertaTable({ navios, isLoading, onNavioClick }: PreAlertaTab
   };
 
   const handleBulkDelete = async () => {
-    const naviosToDelete = filteredNavios.filter(n => selectedNavios.has(getNavioKey(n)));
+    // Capture the list before deletion starts
+    const naviosToDelete = [...filteredNavios].filter(n => selectedNavios.has(getNavioKey(n)));
     
-    for (const navio of naviosToDelete) {
-      await deleteNavioMutation.mutateAsync({ 
-        navio: navio.navio, 
-        nv: navio.nv 
-      });
+    try {
+      // Delete all sequentially to avoid race conditions
+      for (const navio of naviosToDelete) {
+        await deleteNavioMutation.mutateAsync({ 
+          navio: navio.navio, 
+          nv: navio.nv 
+        });
+      }
+    } finally {
+      // Always clean up selection state after all deletions
+      setSelectedNavios(new Set());
+      setShowBulkDeleteDialog(false);
     }
-    
-    setSelectedNavios(new Set());
-    setShowBulkDeleteDialog(false);
   };
 
   const handleSelectNavio = (navio: NavioAgregado, checked: boolean) => {
