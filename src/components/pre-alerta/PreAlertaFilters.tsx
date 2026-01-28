@@ -63,7 +63,10 @@ export function PreAlertaFiltersComponent({
     onFiltersChange(emptyFilters);
   };
 
-  const activeFiltersCount = Object.values(localFilters).filter(v => v !== undefined && v !== null && v !== "").length;
+  const activeFiltersCount = Object.entries(localFilters).filter(([key, v]) => {
+    if (Array.isArray(v)) return v.length > 0;
+    return v !== undefined && v !== null && v !== "";
+  }).length;
 
   return (
     <Card className="mb-4">
@@ -169,51 +172,56 @@ export function PreAlertaFiltersComponent({
                       aria-expanded={clienteOpen}
                       className="h-9 w-full justify-between font-normal"
                     >
-                      {localFilters.cliente
-                        ? clientes.find((c) => c === localFilters.cliente) || localFilters.cliente
+                      {localFilters.clientes && localFilters.clientes.length > 0
+                        ? `${localFilters.clientes.length} selecionado(s)`
                         : "Todos"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[280px] p-0">
+                  <PopoverContent className="w-[280px] p-0 bg-background z-50">
                     <Command>
                       <CommandInput placeholder="Buscar cliente..." />
                       <CommandList>
                         <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
                         <CommandGroup>
                           <CommandItem
-                            value=""
+                            value="__clear__"
                             onSelect={() => {
-                              handleChange("cliente", undefined);
-                              setClienteOpen(false);
+                              handleChange("clientes", []);
                             }}
                           >
                             <Check
                               className={cn(
                                 "mr-2 h-4 w-4",
-                                !localFilters.cliente ? "opacity-100" : "opacity-0"
+                                !localFilters.clientes || localFilters.clientes.length === 0 ? "opacity-100" : "opacity-0"
                               )}
                             />
                             Todos
                           </CommandItem>
-                          {clientes.map((cliente) => (
-                            <CommandItem
-                              key={cliente}
-                              value={cliente}
-                              onSelect={() => {
-                                handleChange("cliente", cliente);
-                                setClienteOpen(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  localFilters.cliente === cliente ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {cliente}
-                            </CommandItem>
-                          ))}
+                          {clientes.map((cliente) => {
+                            const isSelected = localFilters.clientes?.includes(cliente) || false;
+                            return (
+                              <CommandItem
+                                key={cliente}
+                                value={cliente}
+                                onSelect={() => {
+                                  const current = localFilters.clientes || [];
+                                  const newClientes = isSelected
+                                    ? current.filter(c => c !== cliente)
+                                    : [...current, cliente];
+                                  handleChange("clientes", newClientes);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    isSelected ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {cliente}
+                              </CommandItem>
+                            );
+                          })}
                         </CommandGroup>
                       </CommandList>
                     </Command>
