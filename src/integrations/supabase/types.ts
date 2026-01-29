@@ -62,6 +62,82 @@ export type Database = {
           },
         ]
       }
+      acoes_reuniao: {
+        Row: {
+          acao: string
+          area_responsavel: Database["public"]["Enums"]["area_envolvida"]
+          cliente_id: string | null
+          comentarios: string | null
+          created_at: string
+          created_by: string | null
+          data_conclusao: string | null
+          id: string
+          impacto: Database["public"]["Enums"]["impacto_acao"] | null
+          prazo: string | null
+          prioridade: Database["public"]["Enums"]["prioridade_acao_reuniao"]
+          responsavel_id: string | null
+          reuniao_id: string
+          status: Database["public"]["Enums"]["status_acao_reuniao"]
+          updated_at: string
+        }
+        Insert: {
+          acao: string
+          area_responsavel: Database["public"]["Enums"]["area_envolvida"]
+          cliente_id?: string | null
+          comentarios?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          id?: string
+          impacto?: Database["public"]["Enums"]["impacto_acao"] | null
+          prazo?: string | null
+          prioridade?: Database["public"]["Enums"]["prioridade_acao_reuniao"]
+          responsavel_id?: string | null
+          reuniao_id: string
+          status?: Database["public"]["Enums"]["status_acao_reuniao"]
+          updated_at?: string
+        }
+        Update: {
+          acao?: string
+          area_responsavel?: Database["public"]["Enums"]["area_envolvida"]
+          cliente_id?: string | null
+          comentarios?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          id?: string
+          impacto?: Database["public"]["Enums"]["impacto_acao"] | null
+          prazo?: string | null
+          prioridade?: Database["public"]["Enums"]["prioridade_acao_reuniao"]
+          responsavel_id?: string | null
+          reuniao_id?: string
+          status?: Database["public"]["Enums"]["status_acao_reuniao"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acoes_reuniao_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acoes_reuniao_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acoes_reuniao_reuniao_id_fkey"
+            columns: ["reuniao_id"]
+            isOneToOne: false
+            referencedRelation: "reunioes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       acoes_visita: {
         Row: {
           created_at: string
@@ -1185,6 +1261,65 @@ export type Database = {
           },
         ]
       }
+      reunioes: {
+        Row: {
+          area_envolvida: Database["public"]["Enums"]["area_envolvida"]
+          cliente_id: string | null
+          created_at: string
+          created_by: string | null
+          data_reuniao: string
+          id: string
+          objetivo: string | null
+          observacoes_estrategicas: string | null
+          participantes: string | null
+          proxima_reuniao: string | null
+          resumo: string | null
+          status: Database["public"]["Enums"]["status_reuniao"]
+          tipo: Database["public"]["Enums"]["tipo_reuniao"]
+          updated_at: string
+        }
+        Insert: {
+          area_envolvida: Database["public"]["Enums"]["area_envolvida"]
+          cliente_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_reuniao: string
+          id?: string
+          objetivo?: string | null
+          observacoes_estrategicas?: string | null
+          participantes?: string | null
+          proxima_reuniao?: string | null
+          resumo?: string | null
+          status?: Database["public"]["Enums"]["status_reuniao"]
+          tipo: Database["public"]["Enums"]["tipo_reuniao"]
+          updated_at?: string
+        }
+        Update: {
+          area_envolvida?: Database["public"]["Enums"]["area_envolvida"]
+          cliente_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_reuniao?: string
+          id?: string
+          objetivo?: string | null
+          observacoes_estrategicas?: string | null
+          participantes?: string | null
+          proxima_reuniao?: string | null
+          resumo?: string | null
+          status?: Database["public"]["Enums"]["status_reuniao"]
+          tipo?: Database["public"]["Enums"]["tipo_reuniao"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reunioes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tarefas: {
         Row: {
           cliente_id: string | null
@@ -1238,6 +1373,69 @@ export type Database = {
           },
           {
             foreignKeyName: "tarefas_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarefas_acao: {
+        Row: {
+          acao_id: string
+          alerta_atraso: boolean | null
+          comentarios: string | null
+          created_at: string
+          created_by: string | null
+          data_final: string | null
+          data_inicio: string | null
+          descricao: string
+          id: string
+          responsavel_id: string | null
+          sla_horas: number | null
+          status: Database["public"]["Enums"]["status_tarefa_acao"]
+          updated_at: string
+        }
+        Insert: {
+          acao_id: string
+          alerta_atraso?: boolean | null
+          comentarios?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_final?: string | null
+          data_inicio?: string | null
+          descricao: string
+          id?: string
+          responsavel_id?: string | null
+          sla_horas?: number | null
+          status?: Database["public"]["Enums"]["status_tarefa_acao"]
+          updated_at?: string
+        }
+        Update: {
+          acao_id?: string
+          alerta_atraso?: boolean | null
+          comentarios?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_final?: string | null
+          data_inicio?: string | null
+          descricao?: string
+          id?: string
+          responsavel_id?: string | null
+          sla_horas?: number | null
+          status?: Database["public"]["Enums"]["status_tarefa_acao"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_acao_acao_id_fkey"
+            columns: ["acao_id"]
+            isOneToOne: false
+            referencedRelation: "acoes_reuniao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_acao_responsavel_id_fkey"
             columns: ["responsavel_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -1337,6 +1535,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_overdue_acoes_tarefas: { Args: never; Returns: undefined }
       check_stale_opportunities: { Args: never; Returns: undefined }
       gerar_numero_proposta: { Args: never; Returns: string }
       has_role: {
@@ -1351,8 +1550,22 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "user" | "adm"
+      area_envolvida:
+        | "comercial"
+        | "inter_i_tps"
+        | "transporte"
+        | "cdex"
+        | "porto"
+        | "qualidade"
+        | "financeiro"
+      impacto_acao:
+        | "financeiro"
+        | "operacional"
+        | "relacionamento_cliente"
+        | "compliance"
       modalidade_visita: "presencial" | "remota"
       prioridade_acao: "baixa" | "media" | "alta" | "urgente"
+      prioridade_acao_reuniao: "alta" | "media" | "baixa"
       prioridade_tarefa: "baixa" | "media" | "alta" | "urgente"
       segmento_cliente:
         | "industrial"
@@ -1361,6 +1574,11 @@ export type Database = {
         | "tecnologia"
         | "outros"
       status_acao: "pendente" | "em_andamento" | "concluida" | "cancelada"
+      status_acao_reuniao:
+        | "nao_iniciada"
+        | "em_andamento"
+        | "concluida"
+        | "atrasada"
       status_cliente: "ativo" | "inativo" | "prospecto"
       status_contrato: "ativo" | "suspenso" | "encerrado" | "renovacao"
       status_ocorrencia: "aberta" | "em_analise" | "resolvida" | "fechada"
@@ -1373,7 +1591,13 @@ export type Database = {
         | "perdido"
         | "sem_retorno"
       status_proposta: "rascunho" | "enviada" | "aprovada" | "rejeitada"
+      status_reuniao: "realizada" | "em_andamento" | "cancelada"
       status_tarefa: "pendente" | "em_andamento" | "concluida" | "cancelada"
+      status_tarefa_acao:
+        | "nao_iniciada"
+        | "em_andamento"
+        | "concluida"
+        | "atrasada"
       status_visita: "a_agendar" | "agendada" | "realizada" | "cancelada"
       tipo_evento: "reuniao" | "follow_up" | "apresentacao" | "visita" | "outro"
       tipo_modelo_proposta:
@@ -1391,6 +1615,12 @@ export type Database = {
         | "sugestao"
         | "problema_tecnico"
         | "outro"
+      tipo_reuniao:
+        | "comercial"
+        | "operacional"
+        | "qualidade"
+        | "estrategica"
+        | "crise"
       tipo_servico:
         | "maritimo"
         | "aereo"
@@ -1526,8 +1756,24 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "user", "adm"],
+      area_envolvida: [
+        "comercial",
+        "inter_i_tps",
+        "transporte",
+        "cdex",
+        "porto",
+        "qualidade",
+        "financeiro",
+      ],
+      impacto_acao: [
+        "financeiro",
+        "operacional",
+        "relacionamento_cliente",
+        "compliance",
+      ],
       modalidade_visita: ["presencial", "remota"],
       prioridade_acao: ["baixa", "media", "alta", "urgente"],
+      prioridade_acao_reuniao: ["alta", "media", "baixa"],
       prioridade_tarefa: ["baixa", "media", "alta", "urgente"],
       segmento_cliente: [
         "industrial",
@@ -1537,6 +1783,12 @@ export const Constants = {
         "outros",
       ],
       status_acao: ["pendente", "em_andamento", "concluida", "cancelada"],
+      status_acao_reuniao: [
+        "nao_iniciada",
+        "em_andamento",
+        "concluida",
+        "atrasada",
+      ],
       status_cliente: ["ativo", "inativo", "prospecto"],
       status_contrato: ["ativo", "suspenso", "encerrado", "renovacao"],
       status_ocorrencia: ["aberta", "em_analise", "resolvida", "fechada"],
@@ -1550,7 +1802,14 @@ export const Constants = {
         "sem_retorno",
       ],
       status_proposta: ["rascunho", "enviada", "aprovada", "rejeitada"],
+      status_reuniao: ["realizada", "em_andamento", "cancelada"],
       status_tarefa: ["pendente", "em_andamento", "concluida", "cancelada"],
+      status_tarefa_acao: [
+        "nao_iniciada",
+        "em_andamento",
+        "concluida",
+        "atrasada",
+      ],
       status_visita: ["a_agendar", "agendada", "realizada", "cancelada"],
       tipo_evento: ["reuniao", "follow_up", "apresentacao", "visita", "outro"],
       tipo_modelo_proposta: [
@@ -1569,6 +1828,13 @@ export const Constants = {
         "sugestao",
         "problema_tecnico",
         "outro",
+      ],
+      tipo_reuniao: [
+        "comercial",
+        "operacional",
+        "qualidade",
+        "estrategica",
+        "crise",
       ],
       tipo_servico: [
         "maritimo",
