@@ -116,7 +116,7 @@ export function AcaoReuniaoEditForm({ acao, onSuccess, onCancel }: AcaoReuniaoEd
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">Nenhum</SelectItem>
-              {profiles?.map((p) => (
+              {profiles?.filter((p) => p.id && p.id.trim() !== "").map((p) => (
                 <SelectItem key={p.id} value={p.id}>
                   {p.nome}
                 </SelectItem>
