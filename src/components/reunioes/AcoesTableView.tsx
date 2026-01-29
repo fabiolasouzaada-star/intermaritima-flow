@@ -88,7 +88,12 @@ export function AcoesTableView({ acoes }: AcoesTableViewProps) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30">
-                  <TableHead className="font-semibold w-[70px] text-xs">ID</TableHead>
+                  <TableHead className="font-semibold w-[140px] text-xs">
+                    <div className="flex items-center gap-1">
+                      <Building2 className="h-3 w-3" />
+                      Cliente
+                    </div>
+                  </TableHead>
                   <TableHead className="font-semibold w-[160px] text-xs">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
@@ -146,21 +151,18 @@ export function AcoesTableView({ acoes }: AcoesTableViewProps) {
                       `}
                       onClick={() => setSelectedAcao(acao)}
                     >
-                      <TableCell className="font-mono text-[10px] text-muted-foreground py-3">
-                        {acao.id.slice(0, 8)}
+                      <TableCell className="py-3">
+                        <div className="flex items-center gap-1">
+                          <Building2 className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                          <span className="text-xs font-medium truncate max-w-[120px]">
+                            {acao.clientes?.empresa || acao.reunioes?.clientes?.empresa || <span className="text-muted-foreground">-</span>}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="py-3">
                         <div className="flex flex-col gap-0.5">
                           <span className="text-xs font-medium text-primary">{tipoReuniao}</span>
                           <span className="text-[10px] text-muted-foreground">{dataReuniao}</span>
-                          {acao.reunioes?.clientes?.empresa && (
-                            <div className="flex items-center gap-1">
-                              <Building2 className="h-2.5 w-2.5 text-muted-foreground" />
-                              <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
-                                {acao.reunioes.clientes.empresa}
-                              </span>
-                            </div>
-                          )}
                         </div>
                       </TableCell>
                       <TableCell className="py-3">

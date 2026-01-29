@@ -17,7 +17,6 @@ import {
   type ImpactoAcao
 } from "@/hooks/useAcoesReuniao";
 import { type AreaEnvolvida } from "@/hooks/useReunioes";
-import { useProfiles } from "@/hooks/useProfiles";
 import { Trash2 } from "lucide-react";
 import {
   AlertDialog,
@@ -40,7 +39,7 @@ interface AcaoReuniaoEditFormProps {
 export function AcaoReuniaoEditForm({ acao, onSuccess, onCancel }: AcaoReuniaoEditFormProps) {
   const [acaoText, setAcaoText] = useState(acao.acao);
   const [areaResponsavel, setAreaResponsavel] = useState<AreaEnvolvida>(acao.area_responsavel);
-  const [responsavelId, setResponsavelId] = useState(acao.responsavel_id || "");
+  const [responsavelNome, setResponsavelNome] = useState(acao.responsavel_nome || acao.profiles?.nome || "");
   const [prazo, setPrazo] = useState(acao.prazo || "");
   const [prioridade, setPrioridade] = useState<PrioridadeAcaoReuniao>(acao.prioridade);
   const [status, setStatus] = useState<StatusAcaoReuniao>(acao.status);
@@ -48,7 +47,6 @@ export function AcaoReuniaoEditForm({ acao, onSuccess, onCancel }: AcaoReuniaoEd
   const [comentarios, setComentarios] = useState(acao.comentarios || "");
   const [dataConclusao, setDataConclusao] = useState(acao.data_conclusao || "");
 
-  const { data: profiles } = useProfiles();
   const updateAcao = useUpdateAcaoReuniao();
   const deleteAcao = useDeleteAcaoReuniao();
 
@@ -60,7 +58,7 @@ export function AcaoReuniaoEditForm({ acao, onSuccess, onCancel }: AcaoReuniaoEd
       data: {
         acao: acaoText,
         area_responsavel: areaResponsavel,
-        responsavel_id: responsavelId || null,
+        responsavel_nome: responsavelNome || null,
         prazo: prazo || null,
         prioridade,
         status,
@@ -109,20 +107,13 @@ export function AcaoReuniaoEditForm({ acao, onSuccess, onCancel }: AcaoReuniaoEd
         </div>
 
         <div>
-          <Label htmlFor="responsavel">Responsável</Label>
-          <Select value={responsavelId || "none"} onValueChange={(v) => setResponsavelId(v === "none" ? "" : v)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Nenhum</SelectItem>
-              {profiles?.filter((p) => p.id && p.id.trim() !== "").map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label htmlFor="responsavel_nome">Responsável</Label>
+          <Input
+            id="responsavel_nome"
+            value={responsavelNome}
+            onChange={(e) => setResponsavelNome(e.target.value)}
+            placeholder="Nome do responsável..."
+          />
         </div>
       </div>
 

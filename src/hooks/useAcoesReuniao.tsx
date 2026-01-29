@@ -60,10 +60,10 @@ export const PRIORIDADES_ACAO: { value: PrioridadeAcaoReuniao; label: string; co
 ];
 
 export const STATUS_ACAO: { value: StatusAcaoReuniao; label: string; color: string }[] = [
-  { value: "nao_iniciada", label: "Não Iniciada", color: "bg-muted" },
-  { value: "em_andamento", label: "Em Andamento", color: "bg-primary/20" },
-  { value: "concluida", label: "Concluída", color: "bg-success/20" },
-  { value: "atrasada", label: "Atrasada", color: "bg-destructive/20" },
+  { value: "nao_iniciada", label: "Não Iniciada", color: "bg-red-500 text-white" },
+  { value: "em_andamento", label: "Em Andamento", color: "bg-yellow-500 text-black" },
+  { value: "concluida", label: "Concluída", color: "bg-green-500 text-white" },
+  { value: "atrasada", label: "Atrasada", color: "bg-red-600 text-white" },
 ];
 
 export const IMPACTOS_ACAO: { value: ImpactoAcao; label: string }[] = [
