@@ -90,7 +90,7 @@ export function AcoesKanban({ acoes, onAcaoClick }: AcoesKanbanProps) {
 
             <div className="space-y-3">
               {columnAcoes.map((acao) => {
-                const responsavelNome = acao.profiles?.nome;
+                const responsavelNome = acao.responsavel_nome || acao.profiles?.nome;
                 const overdue = isOverdue(acao.prazo, acao.status);
 
                 return (

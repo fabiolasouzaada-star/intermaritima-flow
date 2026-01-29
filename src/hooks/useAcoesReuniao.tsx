@@ -14,6 +14,7 @@ export interface AcaoReuniao {
   area_responsavel: AreaEnvolvida;
   acao: string;
   responsavel_id: string | null;
+  responsavel_nome: string | null;
   prazo: string | null;
   prioridade: PrioridadeAcaoReuniao;
   status: StatusAcaoReuniao;
@@ -45,6 +46,7 @@ export interface AcaoReuniaoUpdate {
   area_responsavel?: AreaEnvolvida;
   acao?: string;
   responsavel_id?: string | null;
+  responsavel_nome?: string | null;
   prazo?: string | null;
   prioridade?: PrioridadeAcaoReuniao;
   status?: StatusAcaoReuniao;
