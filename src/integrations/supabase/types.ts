@@ -76,6 +76,7 @@ export type Database = {
           prazo: string | null
           prioridade: Database["public"]["Enums"]["prioridade_acao_reuniao"]
           responsavel_id: string | null
+          responsavel_nome: string | null
           reuniao_id: string
           status: Database["public"]["Enums"]["status_acao_reuniao"]
           updated_at: string
@@ -93,6 +94,7 @@ export type Database = {
           prazo?: string | null
           prioridade?: Database["public"]["Enums"]["prioridade_acao_reuniao"]
           responsavel_id?: string | null
+          responsavel_nome?: string | null
           reuniao_id: string
           status?: Database["public"]["Enums"]["status_acao_reuniao"]
           updated_at?: string
@@ -110,6 +112,7 @@ export type Database = {
           prazo?: string | null
           prioridade?: Database["public"]["Enums"]["prioridade_acao_reuniao"]
           responsavel_id?: string | null
+          responsavel_nome?: string | null
           reuniao_id?: string
           status?: Database["public"]["Enums"]["status_acao_reuniao"]
           updated_at?: string

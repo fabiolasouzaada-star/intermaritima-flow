@@ -181,7 +181,7 @@ export function AcoesTableView({ acoes }: AcoesTableViewProps) {
                       </TableCell>
                       <TableCell className="py-3">
                         <span className="text-xs">
-                          {acao.profiles?.nome || <span className="text-muted-foreground">-</span>}
+                          {acao.responsavel_nome || acao.profiles?.nome || <span className="text-muted-foreground">-</span>}
                         </span>
                       </TableCell>
                       <TableCell className="py-3">
