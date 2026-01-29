@@ -76,12 +76,13 @@ export function TarefaAcaoForm({ acaoId, onSuccess }: TarefaAcaoFormProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="responsavel">Responsável</Label>
-          <Select value={responsavelId} onValueChange={setResponsavelId}>
+          <Select value={responsavelId || "none"} onValueChange={(v) => setResponsavelId(v === "none" ? "" : v)}>
             <SelectTrigger>
               <SelectValue placeholder={isLoadingProfiles ? "Carregando..." : "Selecione"} />
             </SelectTrigger>
             <SelectContent>
-              {profiles?.map((profile) => (
+              <SelectItem value="none">Nenhum</SelectItem>
+              {profiles?.filter((p) => p.id && p.id.trim() !== "").map((profile) => (
                 <SelectItem key={profile.id} value={profile.id}>
                   {profile.nome}
                 </SelectItem>
