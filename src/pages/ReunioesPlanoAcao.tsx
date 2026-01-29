@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Plus, Calendar, Users, Target, Kanban, List, LayoutDashboard, 
-  Building2, Clock, AlertTriangle, Search, Filter
+  Building2, Clock, AlertTriangle, Search, Table as TableIcon
 } from "lucide-react";
 import { useReunioes, TIPOS_REUNIAO, STATUS_REUNIAO, AREAS_ENVOLVIDAS, type Reuniao } from "@/hooks/useReunioes";
 import { useAllAcoesReuniao, type AcaoReuniao, STATUS_ACAO, PRIORIDADES_ACAO } from "@/hooks/useAcoesReuniao";
@@ -18,6 +18,7 @@ import { useAllTarefasAcao, STATUS_TAREFA_ACAO } from "@/hooks/useTarefasAcao";
 import { ReuniaoForm } from "@/components/reunioes/ReuniaoForm";
 import { ReuniaoDetailDialog } from "@/components/reunioes/ReuniaoDetailDialog";
 import { AcoesKanban } from "@/components/reunioes/AcoesKanban";
+import { AcoesTableView } from "@/components/reunioes/AcoesTableView";
 import { ReunioesPlanoAcaoDashboard } from "@/components/reunioes/ReunioesPlanoAcaoDashboard";
 import { useProfiles } from "@/hooks/useProfiles";
 
@@ -137,8 +138,8 @@ export default function ReunioesPlanoAcao() {
               <span className="hidden sm:inline">Kanban</span>
             </TabsTrigger>
             <TabsTrigger value="lista" className="text-xs sm:text-sm">
-              <List className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Lista</span>
+              <TableIcon className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Tabela</span>
             </TabsTrigger>
             <TabsTrigger value="atrasadas" className="text-xs sm:text-sm">
               <AlertTriangle className="h-4 w-4 sm:mr-2" />
@@ -176,9 +177,13 @@ export default function ReunioesPlanoAcao() {
               <div className="space-y-3">
                 {filteredReunioes.map((reuniao) => {
                   const tipoLabel = TIPOS_REUNIAO.find((t) => t.value === reuniao.tipo)?.label;
-                  const areaLabel = AREAS_ENVOLVIDAS.find((a) => a.value === reuniao.area_envolvida)?.label;
                   const statusLabel = STATUS_REUNIAO.find((s) => s.value === reuniao.status)?.label;
                   const reuniaoAcoes = acoes?.filter((a) => a.reuniao_id === reuniao.id) || [];
+                  
+                  // Usar areas_envolvidas se disponível, senão fallback para area_envolvida
+                  const areasToShow = reuniao.areas_envolvidas?.length > 0 
+                    ? reuniao.areas_envolvidas 
+                    : [reuniao.area_envolvida];
 
                   return (
                     <Card
@@ -211,7 +216,12 @@ export default function ReunioesPlanoAcao() {
 
                           <div className="flex flex-wrap gap-2">
                             <Badge variant="outline">{tipoLabel}</Badge>
-                            <Badge variant="secondary">{areaLabel}</Badge>
+                            {areasToShow.map((area) => {
+                              const areaLabel = AREAS_ENVOLVIDAS.find((a) => a.value === area)?.label || area;
+                              return (
+                                <Badge key={area} variant="secondary">{areaLabel}</Badge>
+                              );
+                            })}
                             {reuniaoAcoes.length > 0 && (
                               <Badge variant="outline" className="text-xs">
                                 <Target className="h-3 w-3 mr-1" />
@@ -284,7 +294,7 @@ export default function ReunioesPlanoAcao() {
             )}
           </TabsContent>
 
-          {/* Lista de Ações */}
+          {/* Lista de Ações em Tabela Excel-like */}
           <TabsContent value="lista" className="mt-4 space-y-4">
             <div className="flex flex-wrap gap-2">
               <div className="relative flex-1 min-w-[200px]">
@@ -324,59 +334,26 @@ export default function ReunioesPlanoAcao() {
                   ))}
                 </SelectContent>
               </Select>
+
+              {(filtroStatus || filtroResponsavel || searchTerm) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setFiltroStatus("");
+                    setFiltroResponsavel("");
+                    setSearchTerm("");
+                  }}
+                >
+                  Limpar filtros
+                </Button>
+              )}
             </div>
 
             {isLoadingAcoes ? (
               <div className="text-center py-8 text-muted-foreground">Carregando...</div>
-            ) : filteredAcoes.length > 0 ? (
-              <div className="space-y-2">
-                {filteredAcoes.map((acao) => {
-                  const statusConfig = STATUS_ACAO.find((s) => s.value === acao.status);
-                  const prioridadeConfig = PRIORIDADES_ACAO.find((p) => p.value === acao.prioridade);
-                  const isOverdue = acao.prazo && new Date(acao.prazo) < new Date() && acao.status !== "concluida";
-
-                  return (
-                    <Card
-                      key={acao.id}
-                      className={`p-3 cursor-pointer hover:shadow-md transition-shadow ${isOverdue ? "border-destructive" : ""}`}
-                      onClick={() => handleAcaoClick(acao)}
-                    >
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium">{acao.acao}</span>
-                            {isOverdue && <AlertTriangle className="h-4 w-4 text-destructive" />}
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {acao.clientes && (
-                              <Badge variant="outline" className="text-xs">
-                                {acao.clientes.empresa}
-                              </Badge>
-                            )}
-                            <Badge className={statusConfig?.color}>{statusConfig?.label}</Badge>
-                            <Badge className={prioridadeConfig?.color}>{prioridadeConfig?.label}</Badge>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          {acao.prazo && (
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {new Date(acao.prazo).toLocaleDateString("pt-BR")}
-                            </span>
-                          )}
-                          {acao.profiles?.nome && (
-                            <span>{acao.profiles.nome}</span>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                Nenhuma ação encontrada
-              </div>
+              <AcoesTableView acoes={filteredAcoes} onAcaoClick={handleAcaoClick} />
             )}
           </TabsContent>
 

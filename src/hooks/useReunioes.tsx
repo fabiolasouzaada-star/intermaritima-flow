@@ -12,6 +12,7 @@ export interface Reuniao {
   cliente_id: string | null;
   tipo: TipoReuniao;
   area_envolvida: AreaEnvolvida;
+  areas_envolvidas: string[];
   participantes: string | null;
   objetivo: string | null;
   resumo: string | null;
@@ -29,6 +30,7 @@ export interface ReuniaoInsert {
   cliente_id?: string | null;
   tipo: TipoReuniao;
   area_envolvida: AreaEnvolvida;
+  areas_envolvidas?: string[];
   participantes?: string;
   objetivo?: string;
   resumo?: string;
@@ -42,6 +44,7 @@ export interface ReuniaoUpdate {
   cliente_id?: string | null;
   tipo?: TipoReuniao;
   area_envolvida?: AreaEnvolvida;
+  areas_envolvidas?: string[];
   participantes?: string | null;
   objetivo?: string | null;
   resumo?: string | null;
