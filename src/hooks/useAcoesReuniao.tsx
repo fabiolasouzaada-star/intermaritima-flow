@@ -73,6 +73,16 @@ export const IMPACTOS_ACAO: { value: ImpactoAcao; label: string }[] = [
   { value: "compliance", label: "Compliance" },
 ];
 
+export const AREAS_RESPONSAVEL: { value: AreaEnvolvida; label: string }[] = [
+  { value: "comercial", label: "Comercial" },
+  { value: "inter_i_tps", label: "INTER I/TPS" },
+  { value: "transporte", label: "Transporte" },
+  { value: "cdex", label: "CDEX" },
+  { value: "porto", label: "Porto" },
+  { value: "qualidade", label: "Qualidade" },
+  { value: "financeiro", label: "Financeiro" },
+];
+
 export function useAcoesReuniao(reuniaoId?: string) {
   return useQuery({
     queryKey: ["acoes_reuniao", reuniaoId],

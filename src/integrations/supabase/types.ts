@@ -1264,6 +1264,7 @@ export type Database = {
       reunioes: {
         Row: {
           area_envolvida: Database["public"]["Enums"]["area_envolvida"]
+          areas_envolvidas: string[] | null
           cliente_id: string | null
           created_at: string
           created_by: string | null
@@ -1280,6 +1281,7 @@ export type Database = {
         }
         Insert: {
           area_envolvida: Database["public"]["Enums"]["area_envolvida"]
+          areas_envolvidas?: string[] | null
           cliente_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1296,6 +1298,7 @@ export type Database = {
         }
         Update: {
           area_envolvida?: Database["public"]["Enums"]["area_envolvida"]
+          areas_envolvidas?: string[] | null
           cliente_id?: string | null
           created_at?: string
           created_by?: string | null

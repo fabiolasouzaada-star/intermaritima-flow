@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   useCreateReuniao, 
   TIPOS_REUNIAO, 
@@ -21,7 +22,7 @@ interface ReuniaoFormProps {
 export function ReuniaoForm({ onSuccess }: ReuniaoFormProps) {
   const [dataReuniao, setDataReuniao] = useState("");
   const [tipo, setTipo] = useState<TipoReuniao>("comercial");
-  const [areaEnvolvida, setAreaEnvolvida] = useState<AreaEnvolvida>("comercial");
+  const [areasEnvolvidas, setAreasEnvolvidas] = useState<string[]>(["comercial"]);
   const [participantes, setParticipantes] = useState("");
   const [objetivo, setObjetivo] = useState("");
   const [resumo, setResumo] = useState("");
@@ -36,13 +37,24 @@ export function ReuniaoForm({ onSuccess }: ReuniaoFormProps) {
     return date.toISOString();
   };
 
+  const toggleArea = (area: string) => {
+    setAreasEnvolvidas((prev) =>
+      prev.includes(area) ? prev.filter((a) => a !== area) : [...prev, area]
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (areasEnvolvidas.length === 0) {
+      return;
+    }
 
     await createReuniao.mutateAsync({
       data_reuniao: toLocalISOString(dataReuniao),
       tipo,
-      area_envolvida: areaEnvolvida,
+      area_envolvida: areasEnvolvidas[0] as AreaEnvolvida,
+      areas_envolvidas: areasEnvolvidas,
       participantes: participantes || undefined,
       objetivo: objetivo || undefined,
       resumo: resumo || undefined,
@@ -54,7 +66,7 @@ export function ReuniaoForm({ onSuccess }: ReuniaoFormProps) {
     // Reset form
     setDataReuniao("");
     setTipo("comercial");
-    setAreaEnvolvida("comercial");
+    setAreasEnvolvidas(["comercial"]);
     setParticipantes("");
     setObjetivo("");
     setResumo("");
@@ -78,7 +90,7 @@ export function ReuniaoForm({ onSuccess }: ReuniaoFormProps) {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="tipo">Tipo de Reunião *</Label>
           <Select value={tipo} onValueChange={(v) => setTipo(v as TipoReuniao)}>
@@ -89,22 +101,6 @@ export function ReuniaoForm({ onSuccess }: ReuniaoFormProps) {
               {TIPOS_REUNIAO.map((t) => (
                 <SelectItem key={t.value} value={t.value}>
                   {t.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Label htmlFor="area">Área Envolvida *</Label>
-          <Select value={areaEnvolvida} onValueChange={(v) => setAreaEnvolvida(v as AreaEnvolvida)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {AREAS_ENVOLVIDAS.map((a) => (
-                <SelectItem key={a.value} value={a.value}>
-                  {a.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -126,6 +122,30 @@ export function ReuniaoForm({ onSuccess }: ReuniaoFormProps) {
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div>
+        <Label>Áreas Envolvidas * (selecione uma ou mais)</Label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 p-3 border rounded-md bg-muted/20">
+          {AREAS_ENVOLVIDAS.map((area) => (
+            <div key={area.value} className="flex items-center space-x-2">
+              <Checkbox
+                id={`area-${area.value}`}
+                checked={areasEnvolvidas.includes(area.value)}
+                onCheckedChange={() => toggleArea(area.value)}
+              />
+              <label
+                htmlFor={`area-${area.value}`}
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                {area.label}
+              </label>
+            </div>
+          ))}
+        </div>
+        {areasEnvolvidas.length === 0 && (
+          <p className="text-xs text-destructive mt-1">Selecione pelo menos uma área</p>
+        )}
       </div>
 
       <div>
