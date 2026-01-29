@@ -142,12 +142,13 @@ export function PlanoAcaoEditForm({ acao, onSuccess }: PlanoAcaoEditFormProps) {
 
       <div>
         <Label htmlFor="responsavel">Responsável</Label>
-        <Select value={responsavelId} onValueChange={setResponsavelId}>
+        <Select value={responsavelId || "none"} onValueChange={(v) => setResponsavelId(v === "none" ? "" : v)}>
           <SelectTrigger>
             <SelectValue placeholder={isLoadingProfiles ? "Carregando..." : "Selecione"} />
           </SelectTrigger>
           <SelectContent>
-            {profiles?.map((profile) => (
+            <SelectItem value="none">Nenhum</SelectItem>
+            {profiles?.filter((p) => p.id && p.id.trim() !== "").map((profile) => (
               <SelectItem key={profile.id} value={profile.id}>
                 {profile.nome}
               </SelectItem>

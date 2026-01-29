@@ -167,12 +167,13 @@ export function AcaoReuniaoForm({ reuniaoId, onSuccess }: AcaoReuniaoFormProps) 
 
         <div>
           <Label htmlFor="responsavel">Responsável</Label>
-          <Select value={responsavelId} onValueChange={setResponsavelId}>
+          <Select value={responsavelId || "none"} onValueChange={(v) => setResponsavelId(v === "none" ? "" : v)}>
             <SelectTrigger>
               <SelectValue placeholder={isLoadingProfiles ? "Carregando..." : "Selecione"} />
             </SelectTrigger>
             <SelectContent>
-              {profiles?.map((profile) => (
+              <SelectItem value="none">Nenhum</SelectItem>
+              {profiles?.filter((p) => p.id && p.id.trim() !== "").map((profile) => (
                 <SelectItem key={profile.id} value={profile.id}>
                   {profile.nome}
                 </SelectItem>
@@ -228,11 +229,12 @@ export function AcaoReuniaoForm({ reuniaoId, onSuccess }: AcaoReuniaoFormProps) 
 
       <div>
         <Label htmlFor="impacto">Impacto</Label>
-        <Select value={impacto} onValueChange={(v) => setImpacto(v as ImpactoAcao)}>
+        <Select value={impacto || "none"} onValueChange={(v) => setImpacto(v === "none" ? "" : v as ImpactoAcao)}>
           <SelectTrigger>
             <SelectValue placeholder="Selecione o tipo de impacto" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="none">Nenhum</SelectItem>
             {IMPACTOS_ACAO.map((i) => (
               <SelectItem key={i.value} value={i.value}>
                 {i.label}

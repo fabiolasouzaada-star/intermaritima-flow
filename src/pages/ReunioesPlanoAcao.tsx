@@ -9,8 +9,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-  Plus, Calendar, Users, Target, Kanban, List, LayoutDashboard, 
-  Building2, Clock, AlertTriangle, Search, Table as TableIcon
+  Plus, Calendar, Users, Target, Kanban, LayoutDashboard, 
+  Building2, Clock, AlertTriangle, Search, Table as TableIcon, UserCircle
 } from "lucide-react";
 import { useReunioes, TIPOS_REUNIAO, STATUS_REUNIAO, AREAS_ENVOLVIDAS, type Reuniao } from "@/hooks/useReunioes";
 import { useAllAcoesReuniao, type AcaoReuniao, STATUS_ACAO, PRIORIDADES_ACAO } from "@/hooks/useAcoesReuniao";
@@ -21,6 +21,8 @@ import { AcoesKanban } from "@/components/reunioes/AcoesKanban";
 import { AcoesTableView } from "@/components/reunioes/AcoesTableView";
 import { ReunioesPlanoAcaoDashboard } from "@/components/reunioes/ReunioesPlanoAcaoDashboard";
 import { useProfiles } from "@/hooks/useProfiles";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ReunioesPlanoAcao() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -31,11 +33,24 @@ export default function ReunioesPlanoAcao() {
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroResponsavel, setFiltroResponsavel] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
+  const [filtroComercial, setFiltroComercial] = useState("");
 
   const { data: reunioes, isLoading: isLoadingReunioes } = useReunioes();
   const { data: acoes, isLoading: isLoadingAcoes } = useAllAcoesReuniao();
   const { data: tarefas, isLoading: isLoadingTarefas } = useAllTarefasAcao();
   const { data: profiles } = useProfiles();
+  const { isAdmin, isManager } = useUserRole();
+  const { user } = useAuth();
+
+  const isAdminOrManager = isAdmin || isManager;
+
+  // Lista de comerciais (usuários que criaram ações)
+  const comerciais = [...new Map(
+    acoes?.filter((a) => a.created_by).map((a) => {
+      const profile = profiles?.find((p) => p.id === a.created_by);
+      return [a.created_by, profile?.nome || "Desconhecido"];
+    }) || []
+  ).entries()].map(([id, nome]) => ({ id: id!, nome: nome! })).filter((c) => c.id && c.nome);
 
   // Filtrar reuniões
   const filteredReunioes = reunioes?.filter((r) => {
@@ -43,6 +58,8 @@ export default function ReunioesPlanoAcao() {
         !r.clientes?.empresa.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
+    // Filtro por comercial (criador)
+    if (filtroComercial && r.created_by !== filtroComercial) return false;
     return true;
   });
 
@@ -55,6 +72,8 @@ export default function ReunioesPlanoAcao() {
     if (filtroCliente && a.cliente_id !== filtroCliente) return false;
     if (filtroResponsavel && a.responsavel_id !== filtroResponsavel) return false;
     if (filtroStatus && a.status !== filtroStatus) return false;
+    // Filtro por comercial (criador)
+    if (filtroComercial && a.created_by !== filtroComercial) return false;
     return true;
   }) || [];
 
@@ -91,35 +110,77 @@ export default function ReunioesPlanoAcao() {
     <CRMLayout>
       <div className="space-y-4 md:space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold">Reuniões & Plano de Ação</h1>
-            <p className="text-sm text-muted-foreground">
-              Transforme reuniões em decisões, ações e tarefas acompanháveis
-            </p>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold">Reuniões & Plano de Ação</h1>
+              <p className="text-sm text-muted-foreground">
+                Transforme reuniões em decisões, ações e tarefas acompanháveis
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Filtro por Comercial (apenas para admin/manager) */}
+              {isAdminOrManager && comerciais.length > 0 && (
+                <Select value={filtroComercial || "all"} onValueChange={(v) => setFiltroComercial(v === "all" ? "" : v)}>
+                  <SelectTrigger className="w-[180px]">
+                    <div className="flex items-center gap-2">
+                      <UserCircle className="h-4 w-4" />
+                      <SelectValue placeholder="Comercial" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Comerciais</SelectItem>
+                    {comerciais.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova Reunião
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh]">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Registrar Reunião
+                    </DialogTitle>
+                  </DialogHeader>
+                  <ScrollArea className="max-h-[calc(90vh-100px)]">
+                    <div className="pr-4">
+                      <ReuniaoForm onSuccess={() => setDialogOpen(false)} />
+                    </div>
+                  </ScrollArea>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Reunião
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh]">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Registrar Reunião
-                </DialogTitle>
-              </DialogHeader>
-              <ScrollArea className="max-h-[calc(90vh-100px)]">
-                <div className="pr-4">
-                  <ReuniaoForm onSuccess={() => setDialogOpen(false)} />
-                </div>
-              </ScrollArea>
-            </DialogContent>
-          </Dialog>
+          {/* Indicator de filtro ativo */}
+          {filtroComercial && (
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <UserCircle className="h-3 w-3" />
+                Filtrando por: {comerciais.find((c) => c.id === filtroComercial)?.nome}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                  onClick={() => setFiltroComercial("")}
+                >
+                  ×
+                </Button>
+              </Badge>
+            </div>
+          )}
         </div>
 
         {/* Tabs de Visualização */}
@@ -245,13 +306,13 @@ export default function ReunioesPlanoAcao() {
           {/* Kanban de Ações */}
           <TabsContent value="kanban" className="mt-4 space-y-4">
             <div className="flex flex-wrap gap-2">
-              <Select value={filtroCliente} onValueChange={setFiltroCliente}>
+              <Select value={filtroCliente || "all"} onValueChange={(v) => setFiltroCliente(v === "all" ? "" : v)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Filtrar por cliente" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os clientes</SelectItem>
-                  {clientesUnicos.map((c) => (
+                  <SelectItem value="all">Todos os clientes</SelectItem>
+                  {clientesUnicos.filter((c) => c.id && c.id.trim() !== "").map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.nome}
                     </SelectItem>
@@ -259,13 +320,13 @@ export default function ReunioesPlanoAcao() {
                 </SelectContent>
               </Select>
 
-              <Select value={filtroResponsavel} onValueChange={setFiltroResponsavel}>
+              <Select value={filtroResponsavel || "all"} onValueChange={(v) => setFiltroResponsavel(v === "all" ? "" : v)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Filtrar por responsável" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os responsáveis</SelectItem>
-                  {profiles?.map((p) => (
+                  <SelectItem value="all">Todos os responsáveis</SelectItem>
+                  {profiles?.filter((p) => p.id && p.id.trim() !== "").map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.nome}
                     </SelectItem>
@@ -307,12 +368,12 @@ export default function ReunioesPlanoAcao() {
                 />
               </div>
 
-              <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+              <Select value={filtroStatus || "all"} onValueChange={(v) => setFiltroStatus(v === "all" ? "" : v)}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   {STATUS_ACAO.map((s) => (
                     <SelectItem key={s.value} value={s.value}>
                       {s.label}
@@ -321,13 +382,13 @@ export default function ReunioesPlanoAcao() {
                 </SelectContent>
               </Select>
 
-              <Select value={filtroResponsavel} onValueChange={setFiltroResponsavel}>
+              <Select value={filtroResponsavel || "all"} onValueChange={(v) => setFiltroResponsavel(v === "all" ? "" : v)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Responsável" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
-                  {profiles?.map((p) => (
+                  <SelectItem value="all">Todos</SelectItem>
+                  {profiles?.filter((p) => p.id && p.id.trim() !== "").map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.nome}
                     </SelectItem>
