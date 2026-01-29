@@ -353,7 +353,7 @@ export default function ReunioesPlanoAcao() {
             {isLoadingAcoes ? (
               <div className="text-center py-8 text-muted-foreground">Carregando...</div>
             ) : (
-              <AcoesTableView acoes={filteredAcoes} onAcaoClick={handleAcaoClick} />
+              <AcoesTableView acoes={filteredAcoes} />
             )}
           </TabsContent>
 
