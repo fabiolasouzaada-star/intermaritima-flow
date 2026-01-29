@@ -1,14 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useClientes } from "@/hooks/useClientes";
 import { 
   useCreateReuniao, 
   TIPOS_REUNIAO, 
@@ -25,7 +20,6 @@ interface ReuniaoFormProps {
 
 export function ReuniaoForm({ onSuccess }: ReuniaoFormProps) {
   const [dataReuniao, setDataReuniao] = useState("");
-  const [selectedClienteId, setSelectedClienteId] = useState("");
   const [tipo, setTipo] = useState<TipoReuniao>("comercial");
   const [areaEnvolvida, setAreaEnvolvida] = useState<AreaEnvolvida>("comercial");
   const [participantes, setParticipantes] = useState("");
@@ -34,20 +28,8 @@ export function ReuniaoForm({ onSuccess }: ReuniaoFormProps) {
   const [status, setStatus] = useState<StatusReuniao>("em_andamento");
   const [proximaReuniao, setProximaReuniao] = useState("");
   const [observacoesEstrategicas, setObservacoesEstrategicas] = useState("");
-  const [clienteOpen, setClienteOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: clientes, isLoading: isLoadingClientes } = useClientes();
   const createReuniao = useCreateReuniao();
-
-  const filteredClientes = useMemo(() => {
-    if (!clientes) return [];
-    return clientes
-      .filter((c) =>
-        c.empresa.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      .slice(0, 50);
-  }, [clientes, searchTerm]);
 
   const toLocalISOString = (dateTimeLocal: string): string => {
     const date = new Date(dateTimeLocal);
@@ -59,7 +41,6 @@ export function ReuniaoForm({ onSuccess }: ReuniaoFormProps) {
 
     await createReuniao.mutateAsync({
       data_reuniao: toLocalISOString(dataReuniao),
-      cliente_id: selectedClienteId || null,
       tipo,
       area_envolvida: areaEnvolvida,
       participantes: participantes || undefined,
@@ -72,7 +53,6 @@ export function ReuniaoForm({ onSuccess }: ReuniaoFormProps) {
 
     // Reset form
     setDataReuniao("");
-    setSelectedClienteId("");
     setTipo("comercial");
     setAreaEnvolvida("comercial");
     setParticipantes("");
@@ -85,72 +65,17 @@ export function ReuniaoForm({ onSuccess }: ReuniaoFormProps) {
     onSuccess?.();
   };
 
-  const selectedCliente = clientes?.find((c) => c.id === selectedClienteId);
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="data_reuniao">Data e Hora da Reunião *</Label>
-          <Input
-            id="data_reuniao"
-            type="datetime-local"
-            value={dataReuniao}
-            onChange={(e) => setDataReuniao(e.target.value)}
-            required
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="cliente">Cliente</Label>
-          <Popover open={clienteOpen} onOpenChange={setClienteOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={clienteOpen}
-                className="w-full justify-between"
-              >
-                {selectedCliente?.empresa || "Selecione um cliente..."}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-0" align="start">
-              <Command>
-                <CommandInput
-                  placeholder="Buscar cliente..."
-                  value={searchTerm}
-                  onValueChange={setSearchTerm}
-                />
-                <CommandList>
-                  <CommandEmpty>
-                    {isLoadingClientes ? "Carregando..." : "Nenhum cliente encontrado."}
-                  </CommandEmpty>
-                  <CommandGroup>
-                    {filteredClientes.map((cliente) => (
-                      <CommandItem
-                        key={cliente.id}
-                        value={cliente.empresa}
-                        onSelect={() => {
-                          setSelectedClienteId(cliente.id);
-                          setClienteOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            selectedClienteId === cliente.id ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {cliente.empresa}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-        </div>
+      <div>
+        <Label htmlFor="data_reuniao">Data e Hora da Reunião *</Label>
+        <Input
+          id="data_reuniao"
+          type="datetime-local"
+          value={dataReuniao}
+          onChange={(e) => setDataReuniao(e.target.value)}
+          required
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
