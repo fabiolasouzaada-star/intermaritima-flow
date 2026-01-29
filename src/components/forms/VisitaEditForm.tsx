@@ -15,8 +15,19 @@ interface VisitaEditFormProps {
 }
 
 export function VisitaEditForm({ visita, onSuccess }: VisitaEditFormProps) {
+  // Formata a data para o input datetime-local no timezone local
+  const formatToLocalDatetime = (isoString: string): string => {
+    const date = new Date(isoString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   const [dataVisita, setDataVisita] = useState(
-    visita.data_visita ? new Date(visita.data_visita).toISOString().slice(0, 16) : ""
+    visita.data_visita ? formatToLocalDatetime(visita.data_visita) : ""
   );
   const [modalidade, setModalidade] = useState<"presencial" | "remota">(
     (visita as any).modalidade || "presencial"
@@ -30,13 +41,19 @@ export function VisitaEditForm({ visita, onSuccess }: VisitaEditFormProps) {
 
   const updateVisita = useUpdateVisita();
 
+  // Converte datetime-local para ISO com timezone local
+  const toLocalISOString = (dateTimeLocal: string): string => {
+    const date = new Date(dateTimeLocal);
+    return date.toISOString();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     await updateVisita.mutateAsync({
       id: visita.id,
       data: {
-        data_visita: dataVisita,
+        data_visita: toLocalISOString(dataVisita),
         modalidade,
         objetivo: objetivo || null,
         situacao_atual: situacaoAtual || null,
