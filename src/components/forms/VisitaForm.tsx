@@ -46,12 +46,18 @@ export function VisitaForm({ clienteId, onSuccess }: VisitaFormProps) {
     ).slice(0, 50);
   }, [clientes, searchTerm]);
 
+  // Converte datetime-local para ISO com timezone local
+  const toLocalISOString = (dateTimeLocal: string): string => {
+    const date = new Date(dateTimeLocal);
+    return date.toISOString();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     await createVisita.mutateAsync({
       cliente_id: selectedClienteId,
-      data_visita: dataVisita,
+      data_visita: toLocalISOString(dataVisita),
       modalidade,
       objetivo: objetivo || undefined,
       situacao_atual: situacaoAtual || undefined,
