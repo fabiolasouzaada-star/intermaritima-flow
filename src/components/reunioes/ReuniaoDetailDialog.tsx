@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,10 +21,29 @@ interface ReuniaoDetailDialogProps {
 export function ReuniaoDetailDialog({ reuniao, open, onOpenChange }: ReuniaoDetailDialogProps) {
   const [showAcaoForm, setShowAcaoForm] = useState(false);
   const [showTarefaForm, setShowTarefaForm] = useState<string | null>(null);
-  const [selectedAcao, setSelectedAcao] = useState<AcaoReuniao | null>(null);
 
   const { data: acoes } = useAcoesReuniao(reuniao?.id);
   const { data: tarefas } = useTarefasAcao();
+
+  // Group actions by client
+  const acoesByCliente = useMemo(() => {
+    if (!acoes) return new Map<string, AcaoReuniao[]>();
+    
+    const grouped = new Map<string, AcaoReuniao[]>();
+    
+    acoes.forEach((acao) => {
+      const clienteKey = acao.cliente_id || "sem_cliente";
+      const clienteName = acao.clientes?.empresa || "Sem Cliente";
+      const key = `${clienteKey}|${clienteName}`;
+      
+      if (!grouped.has(key)) {
+        grouped.set(key, []);
+      }
+      grouped.get(key)!.push(acao);
+    });
+    
+    return grouped;
+  }, [acoes]);
 
   if (!reuniao) return null;
 
@@ -78,13 +97,6 @@ export function ReuniaoDetailDialog({ reuniao, open, onOpenChange }: ReuniaoDeta
                 <Badge className={getStatusColor(reuniao.status)}>{statusLabel}</Badge>
               </div>
             </div>
-
-            {reuniao.clientes && (
-              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">{reuniao.clientes.empresa}</span>
-              </div>
-            )}
 
             {reuniao.participantes && (
               <div>
@@ -148,7 +160,6 @@ export function ReuniaoDetailDialog({ reuniao, open, onOpenChange }: ReuniaoDeta
                   <Card className="p-4">
                     <AcaoReuniaoForm
                       reuniaoId={reuniao.id}
-                      clienteId={reuniao.cliente_id}
                       onSuccess={() => setShowAcaoForm(false)}
                     />
                     <Button
@@ -162,102 +173,119 @@ export function ReuniaoDetailDialog({ reuniao, open, onOpenChange }: ReuniaoDeta
                   </Card>
                 )}
 
-                {acoes?.map((acao) => {
-                  const acaoTarefas = getTarefasForAcao(acao.id);
-                  const statusConfig = STATUS_ACAO.find((s) => s.value === acao.status);
-                  const prioridadeConfig = PRIORIDADES_ACAO.find((p) => p.value === acao.prioridade);
-
+                {/* Ações agrupadas por cliente */}
+                {Array.from(acoesByCliente.entries()).map(([key, clienteAcoes]) => {
+                  const [, clienteName] = key.split("|");
+                  
                   return (
-                    <Card key={acao.id} className="p-4 space-y-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Target className="h-4 w-4 text-primary" />
-                            <span className="font-medium">{acao.acao}</span>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <Badge className={statusConfig?.color}>{statusConfig?.label}</Badge>
-                            <Badge className={prioridadeConfig?.color}>{prioridadeConfig?.label}</Badge>
-                            {acao.prazo && (
-                              <Badge variant="outline" className="text-xs">
-                                <Clock className="h-3 w-3 mr-1" />
-                                {new Date(acao.prazo).toLocaleDateString("pt-BR")}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        {acao.profiles?.nome && (
-                          <span className="text-xs text-muted-foreground">
-                            {acao.profiles.nome}
-                          </span>
-                        )}
+                    <div key={key} className="space-y-3">
+                      <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+                        <Building2 className="h-4 w-4 text-primary" />
+                        <span className="font-medium text-sm">{clienteName}</span>
+                        <Badge variant="secondary" className="ml-auto">
+                          {clienteAcoes.length} {clienteAcoes.length === 1 ? "ação" : "ações"}
+                        </Badge>
                       </div>
 
-                      {acao.comentarios && (
-                        <p className="text-sm text-muted-foreground">{acao.comentarios}</p>
-                      )}
+                      {clienteAcoes.map((acao) => {
+                        const acaoTarefas = getTarefasForAcao(acao.id);
+                        const statusConfig = STATUS_ACAO.find((s) => s.value === acao.status);
+                        const prioridadeConfig = PRIORIDADES_ACAO.find((p) => p.value === acao.prioridade);
 
-                      {/* Tarefas da ação */}
-                      <div className="pl-4 border-l-2 border-muted space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-muted-foreground">
-                            Tarefas ({acaoTarefas.length})
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowTarefaForm(showTarefaForm === acao.id ? null : acao.id)}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Tarefa
-                          </Button>
-                        </div>
-
-                        {showTarefaForm === acao.id && (
-                          <Card className="p-3">
-                            <TarefaAcaoForm
-                              acaoId={acao.id}
-                              onSuccess={() => setShowTarefaForm(null)}
-                            />
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setShowTarefaForm(null)}
-                              className="mt-2 w-full"
-                            >
-                              Cancelar
-                            </Button>
-                          </Card>
-                        )}
-
-                        {acaoTarefas.map((tarefa) => {
-                          const tarefaStatus = STATUS_TAREFA_ACAO.find((s) => s.value === tarefa.status);
-                          return (
-                            <div
-                              key={tarefa.id}
-                              className={`p-2 rounded-lg text-sm ${tarefaStatus?.color}`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <span>{tarefa.descricao}</span>
-                                <div className="flex items-center gap-2">
-                                  {tarefa.alerta_atraso && (
-                                    <AlertTriangle className="h-3 w-3 text-destructive" />
-                                  )}
-                                  {tarefa.status === "concluida" && (
-                                    <CheckCircle className="h-3 w-3 text-success" />
+                        return (
+                          <Card key={acao.id} className="p-4 space-y-3 ml-4">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Target className="h-4 w-4 text-primary" />
+                                  <span className="font-medium">{acao.acao}</span>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  <Badge className={statusConfig?.color}>{statusConfig?.label}</Badge>
+                                  <Badge className={prioridadeConfig?.color}>{prioridadeConfig?.label}</Badge>
+                                  {acao.prazo && (
+                                    <Badge variant="outline" className="text-xs">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      {new Date(acao.prazo).toLocaleDateString("pt-BR")}
+                                    </Badge>
                                   )}
                                 </div>
                               </div>
-                              {tarefa.profiles?.nome && (
+                              {acao.profiles?.nome && (
                                 <span className="text-xs text-muted-foreground">
-                                  {tarefa.profiles.nome}
+                                  {acao.profiles.nome}
                                 </span>
                               )}
                             </div>
-                          );
-                        })}
-                      </div>
-                    </Card>
+
+                            {acao.comentarios && (
+                              <p className="text-sm text-muted-foreground">{acao.comentarios}</p>
+                            )}
+
+                            {/* Tarefas da ação */}
+                            <div className="pl-4 border-l-2 border-muted space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-muted-foreground">
+                                  Tarefas ({acaoTarefas.length})
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setShowTarefaForm(showTarefaForm === acao.id ? null : acao.id)}
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Tarefa
+                                </Button>
+                              </div>
+
+                              {showTarefaForm === acao.id && (
+                                <Card className="p-3">
+                                  <TarefaAcaoForm
+                                    acaoId={acao.id}
+                                    onSuccess={() => setShowTarefaForm(null)}
+                                  />
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setShowTarefaForm(null)}
+                                    className="mt-2 w-full"
+                                  >
+                                    Cancelar
+                                  </Button>
+                                </Card>
+                              )}
+
+                              {acaoTarefas.map((tarefa) => {
+                                const tarefaStatus = STATUS_TAREFA_ACAO.find((s) => s.value === tarefa.status);
+                                return (
+                                  <div
+                                    key={tarefa.id}
+                                    className={`p-2 rounded-lg text-sm ${tarefaStatus?.color}`}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <span>{tarefa.descricao}</span>
+                                      <div className="flex items-center gap-2">
+                                        {tarefa.alerta_atraso && (
+                                          <AlertTriangle className="h-3 w-3 text-destructive" />
+                                        )}
+                                        {tarefa.status === "concluida" && (
+                                          <CheckCircle className="h-3 w-3 text-success" />
+                                        )}
+                                      </div>
+                                    </div>
+                                    {tarefa.profiles?.nome && (
+                                      <span className="text-xs text-muted-foreground">
+                                        {tarefa.profiles.nome}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </Card>
+                        );
+                      })}
+                    </div>
                   );
                 })}
 
