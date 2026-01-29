@@ -5,11 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { Plus, Calendar, User, Building2, Target, AlertTriangle, Clock, CheckCircle } from "lucide-react";
+import { Plus, Calendar, User, Building2, Target, AlertTriangle, Clock, CheckCircle, Pencil } from "lucide-react";
 import { type Reuniao, TIPOS_REUNIAO, AREAS_ENVOLVIDAS, STATUS_REUNIAO } from "@/hooks/useReunioes";
 import { useAcoesReuniao, type AcaoReuniao, STATUS_ACAO, PRIORIDADES_ACAO } from "@/hooks/useAcoesReuniao";
 import { useTarefasAcao, type TarefaAcao, STATUS_TAREFA_ACAO } from "@/hooks/useTarefasAcao";
 import { AcaoReuniaoForm } from "./AcaoReuniaoForm";
+import { AcaoReuniaoEditForm } from "./AcaoReuniaoEditForm";
 import { TarefaAcaoForm } from "./TarefaAcaoForm";
 
 interface ReuniaoDetailDialogProps {
@@ -21,6 +22,7 @@ interface ReuniaoDetailDialogProps {
 export function ReuniaoDetailDialog({ reuniao, open, onOpenChange }: ReuniaoDetailDialogProps) {
   const [showAcaoForm, setShowAcaoForm] = useState(false);
   const [showTarefaForm, setShowTarefaForm] = useState<string | null>(null);
+  const [editingAcao, setEditingAcao] = useState<AcaoReuniao | null>(null);
 
   const { data: acoes } = useAcoesReuniao(reuniao?.id);
   const { data: tarefas } = useTarefasAcao();
@@ -191,97 +193,115 @@ export function ReuniaoDetailDialog({ reuniao, open, onOpenChange }: ReuniaoDeta
                         const acaoTarefas = getTarefasForAcao(acao.id);
                         const statusConfig = STATUS_ACAO.find((s) => s.value === acao.status);
                         const prioridadeConfig = PRIORIDADES_ACAO.find((p) => p.value === acao.prioridade);
+                        const isEditing = editingAcao?.id === acao.id;
 
                         return (
                           <Card key={acao.id} className="p-4 space-y-3 ml-4">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <Target className="h-4 w-4 text-primary" />
-                                  <span className="font-medium">{acao.acao}</span>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                  <Badge className={statusConfig?.color}>{statusConfig?.label}</Badge>
-                                  <Badge className={prioridadeConfig?.color}>{prioridadeConfig?.label}</Badge>
-                                  {acao.prazo && (
-                                    <Badge variant="outline" className="text-xs">
-                                      <Clock className="h-3 w-3 mr-1" />
-                                      {new Date(acao.prazo).toLocaleDateString("pt-BR")}
-                                    </Badge>
+                            {isEditing ? (
+                              <AcaoReuniaoEditForm
+                                acao={acao}
+                                onSuccess={() => setEditingAcao(null)}
+                                onCancel={() => setEditingAcao(null)}
+                              />
+                            ) : (
+                              <>
+                                <div 
+                                  className="flex items-start justify-between gap-2 cursor-pointer hover:bg-muted/50 rounded-lg p-2 -m-2 transition-colors"
+                                  onClick={() => setEditingAcao(acao)}
+                                >
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <Target className="h-4 w-4 text-primary" />
+                                      <span className="font-medium">{acao.acao}</span>
+                                      <Pencil className="h-3 w-3 text-muted-foreground" />
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                      <Badge className={statusConfig?.color}>{statusConfig?.label}</Badge>
+                                      <Badge className={prioridadeConfig?.color}>{prioridadeConfig?.label}</Badge>
+                                      {acao.prazo && (
+                                        <Badge variant="outline" className="text-xs">
+                                          <Clock className="h-3 w-3 mr-1" />
+                                          {new Date(acao.prazo).toLocaleDateString("pt-BR")}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {acao.profiles?.nome && (
+                                    <span className="text-xs text-muted-foreground">
+                                      {acao.profiles.nome}
+                                    </span>
                                   )}
                                 </div>
-                              </div>
-                              {acao.profiles?.nome && (
-                                <span className="text-xs text-muted-foreground">
-                                  {acao.profiles.nome}
-                                </span>
-                              )}
-                            </div>
 
-                            {acao.comentarios && (
-                              <p className="text-sm text-muted-foreground">{acao.comentarios}</p>
-                            )}
+                                {acao.comentarios && (
+                                  <p className="text-sm text-muted-foreground">{acao.comentarios}</p>
+                                )}
 
-                            {/* Tarefas da ação */}
-                            <div className="pl-4 border-l-2 border-muted space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs font-medium text-muted-foreground">
-                                  Tarefas ({acaoTarefas.length})
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setShowTarefaForm(showTarefaForm === acao.id ? null : acao.id)}
-                                >
-                                  <Plus className="h-3 w-3 mr-1" />
-                                  Tarefa
-                                </Button>
-                              </div>
+                                {/* Tarefas da ação */}
+                                <div className="pl-4 border-l-2 border-muted space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium text-muted-foreground">
+                                      Tarefas ({acaoTarefas.length})
+                                    </span>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowTarefaForm(showTarefaForm === acao.id ? null : acao.id);
+                                      }}
+                                    >
+                                      <Plus className="h-3 w-3 mr-1" />
+                                      Tarefa
+                                    </Button>
+                                  </div>
 
-                              {showTarefaForm === acao.id && (
-                                <Card className="p-3">
-                                  <TarefaAcaoForm
-                                    acaoId={acao.id}
-                                    onSuccess={() => setShowTarefaForm(null)}
-                                  />
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setShowTarefaForm(null)}
-                                    className="mt-2 w-full"
-                                  >
-                                    Cancelar
-                                  </Button>
-                                </Card>
-                              )}
+                                  {showTarefaForm === acao.id && (
+                                    <Card className="p-3">
+                                      <TarefaAcaoForm
+                                        acaoId={acao.id}
+                                        onSuccess={() => setShowTarefaForm(null)}
+                                      />
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setShowTarefaForm(null)}
+                                        className="mt-2 w-full"
+                                      >
+                                        Cancelar
+                                      </Button>
+                                    </Card>
+                                  )}
 
-                              {acaoTarefas.map((tarefa) => {
-                                const tarefaStatus = STATUS_TAREFA_ACAO.find((s) => s.value === tarefa.status);
-                                return (
-                                  <div
-                                    key={tarefa.id}
-                                    className={`p-2 rounded-lg text-sm ${tarefaStatus?.color}`}
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <span>{tarefa.descricao}</span>
-                                      <div className="flex items-center gap-2">
-                                        {tarefa.alerta_atraso && (
-                                          <AlertTriangle className="h-3 w-3 text-destructive" />
-                                        )}
-                                        {tarefa.status === "concluida" && (
-                                          <CheckCircle className="h-3 w-3 text-success" />
+                                  {acaoTarefas.map((tarefa) => {
+                                    const tarefaStatus = STATUS_TAREFA_ACAO.find((s) => s.value === tarefa.status);
+                                    return (
+                                      <div
+                                        key={tarefa.id}
+                                        className={`p-2 rounded-lg text-sm ${tarefaStatus?.color}`}
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <span>{tarefa.descricao}</span>
+                                          <div className="flex items-center gap-2">
+                                            {tarefa.alerta_atraso && (
+                                              <AlertTriangle className="h-3 w-3 text-destructive" />
+                                            )}
+                                            {tarefa.status === "concluida" && (
+                                              <CheckCircle className="h-3 w-3 text-success" />
+                                            )}
+                                          </div>
+                                        </div>
+                                        {tarefa.profiles?.nome && (
+                                          <span className="text-xs text-muted-foreground">
+                                            {tarefa.profiles.nome}
+                                          </span>
                                         )}
                                       </div>
-                                    </div>
-                                    {tarefa.profiles?.nome && (
-                                      <span className="text-xs text-muted-foreground">
-                                        {tarefa.profiles.nome}
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
+                                    );
+                                  })}
+                                </div>
+                              </>
+                            )}
                           </Card>
                         );
                       })}
