@@ -14,7 +14,8 @@ import {
   TrendingDown,
   ListTodo,
   ShieldCheck,
-  Ship
+  Ship,
+  MessagesSquare
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,6 +43,7 @@ const menuItems = [
   { title: "Visitas/Reuniões", url: "/visitas", icon: ClipboardList },
   { title: "Tarefas", url: "/tarefas", icon: CheckSquare },
   { title: "Plano de Ações", url: "/plano-acoes", icon: ListTodo },
+  { title: "Reuniões & Plano de Ação", url: "/reunioes-plano-acao", icon: MessagesSquare },
   { title: "Qualidade de Dados", url: "/qualidade-dados", icon: ShieldCheck },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
 ];
