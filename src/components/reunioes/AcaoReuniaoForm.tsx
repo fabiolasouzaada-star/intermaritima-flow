@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
@@ -14,11 +15,12 @@ import {
   PRIORIDADES_ACAO,
   STATUS_ACAO,
   IMPACTOS_ACAO,
+  AREAS_RESPONSAVEL,
   type PrioridadeAcaoReuniao,
   type StatusAcaoReuniao,
   type ImpactoAcao
 } from "@/hooks/useAcoesReuniao";
-import { AREAS_ENVOLVIDAS, type AreaEnvolvida } from "@/hooks/useReunioes";
+import { type AreaEnvolvida } from "@/hooks/useReunioes";
 
 interface AcaoReuniaoFormProps {
   reuniaoId: string;
@@ -28,7 +30,7 @@ interface AcaoReuniaoFormProps {
 export function AcaoReuniaoForm({ reuniaoId, onSuccess }: AcaoReuniaoFormProps) {
   const [acao, setAcao] = useState("");
   const [selectedClienteId, setSelectedClienteId] = useState("");
-  const [areaResponsavel, setAreaResponsavel] = useState<AreaEnvolvida>("comercial");
+  const [areasResponsaveis, setAreasResponsaveis] = useState<AreaEnvolvida[]>(["comercial"]);
   const [responsavelNome, setResponsavelNome] = useState("");
   const [prazo, setPrazo] = useState("");
   const [prioridade, setPrioridade] = useState<PrioridadeAcaoReuniao>("media");
@@ -37,6 +39,14 @@ export function AcaoReuniaoForm({ reuniaoId, onSuccess }: AcaoReuniaoFormProps) 
   const [comentarios, setComentarios] = useState("");
   const [clienteOpen, setClienteOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const toggleArea = (area: AreaEnvolvida) => {
+    setAreasResponsaveis(prev => 
+      prev.includes(area) 
+        ? prev.filter(a => a !== area)
+        : [...prev, area]
+    );
+  };
 
   const { data: clientes, isLoading: isLoadingClientes } = useClientes();
   const createAcao = useCreateAcaoReuniao();
@@ -59,7 +69,8 @@ export function AcaoReuniaoForm({ reuniaoId, onSuccess }: AcaoReuniaoFormProps) 
       reuniao_id: reuniaoId,
       cliente_id: selectedClienteId || null,
       acao,
-      area_responsavel: areaResponsavel,
+      area_responsavel: areasResponsaveis[0] || "comercial",
+      areas_responsaveis: areasResponsaveis,
       responsavel_id: null,
       responsavel_nome: responsavelNome || null,
       prazo: prazo || null,
@@ -72,7 +83,7 @@ export function AcaoReuniaoForm({ reuniaoId, onSuccess }: AcaoReuniaoFormProps) 
     // Reset form
     setAcao("");
     setSelectedClienteId("");
-    setAreaResponsavel("comercial");
+    setAreasResponsaveis(["comercial"]);
     setResponsavelNome("");
     setPrazo("");
     setPrioridade("media");
@@ -149,19 +160,21 @@ export function AcaoReuniaoForm({ reuniaoId, onSuccess }: AcaoReuniaoFormProps) 
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="area">Área Responsável *</Label>
-          <Select value={areaResponsavel} onValueChange={(v) => setAreaResponsavel(v as AreaEnvolvida)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {AREAS_ENVOLVIDAS.map((a) => (
-                <SelectItem key={a.value} value={a.value}>
-                  {a.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label>Áreas Responsáveis *</Label>
+          <div className="grid grid-cols-2 gap-2 mt-2 p-3 border rounded-md max-h-40 overflow-y-auto">
+            {AREAS_RESPONSAVEL.map((area) => (
+              <div key={area.value} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`area-${area.value}`}
+                  checked={areasResponsaveis.includes(area.value)}
+                  onCheckedChange={() => toggleArea(area.value)}
+                />
+                <Label htmlFor={`area-${area.value}`} className="text-sm font-normal cursor-pointer">
+                  {area.label}
+                </Label>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div>

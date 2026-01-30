@@ -12,6 +12,7 @@ export interface AcaoReuniao {
   reuniao_id: string;
   cliente_id: string | null;
   area_responsavel: AreaEnvolvida;
+  areas_responsaveis: AreaEnvolvida[] | null;
   acao: string;
   responsavel_id: string | null;
   responsavel_nome: string | null;
@@ -33,6 +34,7 @@ export interface AcaoReuniaoInsert {
   reuniao_id: string;
   cliente_id?: string | null;
   area_responsavel: AreaEnvolvida;
+  areas_responsaveis?: AreaEnvolvida[];
   acao: string;
   responsavel_id?: string | null;
   responsavel_nome?: string | null;
@@ -45,6 +47,7 @@ export interface AcaoReuniaoInsert {
 
 export interface AcaoReuniaoUpdate {
   area_responsavel?: AreaEnvolvida;
+  areas_responsaveis?: AreaEnvolvida[] | null;
   acao?: string;
   responsavel_id?: string | null;
   responsavel_nome?: string | null;

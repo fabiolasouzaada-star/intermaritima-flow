@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   useUpdateAcaoReuniao, 
   useDeleteAcaoReuniao,
@@ -38,7 +39,9 @@ interface AcaoReuniaoEditFormProps {
 
 export function AcaoReuniaoEditForm({ acao, onSuccess, onCancel }: AcaoReuniaoEditFormProps) {
   const [acaoText, setAcaoText] = useState(acao.acao);
-  const [areaResponsavel, setAreaResponsavel] = useState<AreaEnvolvida>(acao.area_responsavel);
+  const [areasResponsaveis, setAreasResponsaveis] = useState<AreaEnvolvida[]>(
+    (acao.areas_responsaveis as AreaEnvolvida[]) || [acao.area_responsavel]
+  );
   const [responsavelNome, setResponsavelNome] = useState(acao.responsavel_nome || acao.profiles?.nome || "");
   const [prazo, setPrazo] = useState(acao.prazo || "");
   const [prioridade, setPrioridade] = useState<PrioridadeAcaoReuniao>(acao.prioridade);
@@ -46,6 +49,14 @@ export function AcaoReuniaoEditForm({ acao, onSuccess, onCancel }: AcaoReuniaoEd
   const [impacto, setImpacto] = useState<ImpactoAcao | "">(acao.impacto || "");
   const [comentarios, setComentarios] = useState(acao.comentarios || "");
   const [dataConclusao, setDataConclusao] = useState(acao.data_conclusao || "");
+
+  const toggleArea = (area: AreaEnvolvida) => {
+    setAreasResponsaveis(prev => 
+      prev.includes(area) 
+        ? prev.filter(a => a !== area)
+        : [...prev, area]
+    );
+  };
 
   const updateAcao = useUpdateAcaoReuniao();
   const deleteAcao = useDeleteAcaoReuniao();
@@ -57,7 +68,8 @@ export function AcaoReuniaoEditForm({ acao, onSuccess, onCancel }: AcaoReuniaoEd
       id: acao.id,
       data: {
         acao: acaoText,
-        area_responsavel: areaResponsavel,
+        area_responsavel: areasResponsaveis[0] || "comercial",
+        areas_responsaveis: areasResponsaveis,
         responsavel_nome: responsavelNome || null,
         prazo: prazo || null,
         prioridade,
@@ -91,19 +103,21 @@ export function AcaoReuniaoEditForm({ acao, onSuccess, onCancel }: AcaoReuniaoEd
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="area">Área Responsável *</Label>
-          <Select value={areaResponsavel} onValueChange={(v) => setAreaResponsavel(v as AreaEnvolvida)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {AREAS_RESPONSAVEL.map((a) => (
-                <SelectItem key={a.value} value={a.value}>
-                  {a.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label>Áreas Responsáveis *</Label>
+          <div className="grid grid-cols-2 gap-2 mt-2 p-3 border rounded-md max-h-40 overflow-y-auto">
+            {AREAS_RESPONSAVEL.map((area) => (
+              <div key={area.value} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`edit-area-${area.value}`}
+                  checked={areasResponsaveis.includes(area.value)}
+                  onCheckedChange={() => toggleArea(area.value)}
+                />
+                <Label htmlFor={`edit-area-${area.value}`} className="text-sm font-normal cursor-pointer">
+                  {area.label}
+                </Label>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div>
