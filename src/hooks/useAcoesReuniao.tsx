@@ -35,6 +35,7 @@ export interface AcaoReuniaoInsert {
   area_responsavel: AreaEnvolvida;
   acao: string;
   responsavel_id?: string | null;
+  responsavel_nome?: string | null;
   prazo?: string | null;
   prioridade?: PrioridadeAcaoReuniao;
   status?: StatusAcaoReuniao;
