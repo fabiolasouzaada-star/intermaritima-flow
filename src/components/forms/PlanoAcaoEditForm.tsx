@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useUpdatePlanoAcao, type PlanoAcao, type StatusAcao, type PrioridadeAcao, type TipoServicoAcao } from "@/hooks/usePlanoAcoes";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useUpdatePlanoAcao, type PlanoAcao, type StatusAcao, type PrioridadeAcao, type TipoServicoAcao, type AreaEnvolvida } from "@/hooks/usePlanoAcoes";
 import { useProfiles } from "@/hooks/useProfiles";
 
 const TIPOS_SERVICO: { value: TipoServicoAcao; label: string }[] = [
@@ -13,6 +14,16 @@ const TIPOS_SERVICO: { value: TipoServicoAcao; label: string }[] = [
   { value: "AG", label: "AG - Armazém Geral" },
   { value: "OP", label: "OP - Operação" },
   { value: "EXP", label: "EXP - Exportação" },
+];
+
+const AREAS_ENVOLVIDAS: { value: AreaEnvolvida; label: string }[] = [
+  { value: "comercial", label: "Comercial" },
+  { value: "inter_i_tps", label: "Inter I / TPS" },
+  { value: "transporte", label: "Transporte" },
+  { value: "cdex", label: "CDEX" },
+  { value: "porto", label: "Porto" },
+  { value: "qualidade", label: "Qualidade" },
+  { value: "financeiro", label: "Financeiro" },
 ];
 
 interface PlanoAcaoEditFormProps {
@@ -26,9 +37,18 @@ export function PlanoAcaoEditForm({ acao, onSuccess }: PlanoAcaoEditFormProps) {
   const [status, setStatus] = useState<StatusAcao>(acao.status);
   const [prioridade, setPrioridade] = useState<PrioridadeAcao>(acao.prioridade);
   const [tipoServico, setTipoServico] = useState<TipoServicoAcao | "">(acao.tipo_servico || "");
+  const [areas, setAreas] = useState<AreaEnvolvida[]>((acao.areas as AreaEnvolvida[]) || []);
   const [dataLimite, setDataLimite] = useState(acao.data_limite || "");
   const [responsavelId, setResponsavelId] = useState(acao.responsavel_id || "");
   const [observacoes, setObservacoes] = useState(acao.observacoes || "");
+
+  const toggleArea = (area: AreaEnvolvida) => {
+    setAreas(prev => 
+      prev.includes(area) 
+        ? prev.filter(a => a !== area)
+        : [...prev, area]
+    );
+  };
 
   const { data: profiles, isLoading: isLoadingProfiles } = useProfiles();
   const updateAcao = useUpdatePlanoAcao();
@@ -44,6 +64,7 @@ export function PlanoAcaoEditForm({ acao, onSuccess }: PlanoAcaoEditFormProps) {
         status,
         prioridade,
         tipo_servico: tipoServico || null,
+        areas: areas.length > 0 ? areas : null,
         data_limite: dataLimite || null,
         responsavel_id: responsavelId || null,
         observacoes: observacoes || null,
@@ -94,6 +115,24 @@ export function PlanoAcaoEditForm({ acao, onSuccess }: PlanoAcaoEditFormProps) {
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      <div>
+        <Label>Áreas Envolvidas</Label>
+        <div className="grid grid-cols-2 gap-2 mt-2 p-3 border rounded-md">
+          {AREAS_ENVOLVIDAS.map((area) => (
+            <div key={area.value} className="flex items-center space-x-2">
+              <Checkbox
+                id={`edit-area-${area.value}`}
+                checked={areas.includes(area.value)}
+                onCheckedChange={() => toggleArea(area.value)}
+              />
+              <Label htmlFor={`edit-area-${area.value}`} className="text-sm font-normal cursor-pointer">
+                {area.label}
+              </Label>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

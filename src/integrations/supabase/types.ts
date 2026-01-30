@@ -779,6 +779,7 @@ export type Database = {
       }
       plano_acoes: {
         Row: {
+          areas: string[] | null
           cliente_id: string
           created_at: string
           created_by: string | null
@@ -794,6 +795,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          areas?: string[] | null
           cliente_id: string
           created_at?: string
           created_by?: string | null
@@ -809,6 +811,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          areas?: string[] | null
           cliente_id?: string
           created_at?: string
           created_by?: string | null

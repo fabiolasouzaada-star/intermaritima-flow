@@ -8,6 +8,8 @@ export type PrioridadeAcao = "baixa" | "media" | "alta" | "urgente";
 
 export type TipoServicoAcao = "ALF" | "TR" | "AG" | "OP" | "EXP";
 
+export type AreaEnvolvida = "comercial" | "inter_i_tps" | "transporte" | "cdex" | "porto" | "qualidade" | "financeiro";
+
 export interface PlanoAcao {
   id: string;
   cliente_id: string;
@@ -19,6 +21,7 @@ export interface PlanoAcao {
   responsavel_id: string | null;
   observacoes: string | null;
   tipo_servico: TipoServicoAcao | null;
+  areas: AreaEnvolvida[] | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -37,6 +40,7 @@ export interface PlanoAcaoInsert {
   responsavel_id?: string;
   observacoes?: string;
   tipo_servico?: TipoServicoAcao;
+  areas?: AreaEnvolvida[];
 }
 
 export interface PlanoAcaoUpdate {
@@ -48,6 +52,7 @@ export interface PlanoAcaoUpdate {
   responsavel_id?: string | null;
   observacoes?: string | null;
   tipo_servico?: TipoServicoAcao | null;
+  areas?: AreaEnvolvida[] | null;
 }
 
 export function usePlanoAcoes() {

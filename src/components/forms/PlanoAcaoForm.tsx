@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCreatePlanoAcao, type StatusAcao, type PrioridadeAcao, type TipoServicoAcao } from "@/hooks/usePlanoAcoes";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useCreatePlanoAcao, type StatusAcao, type PrioridadeAcao, type TipoServicoAcao, type AreaEnvolvida } from "@/hooks/usePlanoAcoes";
 import { useClientes } from "@/hooks/useClientes";
 import { useProfiles } from "@/hooks/useProfiles";
 import { Loader2, Search } from "lucide-react";
@@ -15,6 +16,16 @@ const TIPOS_SERVICO: { value: TipoServicoAcao; label: string }[] = [
   { value: "AG", label: "AG - Armazém Geral" },
   { value: "OP", label: "OP - Operação" },
   { value: "EXP", label: "EXP - Exportação" },
+];
+
+const AREAS_ENVOLVIDAS: { value: AreaEnvolvida; label: string }[] = [
+  { value: "comercial", label: "Comercial" },
+  { value: "inter_i_tps", label: "Inter I / TPS" },
+  { value: "transporte", label: "Transporte" },
+  { value: "cdex", label: "CDEX" },
+  { value: "porto", label: "Porto" },
+  { value: "qualidade", label: "Qualidade" },
+  { value: "financeiro", label: "Financeiro" },
 ];
 
 interface PlanoAcaoFormProps {
@@ -29,10 +40,19 @@ export function PlanoAcaoForm({ clienteId, onSuccess }: PlanoAcaoFormProps) {
   const [status, setStatus] = useState<StatusAcao>("qualificacao");
   const [prioridade, setPrioridade] = useState<PrioridadeAcao>("media");
   const [tipoServico, setTipoServico] = useState<TipoServicoAcao | "">("");
+  const [areas, setAreas] = useState<AreaEnvolvida[]>([]);
   const [dataLimite, setDataLimite] = useState("");
   const [responsavelId, setResponsavelId] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+
+  const toggleArea = (area: AreaEnvolvida) => {
+    setAreas(prev => 
+      prev.includes(area) 
+        ? prev.filter(a => a !== area)
+        : [...prev, area]
+    );
+  };
 
   const { data: clientes, isLoading: isLoadingClientes } = useClientes();
   const { data: profiles, isLoading: isLoadingProfiles } = useProfiles();
@@ -56,6 +76,7 @@ export function PlanoAcaoForm({ clienteId, onSuccess }: PlanoAcaoFormProps) {
       status,
       prioridade,
       tipo_servico: tipoServico || undefined,
+      areas: areas.length > 0 ? areas : undefined,
       data_limite: dataLimite || undefined,
       responsavel_id: responsavelId || undefined,
       observacoes: observacoes || undefined,
@@ -139,6 +160,24 @@ export function PlanoAcaoForm({ clienteId, onSuccess }: PlanoAcaoFormProps) {
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      <div>
+        <Label>Áreas Envolvidas</Label>
+        <div className="grid grid-cols-2 gap-2 mt-2 p-3 border rounded-md">
+          {AREAS_ENVOLVIDAS.map((area) => (
+            <div key={area.value} className="flex items-center space-x-2">
+              <Checkbox
+                id={`area-${area.value}`}
+                checked={areas.includes(area.value)}
+                onCheckedChange={() => toggleArea(area.value)}
+              />
+              <Label htmlFor={`area-${area.value}`} className="text-sm font-normal cursor-pointer">
+                {area.label}
+              </Label>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
