@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { usePlanoAcoes, useDeletePlanoAcao, type PlanoAcao, type StatusAcao, type PrioridadeAcao, type TipoServicoAcao } from "@/hooks/usePlanoAcoes";
+import { usePlanoAcoes, useDeletePlanoAcao, type PlanoAcao, type StatusAcao, type PrioridadeAcao, type TipoServicoAcao, type AreaEnvolvida } from "@/hooks/usePlanoAcoes";
 import { useClientes } from "@/hooks/useClientes";
 import { PlanoAcaoForm } from "@/components/forms/PlanoAcaoForm";
 import { PlanoAcaoEditForm } from "@/components/forms/PlanoAcaoEditForm";
@@ -22,6 +22,16 @@ const TIPOS_SERVICO: { value: TipoServicoAcao; label: string; color: string }[] 
   { value: "OP", label: "OP - Operação", color: "bg-purple-500 text-white" },
   { value: "EXP", label: "EXP - Exportação", color: "bg-rose-500 text-white" },
 ];
+
+const AREAS_LABELS: Record<string, string> = {
+  comercial: "Comercial",
+  inter_i_tps: "Inter I / TPS",
+  transporte: "Transporte",
+  cdex: "CDEX",
+  porto: "Porto",
+  qualidade: "Qualidade",
+  financeiro: "Financeiro",
+};
 
 const getServicoColor = (tipo: TipoServicoAcao | null | undefined): string => {
   const servico = TIPOS_SERVICO.find(s => s.value === tipo);
@@ -320,6 +330,7 @@ export default function PlanoAcoes() {
                 <TableHead>Cliente</TableHead>
                 <TableHead>Comercial</TableHead>
                 <TableHead>Serviço</TableHead>
+                <TableHead>Áreas</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Prioridade</TableHead>
                 <TableHead>Prazo</TableHead>
@@ -330,13 +341,13 @@ export default function PlanoAcoes() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="h-24 text-center">
+                  <TableCell colSpan={11} className="h-24 text-center">
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : filteredAcoes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="h-24 text-center">
+                  <TableCell colSpan={11} className="h-24 text-center">
                     Nenhuma ação encontrada
                   </TableCell>
                 </TableRow>
@@ -364,6 +375,19 @@ export default function PlanoAcoes() {
                         <Badge className={getServicoColor(acao.tipo_servico)}>
                           {acao.tipo_servico}
                         </Badge>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {acao.areas && acao.areas.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {acao.areas.map((area) => (
+                            <Badge key={area} variant="outline" className="text-xs">
+                              {AREAS_LABELS[area] || area}
+                            </Badge>
+                          ))}
+                        </div>
                       ) : (
                         "-"
                       )}
