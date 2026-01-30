@@ -8,7 +8,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useProfiles } from "@/hooks/useProfiles";
 import { useClientes } from "@/hooks/useClientes";
 import { 
   useCreateAcaoReuniao,
@@ -30,7 +29,7 @@ export function AcaoReuniaoForm({ reuniaoId, onSuccess }: AcaoReuniaoFormProps) 
   const [acao, setAcao] = useState("");
   const [selectedClienteId, setSelectedClienteId] = useState("");
   const [areaResponsavel, setAreaResponsavel] = useState<AreaEnvolvida>("comercial");
-  const [responsavelId, setResponsavelId] = useState("");
+  const [responsavelNome, setResponsavelNome] = useState("");
   const [prazo, setPrazo] = useState("");
   const [prioridade, setPrioridade] = useState<PrioridadeAcaoReuniao>("media");
   const [status, setStatus] = useState<StatusAcaoReuniao>("nao_iniciada");
@@ -39,7 +38,6 @@ export function AcaoReuniaoForm({ reuniaoId, onSuccess }: AcaoReuniaoFormProps) 
   const [clienteOpen, setClienteOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: profiles, isLoading: isLoadingProfiles } = useProfiles();
   const { data: clientes, isLoading: isLoadingClientes } = useClientes();
   const createAcao = useCreateAcaoReuniao();
 
@@ -62,7 +60,8 @@ export function AcaoReuniaoForm({ reuniaoId, onSuccess }: AcaoReuniaoFormProps) 
       cliente_id: selectedClienteId || null,
       acao,
       area_responsavel: areaResponsavel,
-      responsavel_id: responsavelId || null,
+      responsavel_id: null,
+      responsavel_nome: responsavelNome || null,
       prazo: prazo || null,
       prioridade,
       status,
@@ -74,7 +73,7 @@ export function AcaoReuniaoForm({ reuniaoId, onSuccess }: AcaoReuniaoFormProps) 
     setAcao("");
     setSelectedClienteId("");
     setAreaResponsavel("comercial");
-    setResponsavelId("");
+    setResponsavelNome("");
     setPrazo("");
     setPrioridade("media");
     setStatus("nao_iniciada");
@@ -167,19 +166,12 @@ export function AcaoReuniaoForm({ reuniaoId, onSuccess }: AcaoReuniaoFormProps) 
 
         <div>
           <Label htmlFor="responsavel">Responsável</Label>
-          <Select value={responsavelId || "none"} onValueChange={(v) => setResponsavelId(v === "none" ? "" : v)}>
-            <SelectTrigger>
-              <SelectValue placeholder={isLoadingProfiles ? "Carregando..." : "Selecione"} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Nenhum</SelectItem>
-              {profiles?.filter((p) => p.id && p.id.trim() !== "").map((profile) => (
-                <SelectItem key={profile.id} value={profile.id}>
-                  {profile.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Input
+            id="responsavel"
+            value={responsavelNome}
+            onChange={(e) => setResponsavelNome(e.target.value)}
+            placeholder="Digite o nome do responsável"
+          />
         </div>
       </div>
 

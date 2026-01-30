@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useProfiles } from "@/hooks/useProfiles";
 import { 
   useCreateTarefaAcao,
   STATUS_TAREFA_ACAO,
@@ -18,14 +17,13 @@ interface TarefaAcaoFormProps {
 
 export function TarefaAcaoForm({ acaoId, onSuccess }: TarefaAcaoFormProps) {
   const [descricao, setDescricao] = useState("");
-  const [responsavelId, setResponsavelId] = useState("");
+  const [responsavelNome, setResponsavelNome] = useState("");
   const [dataInicio, setDataInicio] = useState("");
   const [dataFinal, setDataFinal] = useState("");
   const [status, setStatus] = useState<StatusTarefaAcao>("nao_iniciada");
   const [slaHoras, setSlaHoras] = useState("");
   const [comentarios, setComentarios] = useState("");
 
-  const { data: profiles, isLoading: isLoadingProfiles } = useProfiles();
   const createTarefa = useCreateTarefaAcao();
 
   const toLocalISOString = (dateTimeLocal: string): string => {
@@ -39,7 +37,7 @@ export function TarefaAcaoForm({ acaoId, onSuccess }: TarefaAcaoFormProps) {
     await createTarefa.mutateAsync({
       acao_id: acaoId,
       descricao,
-      responsavel_id: responsavelId || null,
+      responsavel_id: null,
       data_inicio: dataInicio ? toLocalISOString(dataInicio) : null,
       data_final: dataFinal ? toLocalISOString(dataFinal) : null,
       status,
@@ -49,7 +47,7 @@ export function TarefaAcaoForm({ acaoId, onSuccess }: TarefaAcaoFormProps) {
 
     // Reset form
     setDescricao("");
-    setResponsavelId("");
+    setResponsavelNome("");
     setDataInicio("");
     setDataFinal("");
     setStatus("nao_iniciada");
@@ -76,19 +74,12 @@ export function TarefaAcaoForm({ acaoId, onSuccess }: TarefaAcaoFormProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="responsavel">Responsável</Label>
-          <Select value={responsavelId || "none"} onValueChange={(v) => setResponsavelId(v === "none" ? "" : v)}>
-            <SelectTrigger>
-              <SelectValue placeholder={isLoadingProfiles ? "Carregando..." : "Selecione"} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Nenhum</SelectItem>
-              {profiles?.filter((p) => p.id && p.id.trim() !== "").map((profile) => (
-                <SelectItem key={profile.id} value={profile.id}>
-                  {profile.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Input
+            id="responsavel"
+            value={responsavelNome}
+            onChange={(e) => setResponsavelNome(e.target.value)}
+            placeholder="Digite o nome do responsável"
+          />
         </div>
 
         <div>
