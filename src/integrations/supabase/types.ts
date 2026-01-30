@@ -66,6 +66,7 @@ export type Database = {
         Row: {
           acao: string
           area_responsavel: Database["public"]["Enums"]["area_envolvida"]
+          areas_responsaveis: string[] | null
           cliente_id: string | null
           comentarios: string | null
           created_at: string
@@ -84,6 +85,7 @@ export type Database = {
         Insert: {
           acao: string
           area_responsavel: Database["public"]["Enums"]["area_envolvida"]
+          areas_responsaveis?: string[] | null
           cliente_id?: string | null
           comentarios?: string | null
           created_at?: string
@@ -102,6 +104,7 @@ export type Database = {
         Update: {
           acao?: string
           area_responsavel?: Database["public"]["Enums"]["area_envolvida"]
+          areas_responsaveis?: string[] | null
           cliente_id?: string | null
           comentarios?: string | null
           created_at?: string

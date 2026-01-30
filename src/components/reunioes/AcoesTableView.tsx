@@ -175,9 +175,22 @@ export function AcoesTableView({ acoes }: AcoesTableViewProps) {
                         </div>
                       </TableCell>
                       <TableCell className="py-3">
-                        <Badge variant="outline" className="text-[10px] font-medium">
-                          {areaConfig?.label || acao.area_responsavel}
-                        </Badge>
+                        {acao.areas_responsaveis && acao.areas_responsaveis.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {acao.areas_responsaveis.map((area) => {
+                              const areaConfig = AREAS_RESPONSAVEL.find((a) => a.value === area);
+                              return (
+                                <Badge key={area} variant="outline" className="text-[10px] font-medium">
+                                  {areaConfig?.label || area}
+                                </Badge>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] font-medium">
+                            {areaConfig?.label || acao.area_responsavel}
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="py-3">
                         <span className="text-xs">
