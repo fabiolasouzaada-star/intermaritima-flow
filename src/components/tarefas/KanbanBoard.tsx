@@ -88,8 +88,8 @@ export function KanbanBoard({ tarefas, onTaskClick, mostrarArquivadas = true }: 
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {STATUS_COLUMNS.map((column) => {
+    <div className={`grid grid-cols-1 md:grid-cols-2 ${visibleColumns.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-2'} gap-4`}>
+      {visibleColumns.map((column) => {
         const columnTarefas = tarefas.filter((t) => t.status === column.key);
         return (
           <div
