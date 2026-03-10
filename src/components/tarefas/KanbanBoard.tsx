@@ -11,6 +11,7 @@ type StatusTarefa = Database["public"]["Enums"]["status_tarefa"];
 interface KanbanBoardProps {
   tarefas: Tarefa[];
   onTaskClick?: (tarefa: Tarefa) => void;
+  mostrarArquivadas?: boolean;
 }
 
 const STATUS_COLUMNS: { key: StatusTarefa; label: string; color: string }[] = [
@@ -20,9 +21,13 @@ const STATUS_COLUMNS: { key: StatusTarefa; label: string; color: string }[] = [
   { key: "cancelada", label: "Cancelada", color: "bg-destructive/10" },
 ];
 
-export function KanbanBoard({ tarefas, onTaskClick }: KanbanBoardProps) {
+export function KanbanBoard({ tarefas, onTaskClick, mostrarArquivadas = true }: KanbanBoardProps) {
   const updateTarefa = useUpdateTarefa();
   const [draggedTask, setDraggedTask] = useState<string | null>(null);
+
+  const visibleColumns = mostrarArquivadas
+    ? STATUS_COLUMNS
+    : STATUS_COLUMNS.filter(c => c.key !== "concluida" && c.key !== "cancelada");
 
   const getInitials = (nome: string) => {
     return nome
@@ -83,8 +88,8 @@ export function KanbanBoard({ tarefas, onTaskClick }: KanbanBoardProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {STATUS_COLUMNS.map((column) => {
+    <div className={`grid grid-cols-1 md:grid-cols-2 ${visibleColumns.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-2'} gap-4`}>
+      {visibleColumns.map((column) => {
         const columnTarefas = tarefas.filter((t) => t.status === column.key);
         return (
           <div
