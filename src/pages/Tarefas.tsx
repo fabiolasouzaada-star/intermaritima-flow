@@ -4,7 +4,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, AlertCircle, Clock, CheckCircle2, LayoutGrid, List, User, Search, Filter, Users } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
+import { Plus, AlertCircle, Clock, CheckCircle2, LayoutGrid, List, User, Search, Filter, Users, XCircle, Loader2, Archive } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,12 +16,15 @@ import { TarefaForm } from "@/components/forms/TarefaForm";
 import { KanbanBoard } from "@/components/tarefas/KanbanBoard";
 import { TarefaDetailDialog } from "@/components/tarefas/TarefaDetailDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Label } from "@/components/ui/label";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 export default function Tarefas() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban");
   const [selectedTarefa, setSelectedTarefa] = useState<Tarefa | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [mostrarArquivadas, setMostrarArquivadas] = useState(false);
   
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,57 +40,72 @@ export default function Tarefas() {
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
-  // Função para parsear data do banco (YYYY-MM-DD) como data local
   const parseLocalDate = (dateStr: string) => {
     const [year, month, day] = dateStr.split('-').map(Number);
     return new Date(year, month - 1, day);
   };
 
-  // Extrair comerciais únicos (códigos) dos clientes
   const comerciaisDisponiveis = useMemo(() => {
     if (!clientes) return [];
     const codigos = new Set<string>();
     clientes.forEach(c => {
-      if (c.responsavel_codigo) {
-        codigos.add(c.responsavel_codigo);
-      }
+      if (c.responsavel_codigo) codigos.add(c.responsavel_codigo);
     });
     return Array.from(codigos).sort();
   }, [clientes]);
 
-  // Mapa de cliente_id para responsavel_codigo
   const clienteToComercial = useMemo(() => {
     const map = new Map<string, string>();
     clientes?.forEach(c => {
-      if (c.responsavel_codigo) {
-        map.set(c.id, c.responsavel_codigo);
-      }
+      if (c.responsavel_codigo) map.set(c.id, c.responsavel_codigo);
     });
     return map;
   }, [clientes]);
 
-  // Lista de clientes únicos para o filtro
   const clientesUnicos = useMemo(() => {
-    const clientesList = tarefas
+    return tarefas
       ?.filter(t => t.clientes?.empresa)
       .map(t => t.clientes!.empresa)
       .filter((value, index, self) => self.indexOf(value) === index)
       .sort() || [];
-    return clientesList;
   }, [tarefas]);
+
+  // Dashboard stats (sempre sobre TODAS as tarefas, sem filtro de arquivamento)
+  const dashboardStats = useMemo(() => {
+    if (!tarefas) return { pendentes: 0, emAndamento: 0, concluidas: 0, canceladas: 0, atrasadas: 0, total: 0, percentConcluidas: 0 };
+    const pendentes = tarefas.filter(t => t.status === "pendente").length;
+    const emAndamento = tarefas.filter(t => t.status === "em_andamento").length;
+    const concluidas = tarefas.filter(t => t.status === "concluida").length;
+    const canceladas = tarefas.filter(t => t.status === "cancelada").length;
+    const atrasadas = tarefas.filter(t => {
+      if (!t.data_vencimento || t.status === "concluida" || t.status === "cancelada") return false;
+      return parseLocalDate(t.data_vencimento) < hoje;
+    }).length;
+    const total = tarefas.length;
+    const percentConcluidas = total > 0 ? Math.round((concluidas / total) * 100) : 0;
+    return { pendentes, emAndamento, concluidas, canceladas, atrasadas, total, percentConcluidas };
+  }, [tarefas, hoje]);
+
+  const pieData = useMemo(() => [
+    { name: "Pendentes", value: dashboardStats.pendentes, color: "hsl(var(--muted-foreground))" },
+    { name: "Em Andamento", value: dashboardStats.emAndamento, color: "hsl(var(--primary))" },
+    { name: "Concluídas", value: dashboardStats.concluidas, color: "hsl(var(--success))" },
+    { name: "Canceladas", value: dashboardStats.canceladas, color: "hsl(var(--destructive))" },
+  ].filter(d => d.value > 0), [dashboardStats]);
 
   // Aplicar filtros
   const tarefasFiltradas = useMemo(() => {
     if (!tarefas) return [];
     
     return tarefas.filter(tarefa => {
-      // Filtro por comercial (baseado no cliente)
+      // Filtro de arquivamento
+      if (!mostrarArquivadas && (tarefa.status === "concluida" || tarefa.status === "cancelada")) return false;
+
       if (comercialFilter !== "todos") {
         const comercialDoCliente = tarefa.cliente_id ? clienteToComercial.get(tarefa.cliente_id) : null;
         if (comercialDoCliente !== comercialFilter) return false;
       }
 
-      // Busca por texto
       if (searchTerm) {
         const termo = searchTerm.toLowerCase();
         const matchTitulo = tarefa.titulo.toLowerCase().includes(termo);
@@ -95,45 +115,34 @@ export default function Tarefas() {
         if (!matchTitulo && !matchDescricao && !matchCliente && !matchResponsavel) return false;
       }
 
-      // Filtro por prioridade
       if (filtroPrioridade !== "todos" && tarefa.prioridade !== filtroPrioridade) return false;
-
-      // Filtro por cliente
       if (filtroCliente !== "todos" && tarefa.clientes?.empresa !== filtroCliente) return false;
 
-      // Filtro por prazo
       if (filtroPrazo !== "todos") {
         if (!tarefa.data_vencimento) return filtroPrazo === "sem_prazo";
-        
         const vencimento = parseLocalDate(tarefa.data_vencimento);
-        
-        if (filtroPrazo === "atrasadas") {
-          return vencimento < hoje && tarefa.status !== "concluida";
-        } else if (filtroPrazo === "hoje") {
-          return vencimento.getTime() === hoje.getTime();
-        } else if (filtroPrazo === "semana") {
+        if (filtroPrazo === "atrasadas") return vencimento < hoje && tarefa.status !== "concluida";
+        if (filtroPrazo === "hoje") return vencimento.getTime() === hoje.getTime();
+        if (filtroPrazo === "semana") {
           const umaSemana = new Date(hoje);
           umaSemana.setDate(hoje.getDate() + 7);
           return vencimento >= hoje && vencimento <= umaSemana;
-        } else if (filtroPrazo === "sem_prazo") {
-          return false;
         }
+        if (filtroPrazo === "sem_prazo") return false;
       }
 
       return true;
     });
-  }, [tarefas, searchTerm, filtroPrazo, filtroPrioridade, filtroCliente, comercialFilter, clienteToComercial, hoje]);
+  }, [tarefas, searchTerm, filtroPrazo, filtroPrioridade, filtroCliente, comercialFilter, clienteToComercial, hoje, mostrarArquivadas]);
 
   const tarefasHoje = tarefasFiltradas.filter((t) => {
     if (!t.data_vencimento || t.status === "concluida") return false;
-    const vencimento = parseLocalDate(t.data_vencimento);
-    return vencimento.getTime() === hoje.getTime();
+    return parseLocalDate(t.data_vencimento).getTime() === hoje.getTime();
   });
 
   const tarefasAtrasadas = tarefasFiltradas.filter((t) => {
     if (!t.data_vencimento || t.status === "concluida") return false;
-    const vencimento = parseLocalDate(t.data_vencimento);
-    return vencimento < hoje;
+    return parseLocalDate(t.data_vencimento) < hoje;
   });
 
   const tarefasSemana = tarefasFiltradas.filter((t) => {
@@ -144,14 +153,7 @@ export default function Tarefas() {
     return vencimento >= hoje && vencimento <= umaSemana;
   });
 
-  const getInitials = (nome: string) => {
-    return nome
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-  };
+  const getInitials = (nome: string) => nome.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 
   const getPrioridadeBadge = (prioridade: string) => {
     const config: Record<string, { className: string }> = {
@@ -301,6 +303,78 @@ export default function Tarefas() {
         </div>
       </div>
 
+      {/* Dashboard de Status */}
+      <div className="grid gap-4 md:grid-cols-6">
+        <Card className="md:col-span-4">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{dashboardStats.pendentes}</div>
+                  <div className="text-xs text-muted-foreground">Pendentes</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Loader2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{dashboardStats.emAndamento}</div>
+                  <div className="text-xs text-muted-foreground">Em Andamento</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10 text-success">
+                  <CheckCircle2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{dashboardStats.concluidas}</div>
+                  <div className="text-xs text-muted-foreground">Concluídas</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                  <AlertCircle className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{dashboardStats.atrasadas}</div>
+                  <div className="text-xs text-muted-foreground">Atrasadas</div>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Progresso geral</span>
+                <span className="font-medium">{dashboardStats.percentConcluidas}% concluídas</span>
+              </div>
+              <Progress value={dashboardStats.percentConcluidas} className="h-2" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="md:col-span-2">
+          <CardContent className="p-6 flex items-center justify-center">
+            {pieData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={140}>
+                <PieChart>
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={35} outerRadius={60} dataKey="value" paddingAngle={2}>
+                    {pieData.map((entry, index) => (
+                      <Cell key={index} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number, name: string) => [value, name]} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-sm text-muted-foreground">Sem dados</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Filtros */}
       <Card className="p-4">
         <div className="flex flex-col lg:flex-row gap-4">
@@ -313,7 +387,19 @@ export default function Tarefas() {
               className="pl-10"
             />
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="flex items-center gap-2 mr-2">
+              <Switch
+                id="mostrar-arquivadas"
+                checked={mostrarArquivadas}
+                onCheckedChange={setMostrarArquivadas}
+              />
+              <Label htmlFor="mostrar-arquivadas" className="text-sm cursor-pointer flex items-center gap-1">
+                <Archive className="h-3.5 w-3.5" />
+                Concluídas
+              </Label>
+            </div>
+
             <Select value={comercialFilter} onValueChange={setComercialFilter}>
               <SelectTrigger className="w-[150px]">
                 <Users className="h-4 w-4 mr-2" />
@@ -322,9 +408,7 @@ export default function Tarefas() {
               <SelectContent>
                 <SelectItem value="todos">Todos Comerciais</SelectItem>
                 {comerciaisDisponiveis.map((codigo) => (
-                  <SelectItem key={codigo} value={codigo}>
-                    {codigo}
-                  </SelectItem>
+                  <SelectItem key={codigo} value={codigo}>{codigo}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -383,52 +467,8 @@ export default function Tarefas() {
         )}
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Clock className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{tarefasHoje.length}</div>
-                <div className="text-sm text-muted-foreground">Tarefas Hoje</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-                <AlertCircle className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{tarefasAtrasadas.length}</div>
-                <div className="text-sm text-muted-foreground">Atrasadas</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10 text-success">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{tarefasSemana.length}</div>
-                <div className="text-sm text-muted-foreground">Esta Semana</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {viewMode === "kanban" ? (
-        <KanbanBoard tarefas={tarefasFiltradas} onTaskClick={handleOpenDetail} />
+        <KanbanBoard tarefas={tarefasFiltradas} onTaskClick={handleOpenDetail} mostrarArquivadas={mostrarArquivadas} />
       ) : (
         <Tabs defaultValue="hoje" className="space-y-4">
           <TabsList>
@@ -440,33 +480,27 @@ export default function Tarefas() {
 
           <TabsContent value="hoje" className="space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Tarefas de Hoje</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>Tarefas de Hoje</CardTitle></CardHeader>
               <CardContent>{getTarefasList(tarefasHoje)}</CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="atrasadas" className="space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Tarefas Atrasadas</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>Tarefas Atrasadas</CardTitle></CardHeader>
               <CardContent>{getTarefasList(tarefasAtrasadas)}</CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="semana" className="space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Tarefas desta Semana</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>Tarefas desta Semana</CardTitle></CardHeader>
               <CardContent>{getTarefasList(tarefasSemana)}</CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="todas">
-            {getTarefasList(tarefasFiltradas.filter(t => t.status !== "concluida"))}
+            {getTarefasList(tarefasFiltradas)}
           </TabsContent>
         </Tabs>
       )}

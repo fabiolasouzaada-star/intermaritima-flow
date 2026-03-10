@@ -11,6 +11,7 @@ type StatusTarefa = Database["public"]["Enums"]["status_tarefa"];
 interface KanbanBoardProps {
   tarefas: Tarefa[];
   onTaskClick?: (tarefa: Tarefa) => void;
+  mostrarArquivadas?: boolean;
 }
 
 const STATUS_COLUMNS: { key: StatusTarefa; label: string; color: string }[] = [
