@@ -21,9 +21,13 @@ const STATUS_COLUMNS: { key: StatusTarefa; label: string; color: string }[] = [
   { key: "cancelada", label: "Cancelada", color: "bg-destructive/10" },
 ];
 
-export function KanbanBoard({ tarefas, onTaskClick }: KanbanBoardProps) {
+export function KanbanBoard({ tarefas, onTaskClick, mostrarArquivadas = true }: KanbanBoardProps) {
   const updateTarefa = useUpdateTarefa();
   const [draggedTask, setDraggedTask] = useState<string | null>(null);
+
+  const visibleColumns = mostrarArquivadas
+    ? STATUS_COLUMNS
+    : STATUS_COLUMNS.filter(c => c.key !== "concluida" && c.key !== "cancelada");
 
   const getInitials = (nome: string) => {
     return nome
