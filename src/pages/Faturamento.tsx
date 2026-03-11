@@ -418,7 +418,87 @@ export default function Faturamento() {
             ) : (
               <div className="flex items-center justify-center h-[300px] text-muted-foreground">
                 Nenhum dado disponível. Importe uma planilha.
-              </div>
+      </div>
+
+      {/* Charts row 2: GC + Unidade */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Performance por GC</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {receitaPorGc.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={receitaPorGc} layout="vertical" margin={{ left: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} className="text-xs" />
+                  <YAxis type="category" dataKey="name" className="text-xs" width={55} />
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <Bar dataKey="value" fill="hsl(var(--chart-4))" radius={[0, 4, 4, 0]} name="Faturamento" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">Nenhum dado disponível</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Faturamento por Unidade</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {receitaPorUnidade.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie data={receitaPorUnidade} cx="50%" cy="50%" labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80} dataKey="value">
+                    {receitaPorUnidade.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">Nenhum dado disponível</div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top 10 Clientes */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Top 10 Clientes por Faturamento</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {topClientes.length > 0 ? (
+            <div className="space-y-3">
+              {topClientes.map((c, i) => (
+                <div key={c.name} className="flex items-center gap-3">
+                  <div className="w-8 text-sm font-bold text-muted-foreground">#{i + 1}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium truncate">{c.name}</span>
+                      <div className="flex gap-4 text-xs text-muted-foreground shrink-0">
+                        <span>Fat: {formatCurrency(c.value)}</span>
+                        <span>Com: {formatCurrency(c.comissao)}</span>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full rounded-full bg-primary" style={{ width: `${(c.value / (topClientes[0]?.value || 1)) * 100}%` }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-8 text-muted-foreground">Nenhum dado disponível</div>
+          )}
+        </CardContent>
+      </Card>
             )}
           </CardContent>
         </Card>
