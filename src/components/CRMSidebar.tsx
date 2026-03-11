@@ -40,9 +40,7 @@ const menuItems = [
   { title: "Tarefas", url: "/tarefas", icon: CheckSquare },
   { title: "Plano de Ações", url: "/plano-acoes", icon: ListTodo },
   { title: "Reuniões & Plano de Ação", url: "/reunioes-plano-acao", icon: MessagesSquare },
-  { title: "Qualidade de Dados", url: "/qualidade-dados", icon: ShieldCheck },
   { title: "Faturamento", url: "/faturamento", icon: TrendingUp },
-  { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
 ];
 
 const menuItemsFS = [
