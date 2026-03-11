@@ -529,6 +529,53 @@ export default function Faturamento() {
         </Card>
       </div>
 
+      {/* Charts row 3: Acumulado Mensal + Acumulado Anual */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Faturamento Acumulado Mensal</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {acumuladoMensal.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <ComposedChart data={acumuladoMensal}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="name" className="text-xs" angle={-45} textAnchor="end" height={60} />
+                  <YAxis className="text-xs" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <Bar dataKey="valor" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name="Mensal" opacity={0.6} />
+                  <Area type="monotone" dataKey="acumulado" fill="hsl(var(--primary))" stroke="hsl(var(--primary))" fillOpacity={0.15} name="Acumulado" />
+                </ComposedChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">Nenhum dado disponível</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Faturamento Acumulado Anual</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {acumuladoAnual.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <ComposedChart data={acumuladoAnual}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="name" className="text-xs" />
+                  <YAxis className="text-xs" tickFormatter={(v) => `${(v / 1e6).toFixed(1)}M`} />
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <Bar dataKey="valor" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} name="Anual" opacity={0.6} />
+                  <Area type="monotone" dataKey="acumulado" fill="hsl(var(--chart-4))" stroke="hsl(var(--chart-4))" fillOpacity={0.15} name="Acumulado" />
+                </ComposedChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">Nenhum dado disponível</div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Top 10 Clientes */}
       <Card>
         <CardHeader>
