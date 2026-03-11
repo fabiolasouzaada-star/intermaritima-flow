@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Download, DollarSign, TrendingUp, Building2, BarChart3, FilterX, Layers, ChevronLeft, ChevronRight } from "lucide-react";
+import { Upload, Download, DollarSign, TrendingUp, Building2, BarChart3, FilterX, Layers, ChevronLeft, ChevronRight, Database, Calendar, Users } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, ComposedChart } from "recharts";
 import { useFaturamento, useImportFaturamento, useDeleteFaturamentoByPeriod, FaturamentoInsert } from "@/hooks/useFaturamento";
 import * as XLSX from "xlsx";
@@ -338,6 +338,52 @@ export default function Faturamento() {
         </div>
       </div>
 
+      {/* Base Importada Info */}
+      {faturamento && faturamento.length > 0 && (() => {
+        const lastImportDate = new Date(Math.max(...faturamento.map(f => new Date(f.created_at).getTime())));
+        const anos = faturamento.map(f => f.ano);
+        const minAno = Math.min(...anos);
+        const maxAno = Math.max(...anos);
+        const gcsUnicos = new Set(faturamento.map(f => f.gc).filter(Boolean)).size;
+        const mesesUnicos = new Set(faturamento.map(f => `${f.mes}/${f.ano}`)).size;
+        return (
+          <Card className="border-dashed">
+            <CardContent className="p-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="flex items-center gap-2">
+                  <Database className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div>
+                    <div className="text-sm font-semibold">{faturamento.length.toLocaleString("pt-BR")} registros</div>
+                    <div className="text-xs text-muted-foreground">Total na base</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div>
+                    <div className="text-sm font-semibold">{lastImportDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</div>
+                    <div className="text-xs text-muted-foreground">Última importação</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div>
+                    <div className="text-sm font-semibold">{minAno === maxAno ? String(minAno) : `${minAno} – ${maxAno}`} ({mesesUnicos} meses)</div>
+                    <div className="text-xs text-muted-foreground">Período coberto</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div>
+                    <div className="text-sm font-semibold">{gcsUnicos} GC{gcsUnicos !== 1 ? "s" : ""}</div>
+                    <div className="text-xs text-muted-foreground">Gestores Comerciais</div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {/* Filters */}
       <div className="space-y-3">
         {hasActiveFilter && (
@@ -563,13 +609,16 @@ export default function Faturamento() {
           <CardContent>
             {receitaPorGc.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={receitaPorGc} layout="vertical" margin={{ left: 60 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} className="text-xs" />
-                  <YAxis type="category" dataKey="name" className="text-xs" width={55} />
+                <PieChart>
+                  <Pie data={receitaPorGc} cx="50%" cy="50%" labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80} dataKey="value">
+                    {receitaPorGc.map((_, index) => (
+                      <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  <Bar dataKey="value" fill="hsl(var(--chart-4))" radius={[0, 4, 4, 0]} name="Faturamento" />
-                </BarChart>
+                </PieChart>
               </ResponsiveContainer>
             ) : (
               <div className="flex items-center justify-center h-[300px] text-muted-foreground">Nenhum dado disponível</div>
