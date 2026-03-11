@@ -10,7 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Clientes from "./pages/Clientes";
 import ClienteDetalhes from "./pages/ClienteDetalhes";
 import Pipeline from "./pages/Pipeline";
-import Contratos from "./pages/Contratos";
+
 import Calendario from "./pages/Calendario";
 import Visitas from "./pages/Visitas";
 import Tarefas from "./pages/Tarefas";
