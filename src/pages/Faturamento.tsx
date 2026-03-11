@@ -398,7 +398,7 @@ export default function Faturamento() {
           </div>
         )}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
-          <Select value={filtroAno} onValueChange={setFiltroAno}>
+          <Select value={filtroAno} onValueChange={setFilterAndResetPage(setFiltroAno)}>
             <SelectTrigger className="h-9 text-sm">
               <SelectValue placeholder="Ano" />
             </SelectTrigger>
@@ -410,7 +410,7 @@ export default function Faturamento() {
             </SelectContent>
           </Select>
 
-          <Select value={filtroMes} onValueChange={setFiltroMes}>
+          <Select value={filtroMes} onValueChange={setFilterAndResetPage(setFiltroMes)}>
             <SelectTrigger className="h-9 text-sm">
               <SelectValue placeholder="Mês" />
             </SelectTrigger>
@@ -422,7 +422,7 @@ export default function Faturamento() {
             </SelectContent>
           </Select>
 
-          <Select value={filtroGc} onValueChange={setFiltroGc}>
+          <Select value={filtroGc} onValueChange={setFilterAndResetPage(setFiltroGc)}>
             <SelectTrigger className="h-9 text-sm">
               <SelectValue placeholder="GC" />
             </SelectTrigger>
@@ -434,7 +434,7 @@ export default function Faturamento() {
             </SelectContent>
           </Select>
 
-          <Select value={filtroCliente} onValueChange={setFiltroCliente}>
+          <Select value={filtroCliente} onValueChange={setFilterAndResetPage(setFiltroCliente)}>
             <SelectTrigger className="h-9 text-sm">
               <SelectValue placeholder="Cliente" />
             </SelectTrigger>
@@ -446,7 +446,7 @@ export default function Faturamento() {
             </SelectContent>
           </Select>
 
-          <Select value={filtroSegmento} onValueChange={setFiltroSegmento}>
+          <Select value={filtroSegmento} onValueChange={setFilterAndResetPage(setFiltroSegmento)}>
             <SelectTrigger className="h-9 text-sm">
               <SelectValue placeholder="Segmento" />
             </SelectTrigger>
@@ -458,7 +458,7 @@ export default function Faturamento() {
             </SelectContent>
           </Select>
 
-          <Select value={filtroUnidade} onValueChange={setFiltroUnidade}>
+          <Select value={filtroUnidade} onValueChange={setFilterAndResetPage(setFiltroUnidade)}>
             <SelectTrigger className="h-9 text-sm">
               <SelectValue placeholder="Unidade" />
             </SelectTrigger>
@@ -470,7 +470,7 @@ export default function Faturamento() {
             </SelectContent>
           </Select>
 
-          <Select value={filtroSetor} onValueChange={setFiltroSetor}>
+          <Select value={filtroSetor} onValueChange={setFilterAndResetPage(setFiltroSetor)}>
             <SelectTrigger className="h-9 text-sm">
               <SelectValue placeholder="Setor" />
             </SelectTrigger>
