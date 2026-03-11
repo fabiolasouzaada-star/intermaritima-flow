@@ -32,7 +32,7 @@ const MESES_ORDEM: Record<string, number> = {
 
 export default function Dashboard() {
   const [comercialFilter, setComercialFilter] = useState("todos");
-  
+  const [gcFilter, setGcFilter] = useState("todos");
   const { data: clientes, isLoading: loadingClientes } = useClientes();
   const { data: oportunidades, isLoading: loadingOportunidades } = useOportunidades();
   const { data: contratos, isLoading: loadingContratos } = useContratos();
