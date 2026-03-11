@@ -67,7 +67,6 @@ export default function Faturamento() {
   // Filtered data
   const dadosFiltrados = useMemo(() => {
     if (!faturamento) return [];
-    setPage(1);
     return faturamento.filter(f => {
       if (filtroAno !== "todos" && f.ano !== Number(filtroAno)) return false;
       if (filtroMes !== "todos" && f.mes !== filtroMes) return false;
