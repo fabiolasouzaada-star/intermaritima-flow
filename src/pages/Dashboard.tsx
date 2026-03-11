@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { MetricCard } from "@/components/dashboard/MetricCard";
+import { FaturamentoDashboard } from "@/components/dashboard/FaturamentoDashboard";
 import { 
   Users, 
   UserX, 
@@ -10,8 +11,6 @@ import {
   ClipboardList,
   PhoneCall,
   PackageSearch,
-  Percent,
-  Building2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,7 +20,6 @@ import { useOportunidades } from "@/hooks/useOportunidades";
 import { useContratos } from "@/hooks/useContratos";
 import { useVisitas } from "@/hooks/useVisitas";
 import { useTarefas } from "@/hooks/useTarefas";
-import { useFaturamento } from "@/hooks/useFaturamento";
 
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
