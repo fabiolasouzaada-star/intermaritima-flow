@@ -34,14 +34,31 @@ export function useFaturamento() {
   return useQuery({
     queryKey: ["faturamento"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("faturamento")
-        .select("*")
-        .order("ano", { ascending: false })
-        .order("mes", { ascending: true });
+      // Fetch ALL rows by paginating through the 1000-row limit
+      const allData: Faturamento[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      let hasMore = true;
 
-      if (error) throw error;
-      return data as Faturamento[];
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("faturamento")
+          .select("*")
+          .order("ano", { ascending: false })
+          .order("mes", { ascending: true })
+          .range(from, from + pageSize - 1);
+
+        if (error) throw error;
+        if (data && data.length > 0) {
+          allData.push(...(data as Faturamento[]));
+          from += pageSize;
+          hasMore = data.length === pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return allData;
     },
   });
 }
