@@ -42,16 +42,29 @@ export default function Dashboard() {
 
   const isLoading = loadingClientes || loadingOportunidades || loadingContratos || loadingVisitas || loadingTarefas || loadingFaturamento;
 
-  // Faturamento metrics
-  const faturamentoTotal = useMemo(() => {
-    if (!faturamento) return 0;
-    return faturamento.reduce((acc, f) => acc + Number(f.valor), 0);
+  // GCs disponíveis no faturamento
+  const gcsDisponiveis = useMemo(() => {
+    if (!faturamento) return [];
+    return [...new Set(faturamento.map(f => f.gc).filter(Boolean))].sort() as string[];
   }, [faturamento]);
 
-  const faturamentoPorMes = useMemo(() => {
+  // Faturamento filtrado por GC
+  const faturamentoFiltrado = useMemo(() => {
     if (!faturamento) return [];
+    if (gcFilter === "todos") return faturamento;
+    return faturamento.filter(f => f.gc === gcFilter);
+  }, [faturamento, gcFilter]);
+
+  // Faturamento metrics
+  const faturamentoTotal = useMemo(() => {
+    return faturamentoFiltrado.reduce((acc, f) => acc + Number(f.valor), 0);
+  }, [faturamentoFiltrado]);
+
+  const comissaoTotal = useMemo(() => faturamentoTotal * 0.003, [faturamentoTotal]);
+
+  const faturamentoPorMes = useMemo(() => {
     const map = new Map<string, number>();
-    faturamento.forEach(f => {
+    faturamentoFiltrado.forEach(f => {
       const key = `${f.mes}/${f.ano}`;
       map.set(key, (map.get(key) || 0) + Number(f.valor));
     });
@@ -61,8 +74,20 @@ export default function Dashboard() {
         return { name: key, valor, sortKey: Number(ano) * 100 + (MESES_ORDEM[mes] || 0) };
       })
       .sort((a, b) => a.sortKey - b.sortKey)
-      .slice(-12); // Last 12 months
-  }, [faturamento]);
+      .slice(-12);
+  }, [faturamentoFiltrado]);
+
+  // Faturamento por Unidade
+  const faturamentoPorUnidade = useMemo(() => {
+    const map = new Map<string, number>();
+    faturamentoFiltrado.forEach(f => {
+      const unidade = f.unidade || "Outros";
+      map.set(unidade, (map.get(unidade) || 0) + Number(f.valor));
+    });
+    return Array.from(map.entries())
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [faturamentoFiltrado]);
 
   // Extrair comerciais únicos (códigos)
   const comerciaisDisponiveis = useMemo(() => {
