@@ -207,29 +207,99 @@ export default function Faturamento() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-3 flex-wrap">
-        <Select value={filtroAno} onValueChange={setFiltroAno}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Ano" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os Anos</SelectItem>
-            {anos.map(a => (
-              <SelectItem key={a} value={String(a)}>{a}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={filtroSegmento} onValueChange={setFiltroSegmento}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Segmento" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos Segmentos</SelectItem>
-            {segmentos.map(s => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="space-y-3">
+        {hasActiveFilter && (
+          <div className="flex justify-end">
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
+              <FilterX className="h-4 w-4 mr-1" /> Limpar Filtros
+            </Button>
+          </div>
+        )}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+          <Select value={filtroAno} onValueChange={setFiltroAno}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Ano" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Anos</SelectItem>
+              {filterOptions.anos.map(a => (
+                <SelectItem key={a} value={String(a)}>{a}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filtroMes} onValueChange={setFiltroMes}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Mês" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Meses</SelectItem>
+              {filterOptions.meses.map(m => (
+                <SelectItem key={m} value={m}>{m}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filtroGc} onValueChange={setFiltroGc}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="GC" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os GCs</SelectItem>
+              {filterOptions.gcs.map(g => (
+                <SelectItem key={g} value={g}>{g}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filtroCliente} onValueChange={setFiltroCliente}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Cliente" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Clientes</SelectItem>
+              {filterOptions.clientes.map(c => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filtroSegmento} onValueChange={setFiltroSegmento}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Segmento" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Segmentos</SelectItem>
+              {filterOptions.segmentos.map(s => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filtroUnidade} onValueChange={setFiltroUnidade}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Unidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todas as Unidades</SelectItem>
+              {filterOptions.unidades.map(u => (
+                <SelectItem key={u} value={u}>{u}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filtroSetor} onValueChange={setFiltroSetor}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Setor" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Setores</SelectItem>
+              {filterOptions.setores.map(s => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* KPIs */}
