@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileDown, Trash2, DollarSign, TrendingUp, Building2, BarChart3, FilterX } from "lucide-react";
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, AreaChart, Area, ComposedChart } from "recharts";
+import { Upload, DollarSign, TrendingUp, Building2, BarChart3, FilterX, Layers, ChevronLeft, ChevronRight } from "lucide-react";
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, ComposedChart } from "recharts";
 import { useFaturamento, useImportFaturamento, useDeleteFaturamentoByPeriod, FaturamentoInsert } from "@/hooks/useFaturamento";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 
-const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))', '#8884d8', '#82ca9d', '#ffc658'];
 
 const MESES_ORDEM: Record<string, number> = {
   Jan: 1, Fev: 2, Mar: 3, Abr: 4, Mai: 5, Jun: 6,
@@ -19,6 +19,8 @@ const MESES_ORDEM: Record<string, number> = {
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+
+const PAGE_SIZE = 50;
 
 export default function Faturamento() {
   const { data: faturamento, isLoading } = useFaturamento();
@@ -32,6 +34,7 @@ export default function Faturamento() {
   const [filtroSegmento, setFiltroSegmento] = useState<string>("todos");
   const [filtroUnidade, setFiltroUnidade] = useState<string>("todos");
   const [filtroSetor, setFiltroSetor] = useState<string>("todos");
+  const [page, setPage] = useState(1);
 
   const hasActiveFilter = filtroAno !== "todos" || filtroMes !== "todos" || filtroGc !== "todos" ||
     filtroCliente !== "todos" || filtroSegmento !== "todos" || filtroUnidade !== "todos" || filtroSetor !== "todos";
@@ -44,16 +47,17 @@ export default function Faturamento() {
     setFiltroSegmento("todos");
     setFiltroUnidade("todos");
     setFiltroSetor("todos");
+    setPage(1);
   };
 
-  // Filter options from raw data
+  // Filter options from raw data — NO limit on clientes
   const filterOptions = useMemo(() => {
     if (!faturamento) return { anos: [], meses: [], gcs: [], clientes: [], segmentos: [], unidades: [], setores: [] };
     return {
       anos: [...new Set(faturamento.map(f => f.ano))].sort((a, b) => b - a),
       meses: Object.keys(MESES_ORDEM),
       gcs: [...new Set(faturamento.map(f => f.gc).filter(Boolean))].sort() as string[],
-      clientes: [...new Set(faturamento.map(f => f.cliente_para).filter(Boolean))].sort().slice(0, 100) as string[],
+      clientes: [...new Set(faturamento.map(f => f.cliente_para).filter(Boolean))].sort() as string[],
       segmentos: [...new Set(faturamento.map(f => f.segmento).filter(Boolean))].sort() as string[],
       unidades: [...new Set(faturamento.map(f => f.unidade).filter(Boolean))].sort() as string[],
       setores: [...new Set(faturamento.map(f => f.setor).filter(Boolean))].sort() as string[],
@@ -63,6 +67,7 @@ export default function Faturamento() {
   // Filtered data
   const dadosFiltrados = useMemo(() => {
     if (!faturamento) return [];
+    setPage(1);
     return faturamento.filter(f => {
       if (filtroAno !== "todos" && f.ano !== Number(filtroAno)) return false;
       if (filtroMes !== "todos" && f.mes !== filtroMes) return false;
@@ -75,12 +80,17 @@ export default function Faturamento() {
     });
   }, [faturamento, filtroAno, filtroMes, filtroGc, filtroCliente, filtroSegmento, filtroUnidade, filtroSetor]);
 
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(dadosFiltrados.length / PAGE_SIZE));
+  const paginatedData = useMemo(() => dadosFiltrados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [dadosFiltrados, page]);
+
   // KPIs
   const totalFaturamento = useMemo(() => dadosFiltrados.reduce((acc, f) => acc + Number(f.valor), 0), [dadosFiltrados]);
   const totalComissao = useMemo(() => totalFaturamento * 0.003, [totalFaturamento]);
   const totalRegistros = dadosFiltrados.length;
   const clientesUnicos = useMemo(() => new Set(dadosFiltrados.map(f => f.cliente_para)).size, [dadosFiltrados]);
-  const segmentosUnicos = useMemo(() => new Set(dadosFiltrados.map(f => f.segmento).filter(Boolean)).size, [dadosFiltrados]);
+  const setoresUnicos = useMemo(() => new Set(dadosFiltrados.map(f => f.setor).filter(Boolean)).size, [dadosFiltrados]);
+  const ticketMedio = useMemo(() => clientesUnicos > 0 ? totalFaturamento / clientesUnicos : 0, [totalFaturamento, clientesUnicos]);
 
   // Chart: revenue by month
   const receitaPorMes = useMemo(() => {
@@ -135,6 +145,18 @@ export default function Faturamento() {
       .sort((a, b) => b.value - a.value);
   }, [dadosFiltrados]);
 
+  // Chart: by Setor
+  const receitaPorSetor = useMemo(() => {
+    const map = new Map<string, number>();
+    dadosFiltrados.forEach(f => {
+      const s = f.setor || "Outros";
+      map.set(s, (map.get(s) || 0) + Number(f.valor));
+    });
+    return Array.from(map.entries())
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [dadosFiltrados]);
+
   // Acumulado Mensal
   const acumuladoMensal = useMemo(() => {
     const map = new Map<string, { valor: number; sortKey: number }>();
@@ -168,16 +190,22 @@ export default function Faturamento() {
     return sorted;
   }, [dadosFiltrados]);
 
-  // Top 10 Clientes
+  // Top 15 Clientes with segment
   const topClientes = useMemo(() => {
-    const map = new Map<string, number>();
+    const map = new Map<string, { value: number; segmento: string }>();
     dadosFiltrados.forEach(f => {
-      if (f.cliente_para) map.set(f.cliente_para, (map.get(f.cliente_para) || 0) + Number(f.valor));
+      if (f.cliente_para) {
+        const prev = map.get(f.cliente_para) || { value: 0, segmento: "" };
+        map.set(f.cliente_para, {
+          value: prev.value + Number(f.valor),
+          segmento: f.segmento || prev.segmento || "",
+        });
+      }
     });
     return Array.from(map.entries())
-      .map(([name, value]) => ({ name, value, comissao: value * 0.003 }))
+      .map(([name, { value, segmento }]) => ({ name, value, comissao: value * 0.003, segmento }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 10);
+      .slice(0, 15);
   }, [dadosFiltrados]);
 
   // Import handler
@@ -206,7 +234,6 @@ export default function Faturamento() {
         return;
       }
 
-      // Debug: log detected headers
       if (jsonData.length > 0) {
         console.log("Headers detectados na planilha:", Object.keys(jsonData[0]));
       }
@@ -219,13 +246,13 @@ export default function Faturamento() {
         const mes = String(findValue(row, normalizedRow, "mes", "mês") || "");
         const ano = Number(findValue(row, normalizedRow, "ano") || 0);
         const clienteDe = String(findValue(row, normalizedRow, "cliente - de", "cliente de", "cliente_de") || "");
-        const clientePara = String(findValue(row, normalizedRow, "cliente - para", "cliente para", "cliente_para") || "");
+        // Added "cliente" as fallback for single-column spreadsheets
+        const clientePara = String(findValue(row, normalizedRow, "cliente - para", "cliente para", "cliente_para", "cliente") || "");
         const gc = findValue(row, normalizedRow, "gc") ?? null;
         const segmento = findValue(row, normalizedRow, "segmento") ?? null;
         const unidade = findValue(row, normalizedRow, "unidade") ?? null;
         const setor = findValue(row, normalizedRow, "setor") ?? null;
 
-        // Parse valor - handle R$ format
         let valorRaw = findValue(row, normalizedRow, "valor") ?? 0;
         let valor = 0;
         if (typeof valorRaw === "string") {
@@ -249,7 +276,6 @@ export default function Faturamento() {
       toast.error("Erro ao processar arquivo: " + err.message);
     }
 
-    // Reset input
     e.target.value = "";
   }, [importMutation]);
 
@@ -326,7 +352,7 @@ export default function Faturamento() {
             <SelectTrigger className="h-9 text-sm">
               <SelectValue placeholder="Cliente" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-[300px]">
               <SelectItem value="todos">Todos os Clientes</SelectItem>
               {filterOptions.clientes.map(c => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
@@ -373,58 +399,69 @@ export default function Faturamento() {
       </div>
 
       {/* KPIs */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <DollarSign className="h-8 w-8 text-primary" />
-              <div>
-                <div className="text-2xl font-bold">{formatCurrency(totalFaturamento)}</div>
-                <div className="text-sm text-muted-foreground">Faturamento Total</div>
+              <DollarSign className="h-7 w-7 text-primary shrink-0" />
+              <div className="min-w-0">
+                <div className="text-xl font-bold truncate">{formatCurrency(totalFaturamento)}</div>
+                <div className="text-xs text-muted-foreground">Faturamento Total</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <TrendingUp className="h-8 w-8 text-chart-2" />
-              <div>
-                <div className="text-2xl font-bold">{formatCurrency(totalComissao)}</div>
-                <div className="text-sm text-muted-foreground">Comissão (0,3%)</div>
+              <TrendingUp className="h-7 w-7 text-chart-2 shrink-0" />
+              <div className="min-w-0">
+                <div className="text-xl font-bold truncate">{formatCurrency(totalComissao)}</div>
+                <div className="text-xs text-muted-foreground">Comissão (0,3%)</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <BarChart3 className="h-8 w-8 text-primary" />
-              <div>
-                <div className="text-2xl font-bold">{totalRegistros}</div>
-                <div className="text-sm text-muted-foreground">Registros</div>
+              <DollarSign className="h-7 w-7 text-chart-3 shrink-0" />
+              <div className="min-w-0">
+                <div className="text-xl font-bold truncate">{formatCurrency(ticketMedio)}</div>
+                <div className="text-xs text-muted-foreground">Ticket Médio</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Building2 className="h-8 w-8 text-primary" />
-              <div>
-                <div className="text-2xl font-bold">{clientesUnicos}</div>
-                <div className="text-sm text-muted-foreground">Clientes</div>
+              <BarChart3 className="h-7 w-7 text-primary shrink-0" />
+              <div className="min-w-0">
+                <div className="text-xl font-bold">{totalRegistros.toLocaleString("pt-BR")}</div>
+                <div className="text-xs text-muted-foreground">Registros</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <BarChart3 className="h-8 w-8 text-primary" />
-              <div>
-                <div className="text-2xl font-bold">{segmentosUnicos}</div>
-                <div className="text-sm text-muted-foreground">Segmentos</div>
+              <Building2 className="h-7 w-7 text-primary shrink-0" />
+              <div className="min-w-0">
+                <div className="text-xl font-bold">{clientesUnicos}</div>
+                <div className="text-xs text-muted-foreground">Clientes</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Layers className="h-7 w-7 text-chart-4 shrink-0" />
+              <div className="min-w-0">
+                <div className="text-xl font-bold">{setoresUnicos}</div>
+                <div className="text-xs text-muted-foreground">Setores</div>
               </div>
             </div>
           </CardContent>
@@ -434,8 +471,8 @@ export default function Faturamento() {
       {/* Charts row 1: Mensal + Segmento */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle>Faturamento Mensal</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Faturamento Mensal</CardTitle>
           </CardHeader>
           <CardContent>
             {receitaPorMes.length > 0 ? (
@@ -457,8 +494,8 @@ export default function Faturamento() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Faturamento por Segmento</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Faturamento por Segmento</CardTitle>
           </CardHeader>
           <CardContent>
             {receitaPorSegmento.length > 0 ? (
@@ -481,11 +518,11 @@ export default function Faturamento() {
         </Card>
       </div>
 
-      {/* Charts row 2: GC + Unidade */}
+      {/* Charts row 2: GC + Setor */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle>Performance por GC</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Performance por GC</CardTitle>
           </CardHeader>
           <CardContent>
             {receitaPorGc.length > 0 ? (
@@ -505,8 +542,32 @@ export default function Faturamento() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Faturamento por Unidade</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Receita por Setor</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {receitaPorSetor.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={receitaPorSetor} layout="vertical" margin={{ left: 80 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} className="text-xs" />
+                  <YAxis type="category" dataKey="name" className="text-xs" width={75} />
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <Bar dataKey="value" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} name="Faturamento" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">Nenhum dado disponível</div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts row 3: Unidade (pie) + Acumulado Mensal */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Faturamento por Unidade</CardTitle>
           </CardHeader>
           <CardContent>
             {receitaPorUnidade.length > 0 ? (
@@ -527,13 +588,10 @@ export default function Faturamento() {
             )}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Charts row 3: Acumulado Mensal + Acumulado Anual */}
-      <div className="grid gap-4 md:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle>Faturamento Acumulado Mensal</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Faturamento Acumulado Mensal</CardTitle>
           </CardHeader>
           <CardContent>
             {acumuladoMensal.length > 0 ? (
@@ -552,10 +610,13 @@ export default function Faturamento() {
             )}
           </CardContent>
         </Card>
+      </div>
 
+      {/* Charts row 4: Acumulado Anual */}
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle>Faturamento Acumulado Anual</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Faturamento Acumulado Anual</CardTitle>
           </CardHeader>
           <CardContent>
             {acumuladoAnual.length > 0 ? (
@@ -563,7 +624,7 @@ export default function Faturamento() {
                 <ComposedChart data={acumuladoAnual}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="name" className="text-xs" />
-                  <YAxis className="text-xs" tickFormatter={(v) => `${(v / 1e6).toFixed(1)}M`} />
+                  <YAxis className="text-xs" tickFormatter={(v) => v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : `${(v / 1000).toFixed(0)}k`} />
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
                   <Bar dataKey="valor" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} name="Anual" opacity={0.6} />
                   <Area type="monotone" dataKey="acumulado" fill="hsl(var(--chart-4))" stroke="hsl(var(--chart-4))" fillOpacity={0.15} name="Acumulado" />
@@ -576,10 +637,10 @@ export default function Faturamento() {
         </Card>
       </div>
 
-      {/* Top 10 Clientes */}
+      {/* Top 15 Clientes */}
       <Card>
-        <CardHeader>
-          <CardTitle>Top 10 Clientes por Faturamento</CardTitle>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Top 15 Clientes por Faturamento</CardTitle>
         </CardHeader>
         <CardContent>
           {topClientes.length > 0 ? (
@@ -588,8 +649,11 @@ export default function Faturamento() {
                 <div key={c.name} className="flex items-center gap-3">
                   <div className="w-8 text-sm font-bold text-muted-foreground">#{i + 1}</div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium truncate">{c.name}</span>
+                    <div className="flex items-center justify-between mb-1 gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-sm font-medium truncate">{c.name}</span>
+                        {c.segmento && <Badge variant="outline" className="text-[10px] shrink-0">{c.segmento}</Badge>}
+                      </div>
                       <div className="flex gap-4 text-xs text-muted-foreground shrink-0">
                         <span>Fat: {formatCurrency(c.value)}</span>
                         <span>Com: {formatCurrency(c.comissao)}</span>
@@ -608,53 +672,59 @@ export default function Faturamento() {
         </CardContent>
       </Card>
 
-      {/* Table */}
+      {/* Table with pagination */}
       <Card>
-        <CardHeader>
-          <CardTitle>Dados Importados ({dadosFiltrados.length} registros)</CardTitle>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Dados Importados ({dadosFiltrados.length.toLocaleString("pt-BR")} registros)</CardTitle>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span>{page} / {totalPages}</span>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {dadosFiltrados.length > 0 ? (
-            <div className="max-h-[400px] overflow-auto">
+            <div className="overflow-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Mês</TableHead>
                     <TableHead>Ano</TableHead>
-                    <TableHead>Cliente - De</TableHead>
-                    <TableHead>Cliente - Para</TableHead>
+                    <TableHead>Cliente</TableHead>
                     <TableHead>GC</TableHead>
                     <TableHead>Segmento</TableHead>
-                     <TableHead className="text-right">Valor</TableHead>
-                     <TableHead className="text-right">Comissão (0,3%)</TableHead>
-                     <TableHead>Unidade</TableHead>
-                     <TableHead>Setor</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="text-right">Comissão (0,3%)</TableHead>
+                    <TableHead>Unidade</TableHead>
+                    <TableHead>Setor</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {dadosFiltrados.slice(0, 100).map((f) => (
+                  {paginatedData.map((f) => (
                     <TableRow key={f.id}>
                       <TableCell>{f.mes}</TableCell>
                       <TableCell>{f.ano}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">{f.cliente_de}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">{f.cliente_para}</TableCell>
+                      <TableCell className="max-w-[250px] truncate">{f.cliente_para}</TableCell>
                       <TableCell>{f.gc}</TableCell>
                       <TableCell>
                         {f.segmento && <Badge variant="outline">{f.segmento}</Badge>}
                       </TableCell>
                       <TableCell className="text-right font-medium">{formatCurrency(Number(f.valor))}</TableCell>
-                       <TableCell className="text-right text-muted-foreground">{formatCurrency(Number(f.valor) * 0.003)}</TableCell>
-                       <TableCell>{f.unidade}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{formatCurrency(Number(f.valor) * 0.003)}</TableCell>
+                      <TableCell>{f.unidade}</TableCell>
                       <TableCell>{f.setor}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-              {dadosFiltrados.length > 100 && (
-                <p className="text-sm text-muted-foreground text-center py-2">
-                  Exibindo 100 de {dadosFiltrados.length} registros
-                </p>
-              )}
             </div>
           ) : (
             <div className="flex items-center justify-center py-8 text-muted-foreground">
