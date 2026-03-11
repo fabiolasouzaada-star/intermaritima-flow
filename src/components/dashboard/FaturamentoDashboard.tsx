@@ -190,7 +190,7 @@ export function FaturamentoDashboard() {
           )}
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           <Select value={anoFilter} onValueChange={setAnoFilter}>
             <SelectTrigger className="h-9 text-sm">
               <SelectValue placeholder="Ano" />
@@ -223,6 +223,18 @@ export function FaturamentoDashboard() {
               <SelectItem value="todos">Todos os GCs</SelectItem>
               {filterOptions.gcs.map(g => (
                 <SelectItem key={g} value={g}>{g}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={clienteFilter} onValueChange={setClienteFilter}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Cliente" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Clientes</SelectItem>
+              {filterOptions.clientes.map(c => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
             </SelectContent>
           </Select>
