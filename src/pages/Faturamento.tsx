@@ -51,6 +51,7 @@ export default function Faturamento() {
 
   // KPIs
   const totalFaturamento = useMemo(() => dadosFiltrados.reduce((acc, f) => acc + Number(f.valor), 0), [dadosFiltrados]);
+  const totalComissao = useMemo(() => totalFaturamento * 0.003, [totalFaturamento]);
   const totalRegistros = dadosFiltrados.length;
   const clientesUnicos = useMemo(() => new Set(dadosFiltrados.map(f => f.cliente_para)).size, [dadosFiltrados]);
   const segmentosUnicos = useMemo(() => new Set(dadosFiltrados.map(f => f.segmento).filter(Boolean)).size, [dadosFiltrados]);
