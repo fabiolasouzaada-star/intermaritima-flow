@@ -35,7 +35,6 @@ const menuItems = [
   { title: "Clientes", url: "/clientes", icon: Users },
   { title: "Pipeline", url: "/pipeline", icon: Workflow },
   { title: "Pré-Alerta Navios", url: "/pre-alerta-navios", icon: Ship },
-  { title: "Contratos", url: "/contratos", icon: FileText },
   { title: "Calendário", url: "/calendario", icon: Calendar },
   { title: "Visitas/Reuniões", url: "/visitas", icon: ClipboardList },
   { title: "Tarefas", url: "/tarefas", icon: CheckSquare },
