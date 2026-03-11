@@ -64,7 +64,7 @@ const App = () => (
             <Route path="/matriz" element={<ProtectedRoute><CRMLayout><Matriz /></CRMLayout></ProtectedRoute>} />
             <Route path="/pos-venda" element={<ProtectedRoute><CRMLayout><PosVenda /></CRMLayout></ProtectedRoute>} />
             <Route path="/faturamento" element={<ProtectedRoute><CRMLayout><Faturamento /></CRMLayout></ProtectedRoute>} />
-            <Route path="/relatorios" element={<ProtectedRoute><CRMLayout><Relatorios /></CRMLayout></ProtectedRoute>} />
+            
             <Route path="/plano-acoes" element={<ProtectedRoute><CRMLayout><PlanoAcoes /></CRMLayout></ProtectedRoute>} />
             <Route path="/qualidade-dados" element={<ProtectedRoute><CRMLayout><QualidadeDados /></CRMLayout></ProtectedRoute>} />
             <Route path="/carteira-fs" element={<ProtectedRoute><CRMLayout><CarteiraFS /></CRMLayout></ProtectedRoute>} />
