@@ -2,18 +2,15 @@ import {
   LayoutDashboard, 
   Users, 
   Workflow, 
-  FileText, 
   Calendar, 
   ClipboardList,
   CheckSquare,
   Grid3x3,
-  BarChart3,
   LogOut,
   Target,
   TrendingUp,
   TrendingDown,
   ListTodo,
-  ShieldCheck,
   Ship,
   MessagesSquare
 } from "lucide-react";
@@ -38,20 +35,15 @@ const menuItems = [
   { title: "Clientes", url: "/clientes", icon: Users },
   { title: "Pipeline", url: "/pipeline", icon: Workflow },
   { title: "Pré-Alerta Navios", url: "/pre-alerta-navios", icon: Ship },
-  { title: "Contratos", url: "/contratos", icon: FileText },
   { title: "Calendário", url: "/calendario", icon: Calendar },
   { title: "Visitas/Reuniões", url: "/visitas", icon: ClipboardList },
   { title: "Tarefas", url: "/tarefas", icon: CheckSquare },
   { title: "Plano de Ações", url: "/plano-acoes", icon: ListTodo },
   { title: "Reuniões & Plano de Ação", url: "/reunioes-plano-acao", icon: MessagesSquare },
-  { title: "Qualidade de Dados", url: "/qualidade-dados", icon: ShieldCheck },
   { title: "Faturamento", url: "/faturamento", icon: TrendingUp },
-  { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
 ];
 
 const menuItemsFS = [
-  { title: "Dashboard FS", url: "/dashboard-fs", icon: TrendingUp },
-  { title: "Carteira FS", url: "/carteira-fs", icon: Users },
   { title: "Pipeline Retomada", url: "/pipeline-retomada", icon: Target },
 ];
 

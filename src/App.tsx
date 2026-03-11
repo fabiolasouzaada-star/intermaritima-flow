@@ -10,19 +10,15 @@ import Dashboard from "./pages/Dashboard";
 import Clientes from "./pages/Clientes";
 import ClienteDetalhes from "./pages/ClienteDetalhes";
 import Pipeline from "./pages/Pipeline";
-import Contratos from "./pages/Contratos";
+
 import Calendario from "./pages/Calendario";
 import Visitas from "./pages/Visitas";
 import Tarefas from "./pages/Tarefas";
 import Matriz from "./pages/Matriz";
 import PosVenda from "./pages/PosVenda";
-import Relatorios from "./pages/Relatorios";
 import Faturamento from "./pages/Faturamento";
 import PlanoAcoes from "./pages/PlanoAcoes";
-import QualidadeDados from "./pages/QualidadeDados";
-import CarteiraFS from "./pages/CarteiraFS";
 import PipelineRetomada from "./pages/PipelineRetomada";
-import DashboardFS from "./pages/DashboardFS";
 
 import FSConcorrentes from "./pages/FSConcorrentes";
 import FSMultiterminal from "./pages/FSMultiterminal";
@@ -61,19 +57,16 @@ const App = () => (
             <Route path="/clientes" element={<ProtectedRoute><CRMLayout><Clientes /></CRMLayout></ProtectedRoute>} />
             <Route path="/cliente/:id" element={<ProtectedRoute><CRMLayout><ClienteDetalhes /></CRMLayout></ProtectedRoute>} />
             <Route path="/pipeline" element={<ProtectedRoute><CRMLayout><Pipeline /></CRMLayout></ProtectedRoute>} />
-            <Route path="/contratos" element={<ProtectedRoute><CRMLayout><Contratos /></CRMLayout></ProtectedRoute>} />
+            
             <Route path="/calendario" element={<ProtectedRoute><CRMLayout><Calendario /></CRMLayout></ProtectedRoute>} />
             <Route path="/visitas" element={<ProtectedRoute><CRMLayout><Visitas /></CRMLayout></ProtectedRoute>} />
             <Route path="/tarefas" element={<ProtectedRoute><CRMLayout><Tarefas /></CRMLayout></ProtectedRoute>} />
             <Route path="/matriz" element={<ProtectedRoute><CRMLayout><Matriz /></CRMLayout></ProtectedRoute>} />
             <Route path="/pos-venda" element={<ProtectedRoute><CRMLayout><PosVenda /></CRMLayout></ProtectedRoute>} />
             <Route path="/faturamento" element={<ProtectedRoute><CRMLayout><Faturamento /></CRMLayout></ProtectedRoute>} />
-            <Route path="/relatorios" element={<ProtectedRoute><CRMLayout><Relatorios /></CRMLayout></ProtectedRoute>} />
+            
             <Route path="/plano-acoes" element={<ProtectedRoute><CRMLayout><PlanoAcoes /></CRMLayout></ProtectedRoute>} />
-            <Route path="/qualidade-dados" element={<ProtectedRoute><CRMLayout><QualidadeDados /></CRMLayout></ProtectedRoute>} />
-            <Route path="/carteira-fs" element={<ProtectedRoute><CRMLayout><CarteiraFS /></CRMLayout></ProtectedRoute>} />
             <Route path="/pipeline-retomada" element={<ProtectedRoute><CRMLayout><PipelineRetomada /></CRMLayout></ProtectedRoute>} />
-            <Route path="/dashboard-fs" element={<ProtectedRoute><CRMLayout><DashboardFS /></CRMLayout></ProtectedRoute>} />
             <Route path="/pre-alerta-navios" element={<ProtectedRoute><CRMLayout><PreAlertaNavios /></CRMLayout></ProtectedRoute>} />
             <Route path="/reunioes-plano-acao" element={<ProtectedRoute><ReunioesPlanoAcao /></ProtectedRoute>} />
             
