@@ -57,7 +57,7 @@ export function FaturamentoDashboard() {
   const [setorFilter, setSetorFilter] = useState("todos");
 
   const hasActiveFilter = anoFilter !== "todos" || mesFilter !== "todos" || gcFilter !== "todos" ||
-    segmentoFilter !== "todos" || unidadeFilter !== "todos" || setorFilter !== "todos";
+    clienteFilter !== "todos" || segmentoFilter !== "todos" || unidadeFilter !== "todos" || setorFilter !== "todos";
 
   const clearFilters = () => {
     setAnoFilter("todos");
