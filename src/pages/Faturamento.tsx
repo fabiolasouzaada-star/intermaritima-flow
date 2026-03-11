@@ -85,6 +85,16 @@ export default function Faturamento() {
   }, [dadosFiltrados]);
 
   // Import handler
+  const normalizeKey = (s: string) =>
+    s.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  const findValue = (row: Record<string, any>, normalizedRow: Record<string, any>, ...keys: string[]) => {
+    for (const key of keys) {
+      if (normalizedRow[key] !== undefined) return normalizedRow[key];
+    }
+    return undefined;
+  };
+
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -100,19 +110,27 @@ export default function Faturamento() {
         return;
       }
 
+      // Debug: log detected headers
+      if (jsonData.length > 0) {
+        console.log("Headers detectados na planilha:", Object.keys(jsonData[0]));
+      }
+
       const rows: FaturamentoInsert[] = jsonData.map(row => {
-        // Flexible column mapping
-        const mes = row["Mês"] || row["Mes"] || row["MÊS"] || row["mes"] || "";
-        const ano = Number(row["Ano"] || row["ANO"] || row["ano"] || 0);
-        const clienteDe = row["Cliente - De"] || row["Cliente De"] || row["CLIENTE - DE"] || row["cliente_de"] || "";
-        const clientePara = row["Cliente - Para"] || row["Cliente Para"] || row["CLIENTE - PARA"] || row["cliente_para"] || "";
-        const gc = row["GC"] || row["Gc"] || row["gc"] || null;
-        const segmento = row["Segmento"] || row["SEGMENTO"] || row["segmento"] || null;
-        const unidade = row["Unidade"] || row["UNIDADE"] || row["unidade"] || null;
-        const setor = row["Setor"] || row["SETOR"] || row["setor"] || null;
+        const normalizedRow = Object.fromEntries(
+          Object.entries(row).map(([k, v]) => [normalizeKey(k), v])
+        );
+
+        const mes = String(findValue(row, normalizedRow, "mes", "mês") || "");
+        const ano = Number(findValue(row, normalizedRow, "ano") || 0);
+        const clienteDe = String(findValue(row, normalizedRow, "cliente - de", "cliente de", "cliente_de") || "");
+        const clientePara = String(findValue(row, normalizedRow, "cliente - para", "cliente para", "cliente_para") || "");
+        const gc = findValue(row, normalizedRow, "gc") ?? null;
+        const segmento = findValue(row, normalizedRow, "segmento") ?? null;
+        const unidade = findValue(row, normalizedRow, "unidade") ?? null;
+        const setor = findValue(row, normalizedRow, "setor") ?? null;
 
         // Parse valor - handle R$ format
-        let valorRaw = row["Valor"] || row["VALOR"] || row["valor"] || 0;
+        let valorRaw = findValue(row, normalizedRow, "valor") ?? 0;
         let valor = 0;
         if (typeof valorRaw === "string") {
           valor = Number(valorRaw.replace(/[R$\s.]/g, "").replace(",", ".")) || 0;
@@ -126,6 +144,7 @@ export default function Faturamento() {
       const validRows = rows.filter(r => r.mes && r.ano);
       if (validRows.length === 0) {
         toast.error("Nenhum registro válido encontrado. Verifique os cabeçalhos da planilha.");
+        console.log("Exemplo de row normalizada:", jsonData[0] ? Object.keys(jsonData[0]) : "vazio");
         return;
       }
 
