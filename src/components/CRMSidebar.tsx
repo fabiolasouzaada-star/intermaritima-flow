@@ -11,7 +11,6 @@ import {
   TrendingUp,
   TrendingDown,
   ListTodo,
-  ShieldCheck,
   Ship,
   MessagesSquare
 } from "lucide-react";
