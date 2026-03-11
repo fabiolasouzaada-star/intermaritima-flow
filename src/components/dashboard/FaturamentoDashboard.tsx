@@ -51,6 +51,7 @@ export function FaturamentoDashboard() {
   const [anoFilter, setAnoFilter] = useState("todos");
   const [mesFilter, setMesFilter] = useState("todos");
   const [gcFilter, setGcFilter] = useState("todos");
+  const [clienteFilter, setClienteFilter] = useState("todos");
   const [segmentoFilter, setSegmentoFilter] = useState("todos");
   const [unidadeFilter, setUnidadeFilter] = useState("todos");
   const [setorFilter, setSetorFilter] = useState("todos");
