@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Upload, DollarSign, TrendingUp, Building2, BarChart3, FilterX, Layers, ChevronLeft, ChevronRight } from "lucide-react";
+import { Upload, Download, DollarSign, TrendingUp, Building2, BarChart3, FilterX, Layers, ChevronLeft, ChevronRight } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, ComposedChart } from "recharts";
 import { useFaturamento, useImportFaturamento, useDeleteFaturamentoByPeriod, FaturamentoInsert } from "@/hooks/useFaturamento";
 import * as XLSX from "xlsx";
