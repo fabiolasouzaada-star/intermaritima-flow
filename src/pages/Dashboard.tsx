@@ -30,15 +30,13 @@ const MESES_ORDEM: Record<string, number> = {
 
 export default function Dashboard() {
   const [comercialFilter, setComercialFilter] = useState("todos");
-  const [gcFilter, setGcFilter] = useState("todos");
   const { data: clientes, isLoading: loadingClientes } = useClientes();
   const { data: oportunidades, isLoading: loadingOportunidades } = useOportunidades();
   const { data: contratos, isLoading: loadingContratos } = useContratos();
   const { data: visitas, isLoading: loadingVisitas } = useVisitas();
   const { data: tarefas, isLoading: loadingTarefas } = useTarefas();
-  const { data: faturamento, isLoading: loadingFaturamento } = useFaturamento();
 
-  const isLoading = loadingClientes || loadingOportunidades || loadingContratos || loadingVisitas || loadingTarefas || loadingFaturamento;
+  const isLoading = loadingClientes || loadingOportunidades || loadingContratos || loadingVisitas || loadingTarefas;
 
   // GCs disponíveis no faturamento
   const gcsDisponiveis = useMemo(() => {
