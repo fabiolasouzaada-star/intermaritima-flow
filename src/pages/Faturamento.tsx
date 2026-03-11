@@ -321,9 +321,10 @@ export default function Faturamento() {
                     <TableHead>Cliente - Para</TableHead>
                     <TableHead>GC</TableHead>
                     <TableHead>Segmento</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                    <TableHead>Unidade</TableHead>
-                    <TableHead>Setor</TableHead>
+                     <TableHead className="text-right">Valor</TableHead>
+                     <TableHead className="text-right">Comissão (0,3%)</TableHead>
+                     <TableHead>Unidade</TableHead>
+                     <TableHead>Setor</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
