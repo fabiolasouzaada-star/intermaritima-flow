@@ -90,12 +90,13 @@ export function FaturamentoDashboard() {
       if (anoFilter !== "todos" && f.ano !== Number(anoFilter)) return false;
       if (mesFilter !== "todos" && f.mes !== mesFilter) return false;
       if (gcFilter !== "todos" && f.gc !== gcFilter) return false;
+      if (clienteFilter !== "todos" && f.cliente_para !== clienteFilter) return false;
       if (segmentoFilter !== "todos" && f.segmento !== segmentoFilter) return false;
       if (unidadeFilter !== "todos" && f.unidade !== unidadeFilter) return false;
       if (setorFilter !== "todos" && f.setor !== setorFilter) return false;
       return true;
     });
-  }, [faturamento, anoFilter, mesFilter, gcFilter, segmentoFilter, unidadeFilter, setorFilter]);
+  }, [faturamento, anoFilter, mesFilter, gcFilter, clienteFilter, segmentoFilter, unidadeFilter, setorFilter]);
 
   // KPIs
   const faturamentoTotal = useMemo(() => filtrado.reduce((a, f) => a + Number(f.valor), 0), [filtrado]);
