@@ -353,6 +353,33 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Faturamento Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            Faturamento Realizado — {formatCurrency(faturamentoTotal)}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {faturamentoPorMes.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={faturamentoPorMes}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="name" className="text-xs" angle={-45} textAnchor="end" height={60} />
+                <YAxis className="text-xs" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                <Bar dataKey="valor" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} name="Faturamento" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+              Nenhum dado de faturamento importado. Acesse a página Faturamento para importar planilhas.
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
