@@ -122,7 +122,7 @@ export default function Faturamento() {
         return { mes, ano, cliente_de: clienteDe, cliente_para: clientePara, gc, segmento, valor, unidade, setor };
       });
 
-      const validRows = rows.filter(r => r.mes && r.ano && r.cliente_de);
+      const validRows = rows.filter(r => r.mes && r.ano);
       if (validRows.length === 0) {
         toast.error("Nenhum registro válido encontrado. Verifique os cabeçalhos da planilha.");
         return;
