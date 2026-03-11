@@ -609,13 +609,16 @@ export default function Faturamento() {
           <CardContent>
             {receitaPorGc.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={receitaPorGc} layout="vertical" margin={{ left: 60 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} className="text-xs" />
-                  <YAxis type="category" dataKey="name" className="text-xs" width={55} />
+                <PieChart>
+                  <Pie data={receitaPorGc} cx="50%" cy="50%" labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80} dataKey="value">
+                    {receitaPorGc.map((_, index) => (
+                      <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  <Bar dataKey="value" fill="hsl(var(--chart-4))" radius={[0, 4, 4, 0]} name="Faturamento" />
-                </BarChart>
+                </PieChart>
               </ResponsiveContainer>
             ) : (
               <div className="flex items-center justify-center h-[300px] text-muted-foreground">Nenhum dado disponível</div>
