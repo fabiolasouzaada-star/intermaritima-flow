@@ -51,17 +51,19 @@ export function FaturamentoDashboard() {
   const [anoFilter, setAnoFilter] = useState("todos");
   const [mesFilter, setMesFilter] = useState("todos");
   const [gcFilter, setGcFilter] = useState("todos");
+  const [clienteFilter, setClienteFilter] = useState("todos");
   const [segmentoFilter, setSegmentoFilter] = useState("todos");
   const [unidadeFilter, setUnidadeFilter] = useState("todos");
   const [setorFilter, setSetorFilter] = useState("todos");
 
   const hasActiveFilter = anoFilter !== "todos" || mesFilter !== "todos" || gcFilter !== "todos" ||
-    segmentoFilter !== "todos" || unidadeFilter !== "todos" || setorFilter !== "todos";
+    clienteFilter !== "todos" || segmentoFilter !== "todos" || unidadeFilter !== "todos" || setorFilter !== "todos";
 
   const clearFilters = () => {
     setAnoFilter("todos");
     setMesFilter("todos");
     setGcFilter("todos");
+    setClienteFilter("todos");
     setSegmentoFilter("todos");
     setUnidadeFilter("todos");
     setSetorFilter("todos");
@@ -69,11 +71,12 @@ export function FaturamentoDashboard() {
 
   // Filter options from raw data
   const filterOptions = useMemo(() => {
-    if (!faturamento) return { anos: [], meses: [], gcs: [], segmentos: [], unidades: [], setores: [] };
+    if (!faturamento) return { anos: [], meses: [], gcs: [], clientes: [], segmentos: [], unidades: [], setores: [] };
     return {
       anos: [...new Set(faturamento.map(f => f.ano))].sort((a, b) => b - a),
       meses: Object.keys(MESES_ORDEM),
       gcs: [...new Set(faturamento.map(f => f.gc).filter(Boolean))].sort() as string[],
+      clientes: [...new Set(faturamento.map(f => f.cliente_para).filter(Boolean))].sort().slice(0, 50) as string[],
       segmentos: [...new Set(faturamento.map(f => f.segmento).filter(Boolean))].sort() as string[],
       unidades: [...new Set(faturamento.map(f => f.unidade).filter(Boolean))].sort() as string[],
       setores: [...new Set(faturamento.map(f => f.setor).filter(Boolean))].sort() as string[],
@@ -87,12 +90,13 @@ export function FaturamentoDashboard() {
       if (anoFilter !== "todos" && f.ano !== Number(anoFilter)) return false;
       if (mesFilter !== "todos" && f.mes !== mesFilter) return false;
       if (gcFilter !== "todos" && f.gc !== gcFilter) return false;
+      if (clienteFilter !== "todos" && f.cliente_para !== clienteFilter) return false;
       if (segmentoFilter !== "todos" && f.segmento !== segmentoFilter) return false;
       if (unidadeFilter !== "todos" && f.unidade !== unidadeFilter) return false;
       if (setorFilter !== "todos" && f.setor !== setorFilter) return false;
       return true;
     });
-  }, [faturamento, anoFilter, mesFilter, gcFilter, segmentoFilter, unidadeFilter, setorFilter]);
+  }, [faturamento, anoFilter, mesFilter, gcFilter, clienteFilter, segmentoFilter, unidadeFilter, setorFilter]);
 
   // KPIs
   const faturamentoTotal = useMemo(() => filtrado.reduce((a, f) => a + Number(f.valor), 0), [filtrado]);
@@ -186,7 +190,7 @@ export function FaturamentoDashboard() {
           )}
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           <Select value={anoFilter} onValueChange={setAnoFilter}>
             <SelectTrigger className="h-9 text-sm">
               <SelectValue placeholder="Ano" />
@@ -219,6 +223,18 @@ export function FaturamentoDashboard() {
               <SelectItem value="todos">Todos os GCs</SelectItem>
               {filterOptions.gcs.map(g => (
                 <SelectItem key={g} value={g}>{g}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={clienteFilter} onValueChange={setClienteFilter}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Cliente" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Clientes</SelectItem>
+              {filterOptions.clientes.map(c => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
             </SelectContent>
           </Select>
