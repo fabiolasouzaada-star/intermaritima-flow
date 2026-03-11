@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileDown, Trash2, DollarSign, TrendingUp, Building2, BarChart3 } from "lucide-react";
+import { Upload, FileDown, Trash2, DollarSign, TrendingUp, Building2, BarChart3, FilterX } from "lucide-react";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { useFaturamento, useImportFaturamento, useDeleteFaturamentoByPeriod, FaturamentoInsert } from "@/hooks/useFaturamento";
 import * as XLSX from "xlsx";
@@ -26,17 +26,38 @@ export default function Faturamento() {
   const deleteMutation = useDeleteFaturamentoByPeriod();
 
   const [filtroAno, setFiltroAno] = useState<string>("todos");
+  const [filtroMes, setFiltroMes] = useState<string>("todos");
+  const [filtroGc, setFiltroGc] = useState<string>("todos");
+  const [filtroCliente, setFiltroCliente] = useState<string>("todos");
   const [filtroSegmento, setFiltroSegmento] = useState<string>("todos");
+  const [filtroUnidade, setFiltroUnidade] = useState<string>("todos");
+  const [filtroSetor, setFiltroSetor] = useState<string>("todos");
 
-  // Unique years and segments
-  const anos = useMemo(() => {
-    if (!faturamento) return [];
-    return [...new Set(faturamento.map(f => f.ano))].sort((a, b) => b - a);
-  }, [faturamento]);
+  const hasActiveFilter = filtroAno !== "todos" || filtroMes !== "todos" || filtroGc !== "todos" ||
+    filtroCliente !== "todos" || filtroSegmento !== "todos" || filtroUnidade !== "todos" || filtroSetor !== "todos";
 
-  const segmentos = useMemo(() => {
-    if (!faturamento) return [];
-    return [...new Set(faturamento.map(f => f.segmento).filter(Boolean))].sort() as string[];
+  const clearFilters = () => {
+    setFiltroAno("todos");
+    setFiltroMes("todos");
+    setFiltroGc("todos");
+    setFiltroCliente("todos");
+    setFiltroSegmento("todos");
+    setFiltroUnidade("todos");
+    setFiltroSetor("todos");
+  };
+
+  // Filter options from raw data
+  const filterOptions = useMemo(() => {
+    if (!faturamento) return { anos: [], meses: [], gcs: [], clientes: [], segmentos: [], unidades: [], setores: [] };
+    return {
+      anos: [...new Set(faturamento.map(f => f.ano))].sort((a, b) => b - a),
+      meses: Object.keys(MESES_ORDEM),
+      gcs: [...new Set(faturamento.map(f => f.gc).filter(Boolean))].sort() as string[],
+      clientes: [...new Set(faturamento.map(f => f.cliente_para).filter(Boolean))].sort().slice(0, 100) as string[],
+      segmentos: [...new Set(faturamento.map(f => f.segmento).filter(Boolean))].sort() as string[],
+      unidades: [...new Set(faturamento.map(f => f.unidade).filter(Boolean))].sort() as string[],
+      setores: [...new Set(faturamento.map(f => f.setor).filter(Boolean))].sort() as string[],
+    };
   }, [faturamento]);
 
   // Filtered data
@@ -44,10 +65,15 @@ export default function Faturamento() {
     if (!faturamento) return [];
     return faturamento.filter(f => {
       if (filtroAno !== "todos" && f.ano !== Number(filtroAno)) return false;
+      if (filtroMes !== "todos" && f.mes !== filtroMes) return false;
+      if (filtroGc !== "todos" && f.gc !== filtroGc) return false;
+      if (filtroCliente !== "todos" && f.cliente_para !== filtroCliente) return false;
       if (filtroSegmento !== "todos" && f.segmento !== filtroSegmento) return false;
+      if (filtroUnidade !== "todos" && f.unidade !== filtroUnidade) return false;
+      if (filtroSetor !== "todos" && f.setor !== filtroSetor) return false;
       return true;
     });
-  }, [faturamento, filtroAno, filtroSegmento]);
+  }, [faturamento, filtroAno, filtroMes, filtroGc, filtroCliente, filtroSegmento, filtroUnidade, filtroSetor]);
 
   // KPIs
   const totalFaturamento = useMemo(() => dadosFiltrados.reduce((acc, f) => acc + Number(f.valor), 0), [dadosFiltrados]);
@@ -80,6 +106,43 @@ export default function Faturamento() {
     });
     return Array.from(map.entries())
       .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10);
+  }, [dadosFiltrados]);
+
+  // Chart: by GC
+  const receitaPorGc = useMemo(() => {
+    const map = new Map<string, number>();
+    dadosFiltrados.forEach(f => {
+      const gc = f.gc || "Sem GC";
+      map.set(gc, (map.get(gc) || 0) + Number(f.valor));
+    });
+    return Array.from(map.entries())
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10);
+  }, [dadosFiltrados]);
+
+  // Chart: by Unidade
+  const receitaPorUnidade = useMemo(() => {
+    const map = new Map<string, number>();
+    dadosFiltrados.forEach(f => {
+      const u = f.unidade || "Outros";
+      map.set(u, (map.get(u) || 0) + Number(f.valor));
+    });
+    return Array.from(map.entries())
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [dadosFiltrados]);
+
+  // Top 10 Clientes
+  const topClientes = useMemo(() => {
+    const map = new Map<string, number>();
+    dadosFiltrados.forEach(f => {
+      if (f.cliente_para) map.set(f.cliente_para, (map.get(f.cliente_para) || 0) + Number(f.valor));
+    });
+    return Array.from(map.entries())
+      .map(([name, value]) => ({ name, value, comissao: value * 0.003 }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 10);
   }, [dadosFiltrados]);
@@ -181,29 +244,99 @@ export default function Faturamento() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-3 flex-wrap">
-        <Select value={filtroAno} onValueChange={setFiltroAno}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Ano" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os Anos</SelectItem>
-            {anos.map(a => (
-              <SelectItem key={a} value={String(a)}>{a}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={filtroSegmento} onValueChange={setFiltroSegmento}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Segmento" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos Segmentos</SelectItem>
-            {segmentos.map(s => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="space-y-3">
+        {hasActiveFilter && (
+          <div className="flex justify-end">
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
+              <FilterX className="h-4 w-4 mr-1" /> Limpar Filtros
+            </Button>
+          </div>
+        )}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+          <Select value={filtroAno} onValueChange={setFiltroAno}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Ano" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Anos</SelectItem>
+              {filterOptions.anos.map(a => (
+                <SelectItem key={a} value={String(a)}>{a}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filtroMes} onValueChange={setFiltroMes}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Mês" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Meses</SelectItem>
+              {filterOptions.meses.map(m => (
+                <SelectItem key={m} value={m}>{m}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filtroGc} onValueChange={setFiltroGc}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="GC" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os GCs</SelectItem>
+              {filterOptions.gcs.map(g => (
+                <SelectItem key={g} value={g}>{g}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filtroCliente} onValueChange={setFiltroCliente}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Cliente" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Clientes</SelectItem>
+              {filterOptions.clientes.map(c => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filtroSegmento} onValueChange={setFiltroSegmento}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Segmento" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Segmentos</SelectItem>
+              {filterOptions.segmentos.map(s => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filtroUnidade} onValueChange={setFiltroUnidade}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Unidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todas as Unidades</SelectItem>
+              {filterOptions.unidades.map(u => (
+                <SelectItem key={u} value={u}>{u}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filtroSetor} onValueChange={setFiltroSetor}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Setor" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Setores</SelectItem>
+              {filterOptions.setores.map(s => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* KPIs */}
@@ -265,7 +398,7 @@ export default function Faturamento() {
         </Card>
       </div>
 
-      {/* Charts */}
+      {/* Charts row 1: Mensal + Segmento */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -298,15 +431,9 @@ export default function Faturamento() {
             {receitaPorSegmento.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
-                  <Pie
-                    data={receitaPorSegmento}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
+                  <Pie data={receitaPorSegmento} cx="50%" cy="50%" labelLine={false}
                     label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    dataKey="value"
-                  >
+                    outerRadius={80} dataKey="value">
                     {receitaPorSegmento.map((_, index) => (
                       <Cell key={index} fill={COLORS[index % COLORS.length]} />
                     ))}
@@ -315,13 +442,91 @@ export default function Faturamento() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                Nenhum dado disponível
-              </div>
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">Nenhum dado disponível</div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Charts row 2: GC + Unidade */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Performance por GC</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {receitaPorGc.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={receitaPorGc} layout="vertical" margin={{ left: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} className="text-xs" />
+                  <YAxis type="category" dataKey="name" className="text-xs" width={55} />
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <Bar dataKey="value" fill="hsl(var(--chart-4))" radius={[0, 4, 4, 0]} name="Faturamento" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">Nenhum dado disponível</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Faturamento por Unidade</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {receitaPorUnidade.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie data={receitaPorUnidade} cx="50%" cy="50%" labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80} dataKey="value">
+                    {receitaPorUnidade.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">Nenhum dado disponível</div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top 10 Clientes */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Top 10 Clientes por Faturamento</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {topClientes.length > 0 ? (
+            <div className="space-y-3">
+              {topClientes.map((c, i) => (
+                <div key={c.name} className="flex items-center gap-3">
+                  <div className="w-8 text-sm font-bold text-muted-foreground">#{i + 1}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium truncate">{c.name}</span>
+                      <div className="flex gap-4 text-xs text-muted-foreground shrink-0">
+                        <span>Fat: {formatCurrency(c.value)}</span>
+                        <span>Com: {formatCurrency(c.comissao)}</span>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full rounded-full bg-primary" style={{ width: `${(c.value / (topClientes[0]?.value || 1)) * 100}%` }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-8 text-muted-foreground">Nenhum dado disponível</div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Table */}
       <Card>
