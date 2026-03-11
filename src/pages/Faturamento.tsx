@@ -339,7 +339,8 @@ export default function Faturamento() {
                         {f.segmento && <Badge variant="outline">{f.segmento}</Badge>}
                       </TableCell>
                       <TableCell className="text-right font-medium">{formatCurrency(Number(f.valor))}</TableCell>
-                      <TableCell>{f.unidade}</TableCell>
+                       <TableCell className="text-right text-muted-foreground">{formatCurrency(Number(f.valor) * 0.003)}</TableCell>
+                       <TableCell>{f.unidade}</TableCell>
                       <TableCell>{f.setor}</TableCell>
                     </TableRow>
                   ))}

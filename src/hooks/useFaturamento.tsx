@@ -20,7 +20,7 @@ export interface Faturamento {
 export interface FaturamentoInsert {
   mes: string;
   ano: number;
-  cliente_de: string;
+  cliente_de?: string;
   cliente_para: string;
   gc?: string | null;
   segmento?: string | null;
