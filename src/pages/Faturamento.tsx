@@ -110,6 +110,43 @@ export default function Faturamento() {
       .slice(0, 10);
   }, [dadosFiltrados]);
 
+  // Chart: by GC
+  const receitaPorGc = useMemo(() => {
+    const map = new Map<string, number>();
+    dadosFiltrados.forEach(f => {
+      const gc = f.gc || "Sem GC";
+      map.set(gc, (map.get(gc) || 0) + Number(f.valor));
+    });
+    return Array.from(map.entries())
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10);
+  }, [dadosFiltrados]);
+
+  // Chart: by Unidade
+  const receitaPorUnidade = useMemo(() => {
+    const map = new Map<string, number>();
+    dadosFiltrados.forEach(f => {
+      const u = f.unidade || "Outros";
+      map.set(u, (map.get(u) || 0) + Number(f.valor));
+    });
+    return Array.from(map.entries())
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [dadosFiltrados]);
+
+  // Top 10 Clientes
+  const topClientes = useMemo(() => {
+    const map = new Map<string, number>();
+    dadosFiltrados.forEach(f => {
+      if (f.cliente_para) map.set(f.cliente_para, (map.get(f.cliente_para) || 0) + Number(f.valor));
+    });
+    return Array.from(map.entries())
+      .map(([name, value]) => ({ name, value, comissao: value * 0.003 }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10);
+  }, [dadosFiltrados]);
+
   // Import handler
   const normalizeKey = (s: string) =>
     s.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
