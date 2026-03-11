@@ -63,6 +63,7 @@ export function FaturamentoDashboard() {
     setAnoFilter("todos");
     setMesFilter("todos");
     setGcFilter("todos");
+    setClienteFilter("todos");
     setSegmentoFilter("todos");
     setUnidadeFilter("todos");
     setSetorFilter("todos");
