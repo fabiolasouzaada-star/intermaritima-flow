@@ -338,6 +338,52 @@ export default function Faturamento() {
         </div>
       </div>
 
+      {/* Base Importada Info */}
+      {faturamento && faturamento.length > 0 && (() => {
+        const lastImportDate = new Date(Math.max(...faturamento.map(f => new Date(f.created_at).getTime())));
+        const anos = faturamento.map(f => f.ano);
+        const minAno = Math.min(...anos);
+        const maxAno = Math.max(...anos);
+        const gcsUnicos = new Set(faturamento.map(f => f.gc).filter(Boolean)).size;
+        const mesesUnicos = new Set(faturamento.map(f => `${f.mes}/${f.ano}`)).size;
+        return (
+          <Card className="border-dashed">
+            <CardContent className="p-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="flex items-center gap-2">
+                  <Database className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div>
+                    <div className="text-sm font-semibold">{faturamento.length.toLocaleString("pt-BR")} registros</div>
+                    <div className="text-xs text-muted-foreground">Total na base</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div>
+                    <div className="text-sm font-semibold">{lastImportDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</div>
+                    <div className="text-xs text-muted-foreground">Última importação</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div>
+                    <div className="text-sm font-semibold">{minAno === maxAno ? String(minAno) : `${minAno} – ${maxAno}`} ({mesesUnicos} meses)</div>
+                    <div className="text-xs text-muted-foreground">Período coberto</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div>
+                    <div className="text-sm font-semibold">{gcsUnicos} GC{gcsUnicos !== 1 ? "s" : ""}</div>
+                    <div className="text-xs text-muted-foreground">Gestores Comerciais</div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {/* Filters */}
       <div className="space-y-3">
         {hasActiveFilter && (
