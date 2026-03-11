@@ -26,17 +26,38 @@ export default function Faturamento() {
   const deleteMutation = useDeleteFaturamentoByPeriod();
 
   const [filtroAno, setFiltroAno] = useState<string>("todos");
+  const [filtroMes, setFiltroMes] = useState<string>("todos");
+  const [filtroGc, setFiltroGc] = useState<string>("todos");
+  const [filtroCliente, setFiltroCliente] = useState<string>("todos");
   const [filtroSegmento, setFiltroSegmento] = useState<string>("todos");
+  const [filtroUnidade, setFiltroUnidade] = useState<string>("todos");
+  const [filtroSetor, setFiltroSetor] = useState<string>("todos");
 
-  // Unique years and segments
-  const anos = useMemo(() => {
-    if (!faturamento) return [];
-    return [...new Set(faturamento.map(f => f.ano))].sort((a, b) => b - a);
-  }, [faturamento]);
+  const hasActiveFilter = filtroAno !== "todos" || filtroMes !== "todos" || filtroGc !== "todos" ||
+    filtroCliente !== "todos" || filtroSegmento !== "todos" || filtroUnidade !== "todos" || filtroSetor !== "todos";
 
-  const segmentos = useMemo(() => {
-    if (!faturamento) return [];
-    return [...new Set(faturamento.map(f => f.segmento).filter(Boolean))].sort() as string[];
+  const clearFilters = () => {
+    setFiltroAno("todos");
+    setFiltroMes("todos");
+    setFiltroGc("todos");
+    setFiltroCliente("todos");
+    setFiltroSegmento("todos");
+    setFiltroUnidade("todos");
+    setFiltroSetor("todos");
+  };
+
+  // Filter options from raw data
+  const filterOptions = useMemo(() => {
+    if (!faturamento) return { anos: [], meses: [], gcs: [], clientes: [], segmentos: [], unidades: [], setores: [] };
+    return {
+      anos: [...new Set(faturamento.map(f => f.ano))].sort((a, b) => b - a),
+      meses: Object.keys(MESES_ORDEM),
+      gcs: [...new Set(faturamento.map(f => f.gc).filter(Boolean))].sort() as string[],
+      clientes: [...new Set(faturamento.map(f => f.cliente_para).filter(Boolean))].sort().slice(0, 100) as string[],
+      segmentos: [...new Set(faturamento.map(f => f.segmento).filter(Boolean))].sort() as string[],
+      unidades: [...new Set(faturamento.map(f => f.unidade).filter(Boolean))].sort() as string[],
+      setores: [...new Set(faturamento.map(f => f.setor).filter(Boolean))].sort() as string[],
+    };
   }, [faturamento]);
 
   // Filtered data
@@ -44,10 +65,15 @@ export default function Faturamento() {
     if (!faturamento) return [];
     return faturamento.filter(f => {
       if (filtroAno !== "todos" && f.ano !== Number(filtroAno)) return false;
+      if (filtroMes !== "todos" && f.mes !== filtroMes) return false;
+      if (filtroGc !== "todos" && f.gc !== filtroGc) return false;
+      if (filtroCliente !== "todos" && f.cliente_para !== filtroCliente) return false;
       if (filtroSegmento !== "todos" && f.segmento !== filtroSegmento) return false;
+      if (filtroUnidade !== "todos" && f.unidade !== filtroUnidade) return false;
+      if (filtroSetor !== "todos" && f.setor !== filtroSetor) return false;
       return true;
     });
-  }, [faturamento, filtroAno, filtroSegmento]);
+  }, [faturamento, filtroAno, filtroMes, filtroGc, filtroCliente, filtroSegmento, filtroUnidade, filtroSetor]);
 
   // KPIs
   const totalFaturamento = useMemo(() => dadosFiltrados.reduce((acc, f) => acc + Number(f.valor), 0), [dadosFiltrados]);
