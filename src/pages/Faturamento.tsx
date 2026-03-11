@@ -135,6 +135,39 @@ export default function Faturamento() {
       .sort((a, b) => b.value - a.value);
   }, [dadosFiltrados]);
 
+  // Acumulado Mensal
+  const acumuladoMensal = useMemo(() => {
+    const map = new Map<string, { valor: number; sortKey: number }>();
+    dadosFiltrados.forEach(f => {
+      const key = `${f.mes}/${f.ano}`;
+      const prev = map.get(key) || { valor: 0, sortKey: 0 };
+      map.set(key, {
+        valor: prev.valor + Number(f.valor),
+        sortKey: Number(f.ano) * 100 + (MESES_ORDEM[f.mes] || 0),
+      });
+    });
+    const sorted = Array.from(map.entries())
+      .map(([name, { valor, sortKey }]) => ({ name, valor, sortKey, acumulado: 0 }))
+      .sort((a, b) => a.sortKey - b.sortKey);
+    let acc = 0;
+    sorted.forEach(item => { acc += item.valor; item.acumulado = acc; });
+    return sorted;
+  }, [dadosFiltrados]);
+
+  // Acumulado Anual
+  const acumuladoAnual = useMemo(() => {
+    const map = new Map<number, number>();
+    dadosFiltrados.forEach(f => {
+      map.set(f.ano, (map.get(f.ano) || 0) + Number(f.valor));
+    });
+    const sorted = Array.from(map.entries())
+      .map(([ano, valor]) => ({ name: String(ano), valor, acumulado: 0 }))
+      .sort((a, b) => Number(a.name) - Number(b.name));
+    let acc = 0;
+    sorted.forEach(item => { acc += item.valor; item.acumulado = acc; });
+    return sorted;
+  }, [dadosFiltrados]);
+
   // Top 10 Clientes
   const topClientes = useMemo(() => {
     const map = new Map<string, number>();
