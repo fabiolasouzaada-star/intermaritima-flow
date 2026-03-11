@@ -16,7 +16,6 @@ import Visitas from "./pages/Visitas";
 import Tarefas from "./pages/Tarefas";
 import Matriz from "./pages/Matriz";
 import PosVenda from "./pages/PosVenda";
-import Relatorios from "./pages/Relatorios";
 import Faturamento from "./pages/Faturamento";
 import PlanoAcoes from "./pages/PlanoAcoes";
 import QualidadeDados from "./pages/QualidadeDados";
