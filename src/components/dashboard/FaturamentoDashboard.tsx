@@ -71,11 +71,12 @@ export function FaturamentoDashboard() {
 
   // Filter options from raw data
   const filterOptions = useMemo(() => {
-    if (!faturamento) return { anos: [], meses: [], gcs: [], segmentos: [], unidades: [], setores: [] };
+    if (!faturamento) return { anos: [], meses: [], gcs: [], clientes: [], segmentos: [], unidades: [], setores: [] };
     return {
       anos: [...new Set(faturamento.map(f => f.ano))].sort((a, b) => b - a),
       meses: Object.keys(MESES_ORDEM),
       gcs: [...new Set(faturamento.map(f => f.gc).filter(Boolean))].sort() as string[],
+      clientes: [...new Set(faturamento.map(f => f.cliente_para).filter(Boolean))].sort().slice(0, 50) as string[],
       segmentos: [...new Set(faturamento.map(f => f.segmento).filter(Boolean))].sort() as string[],
       unidades: [...new Set(faturamento.map(f => f.unidade).filter(Boolean))].sort() as string[],
       setores: [...new Set(faturamento.map(f => f.setor).filter(Boolean))].sort() as string[],
