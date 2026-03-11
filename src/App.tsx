@@ -18,10 +18,7 @@ import Matriz from "./pages/Matriz";
 import PosVenda from "./pages/PosVenda";
 import Faturamento from "./pages/Faturamento";
 import PlanoAcoes from "./pages/PlanoAcoes";
-import QualidadeDados from "./pages/QualidadeDados";
-import CarteiraFS from "./pages/CarteiraFS";
 import PipelineRetomada from "./pages/PipelineRetomada";
-import DashboardFS from "./pages/DashboardFS";
 
 import FSConcorrentes from "./pages/FSConcorrentes";
 import FSMultiterminal from "./pages/FSMultiterminal";
