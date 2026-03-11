@@ -44,8 +44,6 @@ const menuItems = [
 ];
 
 const menuItemsFS = [
-  { title: "Dashboard FS", url: "/dashboard-fs", icon: TrendingUp },
-  { title: "Carteira FS", url: "/carteira-fs", icon: Users },
   { title: "Pipeline Retomada", url: "/pipeline-retomada", icon: Target },
 ];
 

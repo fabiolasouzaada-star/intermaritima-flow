@@ -66,10 +66,7 @@ const App = () => (
             <Route path="/faturamento" element={<ProtectedRoute><CRMLayout><Faturamento /></CRMLayout></ProtectedRoute>} />
             
             <Route path="/plano-acoes" element={<ProtectedRoute><CRMLayout><PlanoAcoes /></CRMLayout></ProtectedRoute>} />
-            <Route path="/qualidade-dados" element={<ProtectedRoute><CRMLayout><QualidadeDados /></CRMLayout></ProtectedRoute>} />
-            <Route path="/carteira-fs" element={<ProtectedRoute><CRMLayout><CarteiraFS /></CRMLayout></ProtectedRoute>} />
             <Route path="/pipeline-retomada" element={<ProtectedRoute><CRMLayout><PipelineRetomada /></CRMLayout></ProtectedRoute>} />
-            <Route path="/dashboard-fs" element={<ProtectedRoute><CRMLayout><DashboardFS /></CRMLayout></ProtectedRoute>} />
             <Route path="/pre-alerta-navios" element={<ProtectedRoute><CRMLayout><PreAlertaNavios /></CRMLayout></ProtectedRoute>} />
             <Route path="/reunioes-plano-acao" element={<ProtectedRoute><ReunioesPlanoAcao /></ProtectedRoute>} />
             
