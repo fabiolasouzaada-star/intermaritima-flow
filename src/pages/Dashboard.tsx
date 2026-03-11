@@ -23,6 +23,11 @@ import { useFaturamento } from "@/hooks/useFaturamento";
 
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
+const MESES_ORDEM: Record<string, number> = {
+  Jan: 1, Fev: 2, Mar: 3, Abr: 4, Mai: 5, Jun: 6,
+  Jul: 7, Ago: 8, Set: 9, Out: 10, Nov: 11, Dez: 12,
+};
+
 export default function Dashboard() {
   const [comercialFilter, setComercialFilter] = useState("todos");
   
