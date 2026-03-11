@@ -36,8 +36,31 @@ export default function Dashboard() {
   const { data: contratos, isLoading: loadingContratos } = useContratos();
   const { data: visitas, isLoading: loadingVisitas } = useVisitas();
   const { data: tarefas, isLoading: loadingTarefas } = useTarefas();
+  const { data: faturamento, isLoading: loadingFaturamento } = useFaturamento();
 
-  const isLoading = loadingClientes || loadingOportunidades || loadingContratos || loadingVisitas || loadingTarefas;
+  const isLoading = loadingClientes || loadingOportunidades || loadingContratos || loadingVisitas || loadingTarefas || loadingFaturamento;
+
+  // Faturamento metrics
+  const faturamentoTotal = useMemo(() => {
+    if (!faturamento) return 0;
+    return faturamento.reduce((acc, f) => acc + Number(f.valor), 0);
+  }, [faturamento]);
+
+  const faturamentoPorMes = useMemo(() => {
+    if (!faturamento) return [];
+    const map = new Map<string, number>();
+    faturamento.forEach(f => {
+      const key = `${f.mes}/${f.ano}`;
+      map.set(key, (map.get(key) || 0) + Number(f.valor));
+    });
+    return Array.from(map.entries())
+      .map(([key, valor]) => {
+        const [mes, ano] = key.split("/");
+        return { name: key, valor, sortKey: Number(ano) * 100 + (MESES_ORDEM[mes] || 0) };
+      })
+      .sort((a, b) => a.sortKey - b.sortKey)
+      .slice(-12); // Last 12 months
+  }, [faturamento]);
 
   // Extrair comerciais únicos (códigos)
   const comerciaisDisponiveis = useMemo(() => {
