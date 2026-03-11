@@ -279,6 +279,34 @@ export default function Faturamento() {
     e.target.value = "";
   }, [importMutation]);
 
+  const handleExport = useCallback((format: "xlsx" | "csv") => {
+    if (!dadosFiltrados || dadosFiltrados.length === 0) {
+      toast.error("Nenhum dado para exportar.");
+      return;
+    }
+    const exportData = dadosFiltrados.map(f => ({
+      Mês: f.mes,
+      Ano: f.ano,
+      Cliente: f.cliente_para,
+      "Cliente De": f.cliente_de || "",
+      GC: f.gc || "",
+      Segmento: f.segmento || "",
+      Valor: f.valor,
+      Unidade: f.unidade || "",
+      Setor: f.setor || "",
+    }));
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Faturamento");
+    const suffix = hasActiveFilter ? "_filtrado" : "_completo";
+    if (format === "xlsx") {
+      XLSX.writeFile(wb, `faturamento${suffix}.xlsx`);
+    } else {
+      XLSX.writeFile(wb, `faturamento${suffix}.csv`, { bookType: "csv" });
+    }
+    toast.success(`${dadosFiltrados.length} registros exportados!`);
+  }, [dadosFiltrados, hasActiveFilter]);
+
   if (isLoading) {
     return <div className="p-8 text-center">Carregando...</div>;
   }
@@ -292,6 +320,14 @@ export default function Faturamento() {
           <p className="text-muted-foreground">Importação e análise de faturamento mensal</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => handleExport("xlsx")}>
+            <Download className="h-4 w-4" />
+            Excel
+          </Button>
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => handleExport("csv")}>
+            <Download className="h-4 w-4" />
+            CSV
+          </Button>
           <Button variant="outline" className="gap-2" asChild>
             <label>
               <Upload className="h-4 w-4" />
