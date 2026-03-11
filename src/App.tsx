@@ -17,6 +17,7 @@ import Tarefas from "./pages/Tarefas";
 import Matriz from "./pages/Matriz";
 import PosVenda from "./pages/PosVenda";
 import Relatorios from "./pages/Relatorios";
+import Faturamento from "./pages/Faturamento";
 import PlanoAcoes from "./pages/PlanoAcoes";
 import QualidadeDados from "./pages/QualidadeDados";
 import CarteiraFS from "./pages/CarteiraFS";
@@ -66,6 +67,7 @@ const App = () => (
             <Route path="/tarefas" element={<ProtectedRoute><CRMLayout><Tarefas /></CRMLayout></ProtectedRoute>} />
             <Route path="/matriz" element={<ProtectedRoute><CRMLayout><Matriz /></CRMLayout></ProtectedRoute>} />
             <Route path="/pos-venda" element={<ProtectedRoute><CRMLayout><PosVenda /></CRMLayout></ProtectedRoute>} />
+            <Route path="/faturamento" element={<ProtectedRoute><CRMLayout><Faturamento /></CRMLayout></ProtectedRoute>} />
             <Route path="/relatorios" element={<ProtectedRoute><CRMLayout><Relatorios /></CRMLayout></ProtectedRoute>} />
             <Route path="/plano-acoes" element={<ProtectedRoute><CRMLayout><PlanoAcoes /></CRMLayout></ProtectedRoute>} />
             <Route path="/qualidade-dados" element={<ProtectedRoute><CRMLayout><QualidadeDados /></CRMLayout></ProtectedRoute>} />

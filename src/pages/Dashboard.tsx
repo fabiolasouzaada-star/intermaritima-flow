@@ -19,8 +19,14 @@ import { useOportunidades } from "@/hooks/useOportunidades";
 import { useContratos } from "@/hooks/useContratos";
 import { useVisitas } from "@/hooks/useVisitas";
 import { useTarefas } from "@/hooks/useTarefas";
+import { useFaturamento } from "@/hooks/useFaturamento";
 
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+
+const MESES_ORDEM: Record<string, number> = {
+  Jan: 1, Fev: 2, Mar: 3, Abr: 4, Mai: 5, Jun: 6,
+  Jul: 7, Ago: 8, Set: 9, Out: 10, Nov: 11, Dez: 12,
+};
 
 export default function Dashboard() {
   const [comercialFilter, setComercialFilter] = useState("todos");
@@ -30,8 +36,31 @@ export default function Dashboard() {
   const { data: contratos, isLoading: loadingContratos } = useContratos();
   const { data: visitas, isLoading: loadingVisitas } = useVisitas();
   const { data: tarefas, isLoading: loadingTarefas } = useTarefas();
+  const { data: faturamento, isLoading: loadingFaturamento } = useFaturamento();
 
-  const isLoading = loadingClientes || loadingOportunidades || loadingContratos || loadingVisitas || loadingTarefas;
+  const isLoading = loadingClientes || loadingOportunidades || loadingContratos || loadingVisitas || loadingTarefas || loadingFaturamento;
+
+  // Faturamento metrics
+  const faturamentoTotal = useMemo(() => {
+    if (!faturamento) return 0;
+    return faturamento.reduce((acc, f) => acc + Number(f.valor), 0);
+  }, [faturamento]);
+
+  const faturamentoPorMes = useMemo(() => {
+    if (!faturamento) return [];
+    const map = new Map<string, number>();
+    faturamento.forEach(f => {
+      const key = `${f.mes}/${f.ano}`;
+      map.set(key, (map.get(key) || 0) + Number(f.valor));
+    });
+    return Array.from(map.entries())
+      .map(([key, valor]) => {
+        const [mes, ano] = key.split("/");
+        return { name: key, valor, sortKey: Number(ano) * 100 + (MESES_ORDEM[mes] || 0) };
+      })
+      .sort((a, b) => a.sortKey - b.sortKey)
+      .slice(-12); // Last 12 months
+  }, [faturamento]);
 
   // Extrair comerciais únicos (códigos)
   const comerciaisDisponiveis = useMemo(() => {
@@ -320,6 +349,33 @@ export default function Dashboard() {
           ) : (
             <div className="flex items-center justify-center py-8 text-muted-foreground">
               Nenhum dado disponível
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Faturamento Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            Faturamento Realizado — {formatCurrency(faturamentoTotal)}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {faturamentoPorMes.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={faturamentoPorMes}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="name" className="text-xs" angle={-45} textAnchor="end" height={60} />
+                <YAxis className="text-xs" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                <Bar dataKey="valor" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} name="Faturamento" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+              Nenhum dado de faturamento importado. Acesse a página Faturamento para importar planilhas.
             </div>
           )}
         </CardContent>

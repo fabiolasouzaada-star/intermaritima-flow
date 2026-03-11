@@ -571,6 +571,51 @@ export type Database = {
           },
         ]
       }
+      faturamento: {
+        Row: {
+          ano: number
+          cliente_de: string
+          cliente_para: string
+          created_at: string
+          created_by: string | null
+          gc: string | null
+          id: string
+          mes: string
+          segmento: string | null
+          setor: string | null
+          unidade: string | null
+          valor: number
+        }
+        Insert: {
+          ano: number
+          cliente_de: string
+          cliente_para: string
+          created_at?: string
+          created_by?: string | null
+          gc?: string | null
+          id?: string
+          mes: string
+          segmento?: string | null
+          setor?: string | null
+          unidade?: string | null
+          valor?: number
+        }
+        Update: {
+          ano?: number
+          cliente_de?: string
+          cliente_para?: string
+          created_at?: string
+          created_by?: string | null
+          gc?: string | null
+          id?: string
+          mes?: string
+          segmento?: string | null
+          setor?: string | null
+          unidade?: string | null
+          valor?: number
+        }
+        Relationships: []
+      }
       modelos_proposta: {
         Row: {
           anexos_padrao: Json | null
