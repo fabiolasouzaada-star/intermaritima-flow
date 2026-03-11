@@ -574,7 +574,7 @@ export type Database = {
       faturamento: {
         Row: {
           ano: number
-          cliente_de: string
+          cliente_de: string | null
           cliente_para: string
           created_at: string
           created_by: string | null
@@ -588,7 +588,7 @@ export type Database = {
         }
         Insert: {
           ano: number
-          cliente_de: string
+          cliente_de?: string | null
           cliente_para: string
           created_at?: string
           created_by?: string | null
@@ -602,7 +602,7 @@ export type Database = {
         }
         Update: {
           ano?: number
-          cliente_de?: string
+          cliente_de?: string | null
           cliente_para?: string
           created_at?: string
           created_by?: string | null
