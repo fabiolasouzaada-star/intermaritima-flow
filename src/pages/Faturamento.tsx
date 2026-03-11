@@ -188,7 +188,7 @@ export default function Faturamento() {
       </div>
 
       {/* KPIs */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
@@ -203,7 +203,18 @@ export default function Faturamento() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <TrendingUp className="h-8 w-8 text-primary" />
+              <TrendingUp className="h-8 w-8 text-chart-2" />
+              <div>
+                <div className="text-2xl font-bold">{formatCurrency(totalComissao)}</div>
+                <div className="text-sm text-muted-foreground">Comissão (0,3%)</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <BarChart3 className="h-8 w-8 text-primary" />
               <div>
                 <div className="text-2xl font-bold">{totalRegistros}</div>
                 <div className="text-sm text-muted-foreground">Registros</div>
