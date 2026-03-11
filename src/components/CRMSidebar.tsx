@@ -2,7 +2,6 @@ import {
   LayoutDashboard, 
   Users, 
   Workflow, 
-  FileText, 
   Calendar, 
   ClipboardList,
   CheckSquare,
