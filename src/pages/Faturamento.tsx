@@ -398,7 +398,7 @@ export default function Faturamento() {
         </Card>
       </div>
 
-      {/* Charts */}
+      {/* Charts row 1: Mensal + Segmento */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -418,6 +418,34 @@ export default function Faturamento() {
             ) : (
               <div className="flex items-center justify-center h-[300px] text-muted-foreground">
                 Nenhum dado disponível. Importe uma planilha.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Faturamento por Segmento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {receitaPorSegmento.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie data={receitaPorSegmento} cx="50%" cy="50%" labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80} dataKey="value">
+                    {receitaPorSegmento.map((_, index) => (
+                      <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">Nenhum dado disponível</div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Charts row 2: GC + Unidade */}
@@ -499,42 +527,6 @@ export default function Faturamento() {
           )}
         </CardContent>
       </Card>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Faturamento por Segmento</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {receitaPorSegmento.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={receitaPorSegmento}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    dataKey="value"
-                  >
-                    {receitaPorSegmento.map((_, index) => (
-                      <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                Nenhum dado disponível
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Table */}
       <Card>
