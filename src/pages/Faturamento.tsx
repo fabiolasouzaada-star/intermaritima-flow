@@ -36,6 +36,11 @@ export default function Faturamento() {
   const [filtroSetor, setFiltroSetor] = useState<string>("todos");
   const [page, setPage] = useState(1);
 
+  const setFilterAndResetPage = useCallback((setter: (v: string) => void) => (value: string) => {
+    setter(value);
+    setPage(1);
+  }, []);
+
   const hasActiveFilter = filtroAno !== "todos" || filtroMes !== "todos" || filtroGc !== "todos" ||
     filtroCliente !== "todos" || filtroSegmento !== "todos" || filtroUnidade !== "todos" || filtroSetor !== "todos";
 
