@@ -6,7 +6,6 @@ import {
   ClipboardList,
   CheckSquare,
   Grid3x3,
-  BarChart3,
   LogOut,
   Target,
   TrendingUp,
