@@ -51,6 +51,7 @@ export default function Faturamento() {
 
   // KPIs
   const totalFaturamento = useMemo(() => dadosFiltrados.reduce((acc, f) => acc + Number(f.valor), 0), [dadosFiltrados]);
+  const totalComissao = useMemo(() => totalFaturamento * 0.003, [totalFaturamento]);
   const totalRegistros = dadosFiltrados.length;
   const clientesUnicos = useMemo(() => new Set(dadosFiltrados.map(f => f.cliente_para)).size, [dadosFiltrados]);
   const segmentosUnicos = useMemo(() => new Set(dadosFiltrados.map(f => f.segmento).filter(Boolean)).size, [dadosFiltrados]);
@@ -122,7 +123,7 @@ export default function Faturamento() {
         return { mes, ano, cliente_de: clienteDe, cliente_para: clientePara, gc, segmento, valor, unidade, setor };
       });
 
-      const validRows = rows.filter(r => r.mes && r.ano && r.cliente_de);
+      const validRows = rows.filter(r => r.mes && r.ano);
       if (validRows.length === 0) {
         toast.error("Nenhum registro válido encontrado. Verifique os cabeçalhos da planilha.");
         return;
@@ -187,7 +188,7 @@ export default function Faturamento() {
       </div>
 
       {/* KPIs */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
@@ -202,7 +203,18 @@ export default function Faturamento() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <TrendingUp className="h-8 w-8 text-primary" />
+              <TrendingUp className="h-8 w-8 text-chart-2" />
+              <div>
+                <div className="text-2xl font-bold">{formatCurrency(totalComissao)}</div>
+                <div className="text-sm text-muted-foreground">Comissão (0,3%)</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <BarChart3 className="h-8 w-8 text-primary" />
               <div>
                 <div className="text-2xl font-bold">{totalRegistros}</div>
                 <div className="text-sm text-muted-foreground">Registros</div>
@@ -309,9 +321,10 @@ export default function Faturamento() {
                     <TableHead>Cliente - Para</TableHead>
                     <TableHead>GC</TableHead>
                     <TableHead>Segmento</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                    <TableHead>Unidade</TableHead>
-                    <TableHead>Setor</TableHead>
+                     <TableHead className="text-right">Valor</TableHead>
+                     <TableHead className="text-right">Comissão (0,3%)</TableHead>
+                     <TableHead>Unidade</TableHead>
+                     <TableHead>Setor</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -326,7 +339,8 @@ export default function Faturamento() {
                         {f.segmento && <Badge variant="outline">{f.segmento}</Badge>}
                       </TableCell>
                       <TableCell className="text-right font-medium">{formatCurrency(Number(f.valor))}</TableCell>
-                      <TableCell>{f.unidade}</TableCell>
+                       <TableCell className="text-right text-muted-foreground">{formatCurrency(Number(f.valor) * 0.003)}</TableCell>
+                       <TableCell>{f.unidade}</TableCell>
                       <TableCell>{f.setor}</TableCell>
                     </TableRow>
                   ))}

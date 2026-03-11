@@ -9,7 +9,9 @@ import {
   FileCheck,
   ClipboardList,
   PhoneCall,
-  PackageSearch
+  PackageSearch,
+  Percent,
+  Building2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -30,7 +32,7 @@ const MESES_ORDEM: Record<string, number> = {
 
 export default function Dashboard() {
   const [comercialFilter, setComercialFilter] = useState("todos");
-  
+  const [gcFilter, setGcFilter] = useState("todos");
   const { data: clientes, isLoading: loadingClientes } = useClientes();
   const { data: oportunidades, isLoading: loadingOportunidades } = useOportunidades();
   const { data: contratos, isLoading: loadingContratos } = useContratos();
@@ -40,16 +42,29 @@ export default function Dashboard() {
 
   const isLoading = loadingClientes || loadingOportunidades || loadingContratos || loadingVisitas || loadingTarefas || loadingFaturamento;
 
-  // Faturamento metrics
-  const faturamentoTotal = useMemo(() => {
-    if (!faturamento) return 0;
-    return faturamento.reduce((acc, f) => acc + Number(f.valor), 0);
+  // GCs disponíveis no faturamento
+  const gcsDisponiveis = useMemo(() => {
+    if (!faturamento) return [];
+    return [...new Set(faturamento.map(f => f.gc).filter(Boolean))].sort() as string[];
   }, [faturamento]);
 
-  const faturamentoPorMes = useMemo(() => {
+  // Faturamento filtrado por GC
+  const faturamentoFiltrado = useMemo(() => {
     if (!faturamento) return [];
+    if (gcFilter === "todos") return faturamento;
+    return faturamento.filter(f => f.gc === gcFilter);
+  }, [faturamento, gcFilter]);
+
+  // Faturamento metrics
+  const faturamentoTotal = useMemo(() => {
+    return faturamentoFiltrado.reduce((acc, f) => acc + Number(f.valor), 0);
+  }, [faturamentoFiltrado]);
+
+  const comissaoTotal = useMemo(() => faturamentoTotal * 0.003, [faturamentoTotal]);
+
+  const faturamentoPorMes = useMemo(() => {
     const map = new Map<string, number>();
-    faturamento.forEach(f => {
+    faturamentoFiltrado.forEach(f => {
       const key = `${f.mes}/${f.ano}`;
       map.set(key, (map.get(key) || 0) + Number(f.valor));
     });
@@ -59,8 +74,20 @@ export default function Dashboard() {
         return { name: key, valor, sortKey: Number(ano) * 100 + (MESES_ORDEM[mes] || 0) };
       })
       .sort((a, b) => a.sortKey - b.sortKey)
-      .slice(-12); // Last 12 months
-  }, [faturamento]);
+      .slice(-12);
+  }, [faturamentoFiltrado]);
+
+  // Faturamento por Unidade
+  const faturamentoPorUnidade = useMemo(() => {
+    const map = new Map<string, number>();
+    faturamentoFiltrado.forEach(f => {
+      const unidade = f.unidade || "Outros";
+      map.set(unidade, (map.get(unidade) || 0) + Number(f.valor));
+    });
+    return Array.from(map.entries())
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [faturamentoFiltrado]);
 
   // Extrair comerciais únicos (códigos)
   const comerciaisDisponiveis = useMemo(() => {
@@ -355,31 +382,100 @@ export default function Dashboard() {
       </Card>
 
       {/* Faturamento Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            Faturamento Realizado — {formatCurrency(faturamentoTotal)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {faturamentoPorMes.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={faturamentoPorMes}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="name" className="text-xs" angle={-45} textAnchor="end" height={60} />
-                <YAxis className="text-xs" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                <Bar dataKey="valor" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} name="Faturamento" />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-              Nenhum dado de faturamento importado. Acesse a página Faturamento para importar planilhas.
+      <div className="grid gap-4 md:grid-cols-3">
+        <MetricCard
+          title="Faturamento Realizado"
+          value={formatCurrency(faturamentoTotal)}
+          icon={DollarSign}
+        />
+        <MetricCard
+          title="Comissão (0,3%)"
+          value={formatCurrency(comissaoTotal)}
+          icon={Percent}
+        />
+        <Card>
+          <CardContent className="p-6 flex items-center gap-3">
+            <Building2 className="h-8 w-8 text-primary" />
+            <div className="flex-1">
+              <div className="text-sm text-muted-foreground mb-1">Filtrar por GC</div>
+              <Select value={gcFilter} onValueChange={setGcFilter}>
+                <SelectTrigger className="h-8">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os GCs</SelectItem>
+                  {gcsDisponiveis.map(gc => (
+                    <SelectItem key={gc} value={gc}>{gc}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Faturamento Mensal
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {faturamentoPorMes.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={faturamentoPorMes}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="name" className="text-xs" angle={-45} textAnchor="end" height={60} />
+                  <YAxis className="text-xs" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <Bar dataKey="valor" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} name="Faturamento" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                Nenhum dado de faturamento importado.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Faturamento por Unidade
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {faturamentoPorUnidade.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={faturamentoPorUnidade}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    dataKey="value"
+                  >
+                    {faturamentoPorUnidade.map((_, index) => (
+                      <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                Nenhum dado disponível
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
