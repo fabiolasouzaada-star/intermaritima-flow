@@ -62,6 +62,7 @@ const TERMINAL_OPTIONS = [
 export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDialogProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const updateItem = useUpdatePreAlertaItem();
   const [isCreating, setIsCreating] = useState<string | null>(null);
   const [localTerminals, setLocalTerminals] = useState<Record<string, string>>({});
