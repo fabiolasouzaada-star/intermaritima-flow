@@ -199,6 +199,7 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
 
       if (error) throw error;
 
+      await queryClient.invalidateQueries({ queryKey: ["oportunidades"] });
       toast.success("Oportunidade criada com sucesso!");
       navigate("/pipeline");
     } catch (error) {
