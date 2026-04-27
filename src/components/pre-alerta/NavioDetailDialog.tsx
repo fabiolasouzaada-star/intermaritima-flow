@@ -170,6 +170,8 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
         });
       }
 
+      await queryClient.invalidateQueries({ queryKey: ["clientes"] });
+      await queryClient.invalidateQueries({ queryKey: ["pre-alerta-itens"] });
       toast.success(`Cliente "${clienteNome}" criado com sucesso!`);
       navigate(`/cliente/${data.id}`);
     } catch (error) {
