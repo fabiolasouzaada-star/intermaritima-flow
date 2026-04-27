@@ -35,6 +35,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface NavioDetailDialogProps {
   navio: NavioAgregado | null;
@@ -61,6 +62,7 @@ const TERMINAL_OPTIONS = [
 export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDialogProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const updateItem = useUpdatePreAlertaItem();
   const [isCreating, setIsCreating] = useState<string | null>(null);
   const [localTerminals, setLocalTerminals] = useState<Record<string, string>>({});
@@ -168,6 +170,8 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
         });
       }
 
+      await queryClient.invalidateQueries({ queryKey: ["clientes"] });
+      await queryClient.invalidateQueries({ queryKey: ["pre-alerta-itens"] });
       toast.success(`Cliente "${clienteNome}" criado com sucesso!`);
       navigate(`/cliente/${data.id}`);
     } catch (error) {
@@ -195,6 +199,7 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
 
       if (error) throw error;
 
+      await queryClient.invalidateQueries({ queryKey: ["oportunidades"] });
       toast.success("Oportunidade criada com sucesso!");
       navigate("/pipeline");
     } catch (error) {
@@ -223,6 +228,7 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
 
       if (error) throw error;
 
+      await queryClient.invalidateQueries({ queryKey: ["tarefas"] });
       toast.success("Tarefa criada com sucesso!");
       navigate("/tarefas");
     } catch (error) {
