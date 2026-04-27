@@ -228,6 +228,7 @@ export function NavioDetailDialog({ navio, open, onOpenChange }: NavioDetailDial
 
       if (error) throw error;
 
+      await queryClient.invalidateQueries({ queryKey: ["tarefas"] });
       toast.success("Tarefa criada com sucesso!");
       navigate("/tarefas");
     } catch (error) {
